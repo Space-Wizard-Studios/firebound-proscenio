@@ -50,4 +50,4 @@ For LLM agents and human contributors: detailed guidance lives in [`.ai/skills/`
 
 ## Status
 
-Pre-alpha. Format unstable. Not for production. See [docs/index.md](docs/index.md) for roadmap.
+Pre-alpha. Format unstable. Not for production. The current planning spec is [`specs/000-initial-plan/`](specs/000-initial-plan/) — read [`STUDY.md`](specs/000-initial-plan/STUDY.md) for the rationale and [`TODO.md`](specs/000-initial-plan/TODO.md) for the actionable plan.

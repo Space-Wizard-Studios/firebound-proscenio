@@ -89,7 +89,8 @@ Conventional Commits:
 | `photoshop` | Photoshop JSX exporter |
 | `schema` | `.proscenio` format schema |
 | `skills` | `.ai/skills/` and `.ai/conventions.md` |
-| `docs` | User-facing docs in `docs/` |
+| `specs` | Planning specs under `specs/` |
+| `docs` | User-facing docs (future `docs/` site) |
 | `ci` | Workflows in `.github/` |
 | `repo` | Root meta (license, configs, `.gitattributes`, etc.) |
 

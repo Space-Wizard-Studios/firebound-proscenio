@@ -31,7 +31,7 @@ The MVP is in progress. Full quickstart will land with the first end-to-end samp
 ## Documentation
 
 - **Contributors and LLM agents:** start at [AGENTS.md](AGENTS.md) → [`.ai/skills/`](.ai/skills/)
-- **Users:** [`docs/`](docs/) (placeholder until MVP)
+- **Current plan:** [`specs/000-initial-plan/STUDY.md`](specs/000-initial-plan/STUDY.md) and [`specs/000-initial-plan/TODO.md`](specs/000-initial-plan/TODO.md)
 
 ## License
 
