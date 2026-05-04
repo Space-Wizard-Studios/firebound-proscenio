@@ -62,7 +62,16 @@ static func _add_value_track_if_present(
 
 	var idx := anim.add_track(Animation.TYPE_VALUE)
 	anim.track_set_path(idx, NodePath("%s:%s" % [base_path, property]))
-	anim.track_set_interpolation_type(idx, Animation.INTERPOLATION_LINEAR)
+	# Cubic spline interpolation gives smooth motion between keys without
+	# needing per-key Bezier handles in the .proscenio format. Rotation uses
+	# the *_ANGLE variant so wrap-around at ±π is handled correctly.
+	var interp := Animation.INTERPOLATION_LINEAR
+	match property:
+		"rotation":
+			interp = Animation.INTERPOLATION_CUBIC_ANGLE
+		"position", "scale":
+			interp = Animation.INTERPOLATION_CUBIC
+	anim.track_set_interpolation_type(idx, interp)
 
 	for key in keys:
 		if not key.has(property):
