@@ -22,6 +22,9 @@ venv/
 export.cfg
 export_presets.cfg
 
+# Dev-only fixture copy inside the Godot dev project — canonical lives in examples/
+godot-plugin/test_goblin/
+
 # OS
 .DS_Store
 Thumbs.db

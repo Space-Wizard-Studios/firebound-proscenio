@@ -20,6 +20,8 @@ static func build(skeleton_data: Dictionary) -> Skeleton2D:
 		var length: float = float(bone_data.get("length", 0.0))
 		if length > 0.0:
 			bone.set_length(length)
+		# Capture authored pose as the rest pose so animations replace it cleanly.
+		bone.set_rest(bone.transform)
 		bones[bone.name] = bone
 
 	for bone_data in bones_data:

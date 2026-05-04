@@ -2,10 +2,7 @@
 extends RefCounted
 
 
-static func build(animations_data: Array) -> AnimationPlayer:
-	var player := AnimationPlayer.new()
-	player.name = "AnimationPlayer"
-
+static func populate(player: AnimationPlayer, skeleton: Skeleton2D, animations_data: Array) -> void:
 	var library := AnimationLibrary.new()
 
 	for anim_data in animations_data:
@@ -16,10 +13,70 @@ static func build(animations_data: Array) -> AnimationPlayer:
 			if bool(anim_data.get("loop", false))
 			else Animation.LOOP_NONE
 		)
-		# Track wiring (bone_transform, sprite_frame, slot_attachment, visibility)
-		# lands during Phase 1 finalization. Until then, animations are
-		# created empty so the player and library structure is in place.
+		for track_data in anim_data.get("tracks", []):
+			_add_track(anim, skeleton, track_data)
 		library.add_animation(anim_data.get("name", "anim"), anim)
 
 	player.add_animation_library("", library)
-	return player
+
+
+static func _add_track(anim: Animation, skeleton: Skeleton2D, track_data: Dictionary) -> void:
+	var track_type: String = track_data.get("type", "")
+	var target: String = track_data.get("target", "")
+	var keys: Array = track_data.get("keys", [])
+
+	if keys.is_empty():
+		return
+
+	var character_root := skeleton.get_parent()
+	if character_root == null:
+		push_error("Proscenio: skeleton has no parent — animation tracks cannot resolve paths")
+		return
+
+	match track_type:
+		"bone_transform":
+			var bone := skeleton.find_child(target, true, false)
+			if bone == null:
+				push_error("Proscenio: bone '%s' not found for animation track" % target)
+				return
+			var base_path := str(character_root.get_path_to(bone))
+			_add_value_track_if_present(anim, base_path, "position", keys)
+			_add_value_track_if_present(anim, base_path, "rotation", keys)
+			_add_value_track_if_present(anim, base_path, "scale", keys)
+		"sprite_frame", "slot_attachment", "visibility":
+			push_warning("Proscenio: track type '%s' not implemented yet" % track_type)
+		_:
+			push_warning("Proscenio: unknown track type '%s'" % track_type)
+
+
+static func _add_value_track_if_present(
+	anim: Animation, base_path: String, property: String, keys: Array
+) -> void:
+	var has_any := false
+	for key in keys:
+		if key.has(property):
+			has_any = true
+			break
+	if not has_any:
+		return
+
+	var idx := anim.add_track(Animation.TYPE_VALUE)
+	anim.track_set_path(idx, NodePath("%s:%s" % [base_path, property]))
+	anim.track_set_interpolation_type(idx, Animation.INTERPOLATION_LINEAR)
+
+	for key in keys:
+		if not key.has(property):
+			continue
+		var t := float(key.get("time", 0.0))
+		anim.track_insert_key(idx, t, _key_value_for(property, key[property]))
+
+
+static func _key_value_for(property: String, raw: Variant) -> Variant:
+	match property:
+		"position", "scale":
+			var arr: Array = raw
+			return Vector2(arr[0], arr[1])
+		"rotation":
+			return float(raw)
+		_:
+			return raw

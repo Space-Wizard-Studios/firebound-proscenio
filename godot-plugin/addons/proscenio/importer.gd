@@ -66,13 +66,23 @@ func _import(
 	var json := JSON.new()
 	var parse_err := json.parse(file.get_as_text())
 	if parse_err != OK:
-		push_error("Proscenio: JSON parse failed at line %d: %s" % [json.get_error_line(), json.get_error_message()])
+		push_error(
+			(
+				"Proscenio: JSON parse failed at line %d: %s"
+				% [json.get_error_line(), json.get_error_message()]
+			)
+		)
 		return ERR_PARSE_ERROR
 
 	var data: Dictionary = json.data
 	var version: int = int(data.get("format_version", 0))
 	if version != SUPPORTED_FORMAT_VERSION:
-		push_error("Proscenio: unsupported format_version %d (need %d)" % [version, SUPPORTED_FORMAT_VERSION])
+		push_error(
+			(
+				"Proscenio: unsupported format_version %d (need %d)"
+				% [version, SUPPORTED_FORMAT_VERSION]
+			)
+		)
 		return ERR_INVALID_DATA
 
 	var root := Node2D.new()
@@ -81,10 +91,13 @@ func _import(
 	var skeleton := SkeletonBuilder.build(data.get("skeleton", {}))
 	root.add_child(skeleton)
 
-	PolygonBuilder.attach_sprites(skeleton, data.get("sprites", []))
+	var atlas := _load_atlas(source_file, data.get("atlas", ""))
+	PolygonBuilder.attach_sprites(skeleton, data.get("sprites", []), atlas)
 
-	var animation_player := AnimationBuilder.build(data.get("animations", []))
+	var animation_player := AnimationPlayer.new()
+	animation_player.name = "AnimationPlayer"
 	root.add_child(animation_player)
+	AnimationBuilder.populate(animation_player, skeleton, data.get("animations", []))
 
 	_set_owner_recursive(root, root)
 
@@ -94,6 +107,18 @@ func _import(
 		return pack_err
 
 	return ResourceSaver.save(packed, "%s.scn" % save_path)
+
+
+static func _load_atlas(source_file: String, atlas_path: String) -> Texture2D:
+	if atlas_path == "":
+		return null
+	var source_dir := source_file.get_base_dir()
+	var full := source_dir.path_join(atlas_path)
+	if not ResourceLoader.exists(full):
+		push_warning("Proscenio: atlas not found at '%s'" % full)
+		return null
+	var resource: Resource = load(full)
+	return resource as Texture2D
 
 
 static func _set_owner_recursive(node: Node, owner: Node) -> void:

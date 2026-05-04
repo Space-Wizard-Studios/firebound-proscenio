@@ -2,7 +2,7 @@
 extends RefCounted
 
 
-static func attach_sprites(skeleton: Skeleton2D, sprites_data: Array) -> void:
+static func attach_sprites(skeleton: Skeleton2D, sprites_data: Array, atlas: Texture2D) -> void:
 	for sprite_data in sprites_data:
 		var poly := Polygon2D.new()
 		poly.name = sprite_data.get("name", "sprite")
@@ -19,10 +19,22 @@ static func attach_sprites(skeleton: Skeleton2D, sprites_data: Array) -> void:
 			uvs.append(Vector2(u[0], u[1]))
 		poly.uv = uvs
 
+		if atlas != null:
+			poly.texture = atlas
+
+		if sprite_data.has("weights"):
+			push_warning(
+				(
+					"Proscenio: sprite '%s' has weights — full skinning lands in Phase 2 "
+					+ "(SPEC 004); attaching rigidly to bone for now."
+				)
+				% poly.name
+			)
+
 		var bone_name: String = sprite_data.get("bone", "")
 		var parent: Node = skeleton
 		if bone_name != "":
 			var found := skeleton.find_child(bone_name, true, false)
-			if found:
+			if found != null:
 				parent = found
 		parent.add_child(poly)
