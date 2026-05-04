@@ -23,7 +23,7 @@ When an issue exists, reference it in the commit body (`Refs: #42`), not in the 
 | --- | --- |
 | `snake_case.py` | Python modules |
 | `PascalCase` | Python class names |
-| `PROSCENIO_OT_*` / `PROSCENIO_PT_*` | Blender operator and panel class names (Blender requirement; ruff `N801` is silenced) |
+| `PROSCENIO_OT_*` / `PROSCENIO_PT_*` | Blender operator and panel class names (Blender requirement — `bpy.utils.register_class` validates the `CATEGORY_OT_name` / `CATEGORY_PT_name` shape; ruff `N801` and Sonar `python:S101` are silenced) |
 | `snake_case.gd` | GDScript files — one class per file |
 | `PascalCase` | GDScript `class_name` |
 | `kebab-case` | Config and workflow file names (`.editorconfig`, `release.yml`) |
