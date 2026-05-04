@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "blender-addon-v*"
+      - "godot-plugin-v*"
+      - "photoshop-exporter-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine component and version
+        id: meta
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          component="${tag%-v*}"
+          version="${tag##*-v}"
+          echo "name=$component" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build artifact
+        run: |
+          mkdir -p dist
+          case "${{ steps.meta.outputs.name }}" in
+            blender-addon)
+              (cd blender-addon && zip -r "../dist/proscenio-blender-${{ steps.meta.outputs.version }}.zip" . -x "tests/*" "pyproject.toml" "README.md")
+              ;;
+            godot-plugin)
+              (cd godot-plugin && zip -r "../dist/proscenio-godot-${{ steps.meta.outputs.version }}.zip" addons/proscenio)
+              ;;
+            photoshop-exporter)
+              cp photoshop-exporter/proscenio_export.jsx "dist/proscenio-photoshop-${{ steps.meta.outputs.version }}.jsx"
+              ;;
+            *)
+              echo "Unknown component: ${{ steps.meta.outputs.name }}"
+              exit 1
+              ;;
+          esac
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
