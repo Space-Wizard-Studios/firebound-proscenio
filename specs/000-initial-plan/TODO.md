@@ -4,18 +4,18 @@ Closes the Phase 0 (foundation) work and primes Phase 1 (MVP). Each item is conc
 
 ## Schema cleanup (apply Q1–Q9 decisions)
 
-- [ ] **Q2.** Remove `"cubic"` from the `interp` enum in [`schemas/proscenio.schema.json`](../../schemas/proscenio.schema.json). Keep `"linear"` and `"constant"`.
-- [ ] **Q2.** Update [`.ai/skills/format-spec.md`](../../.ai/skills/format-spec.md) interpolation row to match.
-- [ ] **Q3.** Add a one-line note in `format-spec.md`: weights accepted in v1 schema, ignored by MVP importer, full skinning in Phase 2.
-- [ ] **Q4.** Add a "Atlas packing" subsection to `format-spec.md` clarifying that atlases are pre-packed externally in v1.
-- [ ] **Q9.** Add a "Coordinate origin" line to `format-spec.md` stating the scene-root `Node2D` is `(0, 0)`.
+- [x] **Q2.** Remove `"cubic"` from the `interp` enum in [`schemas/proscenio.schema.json`](../../schemas/proscenio.schema.json). Keep `"linear"` and `"constant"`.
+- [x] **Q2.** Update [`.ai/skills/format-spec.md`](../../.ai/skills/format-spec.md) interpolation row to match.
+- [x] **Q3.** Add a one-line note in `format-spec.md`: weights accepted in v1 schema, ignored by MVP importer, full skinning in Phase 2.
+- [x] **Q4.** Add a "Atlas packing" subsection to `format-spec.md` clarifying that atlases are pre-packed externally in v1.
+- [x] **Q9.** Add a "Coordinate origin" line to `format-spec.md` stating the scene-root `Node2D` is `(0, 0)`.
 
 ## Documentation
 
-- [ ] Add `.ai/skills/references.md` listing prior-art repos with priority and what to read in each (extract from `STUDY.md` "Prior art" section).
-- [ ] Expand the "Why no GDExtension" reasoning into [`.ai/skills/architecture.md`](../../.ai/skills/architecture.md) (currently one paragraph; merge the table from `STUDY.md`).
-- [ ] Update `AGENTS.md` to point at `specs/` for planning specs (replacing the removed `docs/index.md` link).
-- [ ] Update `README.md` to point at `specs/000-initial-plan/STUDY.md` for the current plan.
+- [x] Add `.ai/skills/references.md` listing prior-art repos with priority and what to read in each (extract from `STUDY.md` "Prior art" section).
+- [x] Expand the "Why no GDExtension" reasoning into [`.ai/skills/architecture.md`](../../.ai/skills/architecture.md) (currently one paragraph; merge the table from `STUDY.md`).
+- [x] Update `AGENTS.md` to point at `specs/` for planning specs (replacing the removed `docs/index.md` link).
+- [x] Update `README.md` to point at `specs/000-initial-plan/STUDY.md` for the current plan.
 
 ## Goblin fixture (schema-first, no Blender required)
 

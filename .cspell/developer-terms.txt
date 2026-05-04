@@ -1,3 +1,6 @@
 interp
 mkdocs
+schemafile
+spritesheet
+spritesheets
 tscn

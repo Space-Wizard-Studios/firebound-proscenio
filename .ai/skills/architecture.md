@@ -50,3 +50,23 @@ Photoshop ──JSX──▶ sprites + position JSON
 - No GDExtension. No native libraries. No runtime dependencies in user games.
 - Blender addon is GPL-3.0 (Blender constraint). Repo is GPL-3.0 throughout for simplicity.
 - Format change requires `format_version` bump and a migration path.
+
+## Why no GDExtension
+
+Spine ships a GDExtension because their `.skel` is a binary format, interpreted by their proprietary code at runtime, frame by frame, while the game runs. Native code is required to do that with acceptable performance.
+
+Proscenio does the conversion **once, at editor import time**. The output is a `.tscn` made of built-in nodes — `Skeleton2D`, `Bone2D`, `Polygon2D`, `Sprite2D`, `AnimationPlayer`, `AnimationLibrary` — all already C++ in Godot core. At runtime the game uses Godot's own animation system. There is nothing for our plugin to do.
+
+| Dimension | Spine GDExtension | Proscenio EditorImportPlugin |
+| --- | --- | --- |
+| Runtime cost | non-zero, native call per frame | zero — built-in nodes |
+| Per-platform compilation | yes | no |
+| Update cadence vs Godot | breaks on engine API drift | only `Skeleton2D` API matters |
+| End-user install | runtime + plugin | nothing — scene is portable |
+| Maintenance | high | low |
+
+The only case where GDExtension would be worth the cost is a custom node type with proprietary tools (e.g. `ProscenioCharacter`). That is explicitly out of scope. Pure GDScript stays.
+
+The hard rule above ("must run in stock Godot without the Proscenio plugin installed") is the operational test for this design. If a generated `.tscn` ever depends on plugin code, the design has slipped — fix it before merging.
+
+For deeper reasoning and the prior-art investigation, see [`specs/000-initial-plan/STUDY.md`](../../specs/000-initial-plan/STUDY.md).

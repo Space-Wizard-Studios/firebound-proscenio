@@ -20,6 +20,7 @@ For LLM agents and human contributors: detailed guidance lives in [`.ai/skills/`
 | Run or write tests | [.ai/skills/testing.md](.ai/skills/testing.md) |
 | Package, version, release | [.ai/skills/release.md](.ai/skills/release.md) |
 | Domain terms (bone, slot, atlas, weights) | [.ai/skills/glossary.md](.ai/skills/glossary.md) |
+| External prior art and Godot/Blender docs | [.ai/skills/references.md](.ai/skills/references.md) |
 
 ## Hard rules
 
