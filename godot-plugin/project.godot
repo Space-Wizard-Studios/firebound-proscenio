@@ -1,0 +1,18 @@
+; Proscenio dev project. Used to develop and test the addon in `addons/proscenio/`.
+; Open in Godot 4.3 or newer.
+
+config_version=5
+
+[application]
+
+config/name="Proscenio Dev"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/proscenio/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

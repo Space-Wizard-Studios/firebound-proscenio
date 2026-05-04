@@ -1,0 +1,38 @@
+@tool
+extends RefCounted
+
+
+static func build(skeleton_data: Dictionary) -> Skeleton2D:
+	var skeleton := Skeleton2D.new()
+	skeleton.name = "Skeleton2D"
+
+	var bones_data: Array = skeleton_data.get("bones", [])
+	var bones: Dictionary = {}
+
+	for bone_data in bones_data:
+		var bone := Bone2D.new()
+		bone.name = bone_data.get("name", "bone")
+		var pos: Array = bone_data.get("position", [0.0, 0.0])
+		bone.position = Vector2(pos[0], pos[1])
+		bone.rotation = float(bone_data.get("rotation", 0.0))
+		var scale_arr: Array = bone_data.get("scale", [1.0, 1.0])
+		bone.scale = Vector2(scale_arr[0], scale_arr[1])
+		var length: float = float(bone_data.get("length", 0.0))
+		if length > 0.0:
+			bone.set_length(length)
+		bones[bone.name] = bone
+
+	for bone_data in bones_data:
+		var bone_name: String = bone_data.get("name", "")
+		var parent_name = bone_data.get("parent", null)
+		var bone: Bone2D = bones[bone_name]
+		if parent_name == null:
+			skeleton.add_child(bone)
+		else:
+			var parent: Bone2D = bones.get(parent_name)
+			if parent == null:
+				skeleton.add_child(bone)
+			else:
+				parent.add_child(bone)
+
+	return skeleton
