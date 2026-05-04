@@ -25,6 +25,14 @@ export_presets.cfg
 # Dev-only fixture copy inside the Godot dev project — canonical lives in examples/
 godot-plugin/test_goblin/
 
+# Headless test artifacts under scripts/ — re-runnable, not source
+scripts/*.out
+scripts/*.log
+scripts/*.out.proscenio
+
+# Per-developer Claude Code workspace state
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
