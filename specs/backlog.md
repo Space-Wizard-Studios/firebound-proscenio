@@ -69,7 +69,7 @@ A Blender operator that adds a properly configured ortho camera for pixel-perfec
 
 ### Reimport non-destructive merge
 
-Slated for SPEC 002. Diff existing imported scene against new `.proscenio`, preserve user-added nodes, scripts, custom animations.
+**Resolved by [SPEC 002](002-reimport-merge/STUDY.md)** — adopt full overwrite plus the wrapper-scene pattern (Option A). Marker-based merge (Option B) deferred unless demand emerges.
 
 ### Spritesheet support and `Sprite2D` path
 
