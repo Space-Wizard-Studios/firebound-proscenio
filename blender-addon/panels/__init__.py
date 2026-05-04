@@ -14,9 +14,15 @@ class PROSCENIO_PT_main(bpy.types.Panel):
 
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
-        layout.label(text="Scaffold v0.1.0", icon="INFO")
+        layout.label(text="Pipeline v0.1.0", icon="INFO")
         layout.separator()
-        layout.operator("proscenio.smoke_test", icon="PLAY")
+        col = layout.column(align=True)
+        col.label(text="Export")
+        col.operator("proscenio.export_godot", icon="EXPORT")
+        layout.separator()
+        col = layout.column(align=True)
+        col.label(text="Diagnostics")
+        col.operator("proscenio.smoke_test", icon="PLAY")
 
 
 _classes: tuple[type, ...] = (PROSCENIO_PT_main,)
