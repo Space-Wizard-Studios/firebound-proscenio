@@ -1,0 +1,14 @@
+[remap]
+
+importer="proscenio.character"
+type="PackedScene"
+uid="uid://d1tg33d7kb233"
+path="res://.godot/imported/goblin.proscenio-63bde98beefe19c24153f874a4c05dff.scn"
+
+[deps]
+
+source_file="res://tests/fixtures/goblin.proscenio"
+dest_files=["res://.godot/imported/goblin.proscenio-63bde98beefe19c24153f874a4c05dff.scn"]
+
+[params]
+
