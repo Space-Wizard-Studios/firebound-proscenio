@@ -1,8 +1,11 @@
 Aodaruma
+claude
 Evgene
 Firebound
+GITHUB
 godot
 Krita
 Kuklin
 ndee
+Qube
 tozpeak
