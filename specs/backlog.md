@@ -128,11 +128,11 @@ Port `coa_tools2/Photoshop/coa_export.jsx` forward into `photoshop-exporter/pros
 
 ### Maintainer contact
 
-`blender-addon/blender_manifest.toml` has `hello@spacewizardstudios.example`. Replace with a real address before submitting to the Blender Extensions Platform.
+Resolved — `blender-addon/blender_manifest.toml` now points to `contato@spacewiz.dev`.
 
 ### Final repo URL
 
-Confirm the canonical GitHub URL is `Space-Wizard-Studios/proscenio` and update any docs that assumed it.
+Resolved — canonical URL is `https://github.com/Space-Wizard-Studios/firebound-proscenio`.
 
 ### Issue and PR templates
 

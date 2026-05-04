@@ -62,9 +62,9 @@ Phase 1 ends once the goblin round-trip passes and the photoshop exporter produc
 
 ## Cleanup before declaring Phase 1 done
 
-- [ ] Replace LICENSE placeholder body with the full GPL-3.0 text from gnu.org.
-- [ ] Replace the placeholder maintainer email in `blender-addon/blender_manifest.toml`.
-- [ ] Decide and document the canonical `Space-Wizard-Studios/proscenio` GitHub URL or update references if it differs.
+- [x] Replace LICENSE placeholder body with the full GPL-3.0 text from gnu.org.
+- [x] Replace the placeholder maintainer email in `blender-addon/blender_manifest.toml`.
+- [x] Decide and document the canonical `Space-Wizard-Studios/firebound-proscenio` GitHub URL or update references if it differs.
 
 ## Out of scope for SPEC 000
 

@@ -5,8 +5,8 @@ Read [AGENTS.md](AGENTS.md) first. It points to [`.ai/skills/`](.ai/skills/) —
 ## Setup
 
 ```sh
-git clone https://github.com/Space-Wizard-Studios/proscenio
-cd proscenio
+git clone https://github.com/Space-Wizard-Studios/firebound-proscenio
+cd firebound-proscenio
 git lfs install
 ```
 

@@ -26,11 +26,13 @@ The importer rebuilds the scene from scratch and overwrites the previous output.
 **How it works.** The user creates `goblin_character.tscn` that *instances* the imported `goblin.scn` (or *inherits* from it). Scripts and extra nodes live on the wrapping scene, not on the generated one. Reimport touches only `goblin.scn`; `goblin_character.tscn` is untouched.
 
 **Pros.**
+
 - Zero merge logic in the importer.
 - Aligns with Godot's idiomatic instance/inherit pattern.
 - Plugin-uninstall guarantee survives trivially: the generated scene is just nodes and resources, the user's wrapper is a normal `.tscn`.
 
 **Cons.**
+
 - The user cannot attach a script to a *bone inside* the generated scene (Godot doesn't let you add scripts to nodes inside an instanced sub-scene unless you make them editable children, which is fragile).
 - Per-bone customization (a script on `head`, an extra `Particles2D` parented to `hand`) requires "Editable Children" or a node-replacement workflow at runtime.
 - Animations authored in the editor cannot extend the imported `AnimationLibrary` — they live in a sibling `AnimationPlayer` on the wrapping scene, which is awkward but not broken.
@@ -40,6 +42,7 @@ The importer rebuilds the scene from scratch and overwrites the previous output.
 Reimport reads the previous output `.scn` (via `ResourceLoader`), walks both trees, and preserves any node tagged with metadata `_proscenio_user = true`. User-added nodes carry that flag; auto-generated nodes don't. Animations follow the same rule via `AnimationLibrary` metadata.
 
 **How it works.**
+
 1. The importer loads the existing `.scn` if present.
 2. It builds the fresh scene from the `.proscenio`.
 3. It walks the existing scene's tree, finds nodes flagged `_proscenio_user = true` (and their entire subtree), and re-parents them onto the matching bone or sprite in the fresh scene by **node-name match**.
@@ -47,10 +50,12 @@ Reimport reads the previous output `.scn` (via `ResourceLoader`), walks both tre
 5. The merged scene replaces the existing `.scn`.
 
 **Pros.**
+
 - The user can attach scripts to *any* node and add children to *any* bone. The generated scene is the canonical scene.
 - Iteration story matches Spine/COA expectations: edit in DCC, re-export, keep working.
 
 **Cons.**
+
 - Bone renames in Blender break the match. Without stable IDs in the schema (and there are none in v1), a rename looks like *delete old + add new*, and user work attached to the old name is dropped.
 - "Editable children" semantics: scripts on a node that came from the generated scene will be reset when that node is regenerated, unless the importer reads them off the old scene and reapplies them.
 - Significant new code in the importer; significant new test surface.
@@ -61,11 +66,13 @@ Reimport reads the previous output `.scn` (via `ResourceLoader`), walks both tre
 The importer's default behavior is full overwrite (Option A). The user opts into merge per-asset via an import option `preserve_user_edits = true` exposed on the importer. When enabled, the importer runs Option B's merge logic.
 
 **Pros.**
+
 - Lets the simple case stay simple.
 - Lets users with deep per-bone customization needs opt in.
 - Encourages the instance/inherit pattern (A) as the documented default.
 
 **Cons.**
+
 - Two code paths.
 - Users will not realize the option exists until they lose work once.
 
@@ -74,6 +81,7 @@ The importer's default behavior is full overwrite (Option A). The user opts into
 **Adopt Option A as the default and document the instance/inherit pattern as the canonical workflow.** Defer Option B unless and until concrete user demand emerges that the wrapper-scene pattern cannot serve.
 
 Reasons:
+
 - The instance/inherit pattern is what Godot does for every other complex resource (`Skeleton3D`-driven characters, GLTF imports, etc.). Adopting it here makes Proscenio feel native to the engine.
 - Option B is a moving target: bone renames, sprite renames, atlas region rebakes, animation track rewrites all change identity, and without schema-level stable IDs, name-matching is the only available strategy and is fragile.
 - The plugin-uninstall constraint cuts harder against Option B: every merge bug is a potential bug in the *output*, not just the importer.
