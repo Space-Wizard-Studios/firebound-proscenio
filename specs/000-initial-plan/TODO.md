@@ -21,9 +21,9 @@ Closes the Phase 0 (foundation) work and primes Phase 1 (MVP). Each item is conc
 
 The first end-to-end test bypasses the Blender exporter entirely and hand-writes a `.proscenio` file to validate the Godot importer.
 
-- [ ] Hand-write `examples/goblin/goblin.proscenio` with: 3 bones (root, torso, head), 3 `Polygon2D` sprites as simple quads, one `idle` animation with one `bone_transform` track that rotates the head ±15°.
-- [ ] Add a tiny placeholder `examples/goblin/atlas.png` (commit as LFS via `.gitattributes` rule already in place).
-- [ ] Run `check-jsonschema --schemafile schemas/proscenio.schema.json examples/goblin/goblin.proscenio` and fix any failures.
+- [x] Hand-write `examples/goblin/goblin.proscenio` with: 3 bones (root, torso, head), 3 `Polygon2D` sprites as simple quads, one `idle` animation with one `bone_transform` track that rotates the head ±15°.
+- [x] Add a tiny placeholder `examples/goblin/atlas.png` (commit as LFS via `.gitattributes` rule already in place).
+- [x] Run `check-jsonschema --schemafile schemas/proscenio.schema.json examples/goblin/goblin.proscenio` and fix any failures.
 
 ## Godot importer — make MVP work end-to-end
 

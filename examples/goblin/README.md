@@ -1,18 +1,36 @@
 # Goblin example
 
-End-to-end sample asset showing the full Proscenio pipeline:
+Hand-written end-to-end fixture for SPEC 000 Phase 1. Bypasses the Blender exporter (which does not exist yet) and exercises the Godot importer in isolation.
+
+## Files
+
+| File | Purpose | LFS |
+| --- | --- | --- |
+| `goblin.proscenio` | hand-authored character — 3 bones, 3 sprites, 1 idle animation | text |
+| `atlas.png` | 256×256 placeholder texture with three labeled 80×80 regions | yes |
+| `generate_atlas.py` | regenerates `atlas.png` from scratch (Pillow required) | text |
+
+## Anatomy
 
 ```text
-goblin.psd ──▶ goblin (sprites + json) ──▶ goblin.blend ──▶ goblin.proscenio ──▶ Godot scene
+root          legs sprite (parented to root, polygon extends below the bone)
+ │
+ └─ torso     torso sprite (centered on the torso bone)
+     │
+     └─ head  head sprite (centered on the head bone)
+              animated: head bobs ±15° on the rotation axis, 1.0 s loop
 ```
 
-Files (added during Phase 1):
+The atlas is 256×256. Three vertical 80×80 regions on the left edge, top to bottom: head (red), torso (blue), legs (green). Anything magenta is "off the atlas" and indicates a UV bug.
 
-- `goblin.psd` — source PSD (Git LFS)
-- `goblin.blend` — rigged and animated (Git LFS)
-- `goblin.proscenio` — exported intermediate (text, in-repo)
-- `goblin_atlas.png` — packed atlas (Git LFS)
+## Validate the fixture
 
-## Why a goblin
+```sh
+python -m check_jsonschema --schemafile schemas/proscenio.schema.json examples/goblin/goblin.proscenio
+```
 
-Simple silhouette, distinct body parts (head, torso, two arms, two legs), minimal weights, two animations (idle, walk). Small enough to fit in CI, complex enough to exercise every track type.
+Should print `ok -- validation done`.
+
+## Next steps in the spec
+
+This goblin is the input to the Godot importer smoke test (TODO §"Godot importer — make MVP work end-to-end" in [`specs/000-initial-plan/TODO.md`](../../specs/000-initial-plan/TODO.md)).
