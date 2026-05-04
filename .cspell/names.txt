@@ -1,6 +1,7 @@
 Aodaruma
 claude
 Evgene
+firebound
 Firebound
 GITHUB
 godot

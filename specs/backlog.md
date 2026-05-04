@@ -103,22 +103,17 @@ Port `coa_tools2/Photoshop/coa_export.jsx` forward into `photoshop-exporter/pros
 
 ## Tests and CI
 
-### Blender headless test runner
+### Blender headless test — multi-version matrix
 
-`blender-addon/tests/run_tests.py` is a stub. Wire `pytest` to run a real export against `tests/fixtures/*.blend`, diff against expected `.proscenio` ignoring volatile fields (timestamps).
+A single-version `test-blender` job ships in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) pinned to Blender 5.1.1. Expand to a matrix covering Blender 4.2 LTS and the latest stable so legacy-action regressions are caught.
 
-### GUT tests for the Godot importer
+### Godot importer test — full editor reimport
 
-`godot-plugin/tests/` is empty. Add fixtures + GUT tests asserting:
+[`godot-plugin/tests/test_importer.gd`](../godot-plugin/tests/test_importer.gd) exercises the builders directly. A higher-fidelity test would launch the editor headlessly, drop a `.proscenio` into the project, and assert the generated `.scn` opens with the plugin disabled (the no-GDExtension hard rule, automated). Currently verified manually per [SPEC 000 TODO](000-initial-plan/TODO.md).
 
-- generated scene has the expected node hierarchy
-- bone count, bone names, bone rest positions
-- animation library has the expected animations and track count
-- imported scene runs in stock Godot without the plugin (the no-GDExtension hard rule, automated)
+### CI matrix expansion
 
-### CI matrix
-
-`.github/workflows/ci.yml` lints. Add `test-blender` and `test-godot` jobs once headless tests exist. Pin Blender 4.2 LTS and 4.5 LTS, Godot 4.3 and the latest stable.
+The current `test-godot` job pins Godot 4.6.2-stable. Add Godot 4.3 and 4.5 to the matrix once those releases settle. Same for the `test-blender` matrix.
 
 ## Repo and packaging
 

@@ -48,15 +48,15 @@ Once the importer is proven against the hand-written fixture, write the smallest
 
 ## Tests
 
-- [ ] Add `blender-addon/tests/fixtures/goblin/` with the `.blend` and the expected `.proscenio` output.
-- [ ] Replace the placeholder body of `blender-addon/tests/run_tests.py` with one assertion: re-export `goblin.blend` and compare the JSON to the expected fixture (minus volatile fields).
-- [ ] Add `godot-plugin/tests/fixtures/goblin.proscenio` and a GUT test that runs the importer in headless mode and asserts node names, bone count, and animation length.
-- [ ] Wire both into CI (already partially scaffolded in `.github/workflows/ci.yml`).
+- [x] Add `blender-addon/tests/fixtures/goblin/` with the expected `.proscenio` fixture (the source `.blend` lives at `examples/goblin/goblin.blend` — single source of truth).
+- [x] Replace the placeholder body of `blender-addon/tests/run_tests.py`: re-export `goblin.blend` and diff the result against `tests/fixtures/goblin/expected.proscenio` (normalized via `json.dumps(sort_keys=True)`).
+- [x] Add `godot-plugin/tests/test_importer.gd`: headless smoke test that exercises the builders and asserts node hierarchy, bone count and names, sprite count, animation library and length. No GUT dependency.
+- [x] Wire both into `.github/workflows/ci.yml` as `test-blender` and `test-godot` jobs (Blender 5.1.1, Godot 4.6.2-stable; matrix expansion in backlog).
 
 ## Photoshop exporter
 
-- [ ] Port `coa_tools2/Photoshop/coa_export.jsx` into `photoshop-exporter/proscenio_export.jsx`. Adapt output JSON to the format described in [`.ai/skills/photoshop-jsx-dev.md`](../../.ai/skills/photoshop-jsx-dev.md).
-- [ ] Add a `photoshop-exporter/examples/` PSD or document the expected layer convention in the README.
+- [x] Port `coa_tools2/Photoshop/coa_export.jsx` into `photoshop-exporter/proscenio_export.jsx`. Layer walk (with group recursion), per-layer PNG export, and JSON manifest matching [`.ai/skills/photoshop-jsx-dev.md`](../../.ai/skills/photoshop-jsx-dev.md). Untested against real PSD in CI — no headless Photoshop available.
+- [x] Document the expected layer convention in [`photoshop-exporter/README.md`](../../photoshop-exporter/README.md). PSD example deferred — requires a real Photoshop session to author.
 
 Phase 1 ends once the goblin round-trip passes and the photoshop exporter produces the per-sprite PNGs + position JSON for the same goblin.
 
