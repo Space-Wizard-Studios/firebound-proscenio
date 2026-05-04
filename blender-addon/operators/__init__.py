@@ -1,6 +1,7 @@
 """Blender operators."""
 
 from pathlib import Path
+from typing import ClassVar
 
 import bpy
 from bpy.props import FloatProperty, StringProperty
@@ -13,7 +14,7 @@ class PROSCENIO_OT_smoke_test(bpy.types.Operator):
     bl_idname = "proscenio.smoke_test"
     bl_label = "Hello Proscenio"
     bl_description = "Print a sanity check to the system console"
-    bl_options = {"REGISTER"}
+    bl_options: ClassVar[set[str]] = {"REGISTER"}
 
     def execute(self, context: bpy.types.Context) -> set[str]:
         message = "Proscenio smoke test OK"
@@ -28,7 +29,7 @@ class PROSCENIO_OT_export_godot(bpy.types.Operator, ExportHelper):
     bl_idname = "proscenio.export_godot"
     bl_label = "Export Proscenio (.proscenio)"
     bl_description = "Write the active scene to a Proscenio JSON file"
-    bl_options = {"REGISTER"}
+    bl_options: ClassVar[set[str]] = {"REGISTER"}
 
     filename_ext = ".proscenio"
     filter_glob: StringProperty(default="*.proscenio", options={"HIDDEN"})  # type: ignore[valid-type]
@@ -45,7 +46,7 @@ class PROSCENIO_OT_export_godot(bpy.types.Operator, ExportHelper):
 
         try:
             writer.export(self.filepath, pixels_per_unit=self.pixels_per_unit)
-        except Exception as exc:  # noqa: BLE001 — surface any failure to the user
+        except Exception as exc:
             self.report({"ERROR"}, f"Proscenio export failed: {exc}")
             return {"CANCELLED"}
 

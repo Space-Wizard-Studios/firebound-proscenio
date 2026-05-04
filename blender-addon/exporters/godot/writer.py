@@ -57,9 +57,7 @@ def export(filepath: str | Path, *, pixels_per_unit: float = DEFAULT_PIXELS_PER_
         "name": _doc_name(),
         "pixels_per_unit": pixels_per_unit,
         "skeleton": skeleton,
-        "sprites": [
-            _build_sprite(obj, bone_world_godot, pixels_per_unit) for obj in sprite_objs
-        ],
+        "sprites": [_build_sprite(obj, bone_world_godot, pixels_per_unit) for obj in sprite_objs],
     }
 
     atlas = _find_atlas_image(path)
@@ -359,7 +357,7 @@ def _collect_bone_keys(
 
 
 def _absolute_position(rest_xy: tuple[float, float], delta: list[float] | None) -> list[float]:
-    dx, dy = (delta or [0.0, 0.0])
+    dx, dy = delta or [0.0, 0.0]
     return [round(rest_xy[0] + dx, 6), round(rest_xy[1] + dy, 6)]
 
 
@@ -368,7 +366,7 @@ def _absolute_rotation(rest_rot: float, delta: float | None) -> float:
 
 
 def _absolute_scale(rest_xy: tuple[float, float], delta: list[float] | None) -> list[float]:
-    sx, sy = (delta or [1.0, 1.0])
+    sx, sy = delta or [1.0, 1.0]
     return [round(rest_xy[0] * sx, 6), round(rest_xy[1] * sy, 6)]
 
 
@@ -383,7 +381,10 @@ def _build_bone_track(
     rest still gets a track (timing markers only) — useful for `root` handles.
     """
     resolved = {t: _resolve_pose_entry(entry, ppu) for t, entry in by_time.items()}
-    has = {p: any(r[p] is not None for r in resolved.values()) for p in ("position", "rotation", "scale")}
+    has = {
+        p: any(r[p] is not None for r in resolved.values())
+        for p in ("position", "rotation", "scale")
+    }
     rest = rest_local.get(bone_name, _REST_FALLBACK)
 
     keys: list[dict[str, Any]] = []
@@ -411,7 +412,9 @@ def _build_animation(
     if not bone_keys:
         return None
 
-    tracks = [_build_bone_track(name, by_time, ppu, rest_local) for name, by_time in bone_keys.items()]
+    tracks = [
+        _build_bone_track(name, by_time, ppu, rest_local) for name, by_time in bone_keys.items()
+    ]
     frame_start, frame_end = action.frame_range
     length = max(0.001, (frame_end - frame_start) / float(fps))
 

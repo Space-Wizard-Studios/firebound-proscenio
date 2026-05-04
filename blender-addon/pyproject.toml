@@ -26,6 +26,9 @@ ignore = [
     "N802",
     "N803",
     "N815",
+    # The addon directory is `blender-addon/` (hyphen) by Blender Extensions
+    # repo convention; it is never imported as a top-level Python package.
+    "N999",
 ]
 
 [tool.ruff.format]
