@@ -9,9 +9,7 @@ static func populate(player: AnimationPlayer, skeleton: Skeleton2D, animations_d
 		var anim := Animation.new()
 		anim.length = float(anim_data.get("length", 1.0))
 		anim.loop_mode = (
-			Animation.LOOP_LINEAR
-			if bool(anim_data.get("loop", false))
-			else Animation.LOOP_NONE
+			Animation.LOOP_LINEAR if bool(anim_data.get("loop", false)) else Animation.LOOP_NONE
 		)
 		for track_data in anim_data.get("tracks", []):
 			_add_track(anim, skeleton, track_data)

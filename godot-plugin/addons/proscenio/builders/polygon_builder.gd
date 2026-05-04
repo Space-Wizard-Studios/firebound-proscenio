@@ -31,10 +31,12 @@ static func attach_sprites(skeleton: Skeleton2D, sprites_data: Array, atlas: Tex
 		if sprite_data.has("weights"):
 			push_warning(
 				(
-					"Proscenio: sprite '%s' has weights — full skinning lands in Phase 2 "
-					+ "(SPEC 004); attaching rigidly to bone for now."
+					(
+						"Proscenio: sprite '%s' has weights — full skinning lands in Phase 2 "
+						+ "(SPEC 004); attaching rigidly to bone for now."
+					)
+					% poly.name
 				)
-				% poly.name
 			)
 
 		var bone_name: String = sprite_data.get("bone", "")

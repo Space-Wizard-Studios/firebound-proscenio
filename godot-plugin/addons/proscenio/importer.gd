@@ -117,17 +117,16 @@ static func _load_atlas(source_file: String, atlas_path: String) -> Texture2D:
 	if not ResourceLoader.exists(full):
 		push_warning("Proscenio: atlas not found at '%s'" % full)
 		return null
-	var resource: Resource = ResourceLoader.load(full, "Texture2D", ResourceLoader.CACHE_MODE_REPLACE)
+	var resource: Resource = ResourceLoader.load(
+		full, "Texture2D", ResourceLoader.CACHE_MODE_REPLACE
+	)
 	if resource == null:
 		push_error("Proscenio: ResourceLoader.load() returned null for '%s'" % full)
 		return null
 	var tex := resource as Texture2D
 	if tex == null:
 		push_error(
-			(
-				"Proscenio: '%s' loaded but not Texture2D — got %s"
-				% [full, resource.get_class()]
-			)
+			"Proscenio: '%s' loaded but not Texture2D — got %s" % [full, resource.get_class()]
 		)
 		return null
 	return tex
