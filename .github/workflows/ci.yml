@@ -47,3 +47,52 @@ jobs:
             exit 0
           fi
           check-jsonschema --schemafile schemas/proscenio.schema.json "${files[@]}"
+
+  test-blender:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Cache Blender
+        id: cache-blender
+        uses: actions/cache@v4
+        with:
+          path: ~/blender
+          key: blender-5.1.1-linux-x64
+      - name: Download Blender
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/blender
+          curl -fL "https://download.blender.org/release/Blender5.1/blender-5.1.1-linux-x64.tar.xz" \
+            | tar -xJ -C ~/blender --strip-components=1
+      - name: Re-export goblin fixture and diff
+        run: |
+          ~/blender/blender --background examples/goblin/goblin.blend \
+            --python blender-addon/tests/run_tests.py
+
+  test-godot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-4.6.2-stable-linux-x86_64
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -fLo /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/4.6.2-stable/Godot_v4.6.2-stable_linux.x86_64.zip"
+          unzip /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v4.6.2-stable_linux.x86_64 ~/godot/godot
+          chmod +x ~/godot/godot
+      - name: Run importer smoke test
+        run: |
+          ~/godot/godot --headless --path godot-plugin \
+            --script res://tests/test_importer.gd
