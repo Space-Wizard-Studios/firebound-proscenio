@@ -1,1 +1,38 @@
-# firebound-proscenio
+# Proscenio
+
+Blender → Godot 4 pipeline for 2D cutout animation. Native `Skeleton2D` + `Bone2D` + `Polygon2D` output. No runtime, no GDExtension, no custom engine build.
+
+> **Status:** pre-alpha. Format unstable. Not for production use.
+
+## Why
+
+The 2D cutout pipeline for Godot has gaps:
+
+- **Spine2D** — paid, opaque format, GDExtension dependency, third-party-of-third-party support story.
+- **COA Tools / coa_tools2** — Blender side alive (Blender 4.x and 5.x), Godot side broken or abandoned.
+- **Godot 2D Bridge** — proves `Polygon2D` + `Skeleton2D` export works, but no animations and stuck on Godot 4.0.
+
+Proscenio fills the gap: rig and animate in Blender, import into Godot 4 as native scenes (`.tscn`). After import, Godot does not know the asset came from Blender.
+
+## Components
+
+| Folder | Purpose |
+| --- | --- |
+| [`photoshop-exporter/`](photoshop-exporter/) | JSX script: PSD layers → sprites + position JSON |
+| [`blender-addon/`](blender-addon/) | Blender 4.2+ addon: sprite import, rigging, animation, `.proscenio` export |
+| [`godot-plugin/`](godot-plugin/) | Godot 4.3+ `EditorImportPlugin`: `.proscenio` → `.tscn` |
+| [`schemas/`](schemas/) | `proscenio.schema.json` — versioned format spec, single source of truth |
+| [`examples/`](examples/) | End-to-end sample assets (binary files via Git LFS) |
+
+## Quickstart
+
+The MVP is in progress. Full quickstart will land with the first end-to-end sample.
+
+## Documentation
+
+- **Contributors and LLM agents:** start at [AGENTS.md](AGENTS.md) → [`.ai/skills/`](.ai/skills/)
+- **Users:** [`docs/`](docs/) (placeholder until MVP)
+
+## License
+
+GPL-3.0-or-later. See [LICENSE](LICENSE).
