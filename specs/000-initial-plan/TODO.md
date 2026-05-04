@@ -29,11 +29,11 @@ The first end-to-end test bypasses the Blender exporter entirely and hand-writes
 
 Order matters. Each step must produce a visible result before moving on.
 
-- [ ] **Smoke import.** Drop `goblin.proscenio` into `godot-plugin/`. Confirm the importer fires, parses, and produces a saved `.scn`. Fix any surface bugs.
-- [ ] **Skeleton render.** Open the imported scene in the Godot editor. Verify the `Skeleton2D` and `Bone2D` hierarchy is correct visually.
-- [ ] **Sprites render.** Verify each `Polygon2D` shows the right region of `atlas.png`. Y-flip and UV correctness checked by eye against the source.
-- [ ] **Implement `bone_transform` track wiring.** Currently [`animation_builder.gd`](../../godot-plugin/addons/proscenio/builders/animation_builder.gd) creates empty `Animation` resources. Wire keyframes into Godot's separate position/rotation/scale tracks per `Bone2D`.
-- [ ] **Animation playback.** Press Play in Godot, confirm the head rotates as authored.
+- [x] **Smoke import.** Drop `goblin.proscenio` into `godot-plugin/`. Confirm the importer fires, parses, and produces a saved `.scn`. Fix any surface bugs.
+- [x] **Skeleton render.** Open the imported scene in the Godot editor. Verify the `Skeleton2D` and `Bone2D` hierarchy is correct visually.
+- [x] **Sprites render.** Verify each `Polygon2D` shows the right region of `atlas.png`. Y-flip and UV correctness checked by eye against the source. *Note: UVs in `.proscenio` are normalized `[0, 1]`; the Godot importer multiplies by atlas pixel size since `Polygon2D.uv` is pixel-space.*
+- [x] **Implement `bone_transform` track wiring.** Currently [`animation_builder.gd`](../../godot-plugin/addons/proscenio/builders/animation_builder.gd) creates empty `Animation` resources. Wire keyframes into Godot's separate position/rotation/scale tracks per `Bone2D`.
+- [x] **Animation playback.** Press Play in Godot, confirm the head rotates as authored.
 - [ ] **Plugin-uninstall test.** Move `addons/proscenio/` out of the project. Confirm the imported scene still opens and plays. Critical no-GDExtension verification.
 
 ## Blender exporter — minimal path

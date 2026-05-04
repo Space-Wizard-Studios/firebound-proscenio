@@ -15,8 +15,14 @@ static func attach_sprites(skeleton: Skeleton2D, sprites_data: Array, atlas: Tex
 
 		var uv_pts: Array = sprite_data.get("uv", [])
 		var uvs := PackedVector2Array()
+		# .proscenio stores UVs normalized [0, 1] — engine-agnostic. Godot's
+		# Polygon2D expects UVs in texture pixel space, so multiply by atlas
+		# size at import time. Sprites without an atlas keep raw UVs.
+		var uv_scale := Vector2.ONE
+		if atlas != null:
+			uv_scale = atlas.get_size()
 		for u in uv_pts:
-			uvs.append(Vector2(u[0], u[1]))
+			uvs.append(Vector2(u[0] * uv_scale.x, u[1] * uv_scale.y))
 		poly.uv = uvs
 
 		if atlas != null:

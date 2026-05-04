@@ -20,6 +20,10 @@ JSON file with extension `.proscenio`. Source of truth: [`schemas/proscenio.sche
 | `slots` | array | no | sprite swap groups |
 | `animations` | array | no | track data |
 
+## UV coordinates
+
+UVs in `.proscenio` are **normalized to `[0, 1]`** of the atlas image, regardless of atlas resolution. The format stays engine-agnostic. Engine-specific importers convert to whatever convention the target uses (e.g. Godot's `Polygon2D` wants UVs in atlas pixel space, so the importer multiplies by atlas size).
+
 ## Coordinate system
 
 - 2D plane: Blender XY → Godot XY.

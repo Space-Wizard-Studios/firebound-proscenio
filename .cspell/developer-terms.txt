@@ -1,3 +1,4 @@
+autocalculate
 interp
 mkdocs
 schemafile

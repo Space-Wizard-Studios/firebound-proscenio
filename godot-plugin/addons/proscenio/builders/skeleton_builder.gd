@@ -20,6 +20,9 @@ static func build(skeleton_data: Dictionary) -> Skeleton2D:
 		var length: float = float(bone_data.get("length", 0.0))
 		if length > 0.0:
 			bone.set_length(length)
+			# Stop Skeleton2D from inferring length/angle from missing child
+			# Bone2D nodes — we already supplied authoritative values.
+			bone.set_autocalculate_length_and_angle(false)
 		# Capture authored pose as the rest pose so animations replace it cleanly.
 		bone.set_rest(bone.transform)
 		bones[bone.name] = bone
