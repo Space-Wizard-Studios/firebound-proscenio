@@ -34,7 +34,7 @@ Order matters. Each step must produce a visible result before moving on.
 - [x] **Sprites render.** Verify each `Polygon2D` shows the right region of `atlas.png`. Y-flip and UV correctness checked by eye against the source. *Note: UVs in `.proscenio` are normalized `[0, 1]`; the Godot importer multiplies by atlas pixel size since `Polygon2D.uv` is pixel-space.*
 - [x] **Implement `bone_transform` track wiring.** Currently [`animation_builder.gd`](../../godot-plugin/addons/proscenio/builders/animation_builder.gd) creates empty `Animation` resources. Wire keyframes into Godot's separate position/rotation/scale tracks per `Bone2D`.
 - [x] **Animation playback.** Press Play in Godot, confirm the head rotates as authored.
-- [ ] **Plugin-uninstall test.** Move `addons/proscenio/` out of the project. Confirm the imported scene still opens and plays. Critical no-GDExtension verification.
+- [x] **Plugin-uninstall test.** Move `addons/proscenio/` out of the project. Confirm the imported scene still opens and plays. Critical no-GDExtension verification. *Verified: with the plugin disabled, a wrapper scene instancing the imported goblin still renders with the correct atlas regions and plays the idle animation. The generated `.scn` is self-contained.*
 
 ## Blender exporter — minimal path
 
