@@ -147,7 +147,7 @@
       "additionalProperties": false,
       "properties": {
         "time": { "type": "number", "minimum": 0 },
-        "interp": { "enum": ["linear", "constant", "cubic"] },
+        "interp": { "enum": ["linear", "constant"] },
         "position": { "$ref": "#/$defs/Vec2" },
         "rotation": { "type": "number" },
         "scale": { "$ref": "#/$defs/Vec2" },

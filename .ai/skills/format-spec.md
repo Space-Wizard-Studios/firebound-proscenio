@@ -26,8 +26,17 @@ JSON file with extension `.proscenio`. Source of truth: [`schemas/proscenio.sche
 - Y is up in Blender, down in Godot. The exporter flips Y.
 - Rotations are in radians, CCW in Blender, CW in Godot. The exporter negates.
 - Scales are Vec2 multipliers around the bone origin.
+- **Origin.** The character origin is the scene-root `Node2D` at `(0, 0)`. The `Skeleton2D` lives at `(0, 0)` relative to it. Any global offset is carried by the `root` bone.
 
 The Godot importer trusts the exporter — it does not re-flip. If you write a non-Blender exporter, follow Godot conventions in the file.
+
+## Atlas packing (v1)
+
+The `atlas` field is an optional path to a single pre-packed texture. **Atlases are packed externally** (TexturePacker, Free Texture Packer, etc.) before the Blender pipeline runs. The Blender addon consumes the atlas plus per-sprite `texture_region` rectangles; it does **not** pack atlases itself in v1. Multi-atlas characters split into multiple `.proscenio` files.
+
+## Skinning weights (v1)
+
+The `weights` array on a sprite is **accepted by the schema** but **ignored by the v1 Godot importer**. Sprites without weights are attached rigidly to their `bone` (a child of the `Bone2D`, riding the bone transform). Full skinning (`Polygon2D.skeleton` path + `set_bones()`) lands in Phase 2 (SPEC 004). Until then, exporters may emit weights and the importer will log a one-line console warning.
 
 ## Versioning policy
 
@@ -55,4 +64,4 @@ The Godot importer rejects unknown future versions with a clear error message an
 | `slot_attachment` | slot | `attachment` (sprite name) |
 | `visibility` | any | `visible` (bool) |
 
-Per-key interpolation: `interp` field with values `linear`, `constant`, `cubic`. Default is `linear` if omitted.
+Per-key interpolation: `interp` field with values `linear` or `constant`. Default is `linear` if omitted. Cubic Bézier was considered for v1 but dropped — proper cubic interpolation needs in/out tangent handles per key, which the schema does not yet model. Add in a future format bump if real demand surfaces.
