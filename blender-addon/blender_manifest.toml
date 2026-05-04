@@ -1,0 +1,17 @@
+schema_version = "1.0.0"
+
+id = "proscenio"
+version = "0.1.0"
+name = "Proscenio"
+tagline = "Blender → Godot 4 pipeline for 2D cutout animation"
+maintainer = "Space Wizard Studios <hello@spacewizardstudios.example>"
+type = "add-on"
+
+website = "https://github.com/Space-Wizard-Studios/proscenio"
+
+tags = ["Animation", "Mesh", "Pipeline", "Rigging"]
+
+blender_version_min = "4.2.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2026 Space Wizard Studios"]

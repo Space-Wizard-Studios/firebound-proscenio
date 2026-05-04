@@ -1,0 +1,32 @@
+[project]
+name = "proscenio-blender-addon"
+version = "0.1.0"
+description = "Proscenio Blender addon — dev tooling configuration. The addon itself is packaged by `blender --command extension build`, not by pip."
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later" }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "check-jsonschema>=0.29",
+    "pytest>=8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "RUF", "SIM"]
+ignore = [
+    # Blender operator/panel class names follow PROSCENIO_OT_foo / PROSCENIO_PT_foo
+    # conventions, which violate stock PEP-8 naming rules.
+    "N801",
+    "N802",
+    "N803",
+    "N815",
+]
+
+[tool.ruff.format]
+quote-style = "double"
