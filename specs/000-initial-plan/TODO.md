@@ -40,11 +40,11 @@ Order matters. Each step must produce a visible result before moving on.
 
 Once the importer is proven against the hand-written fixture, write the smallest possible exporter that reproduces the same fixture from Blender data.
 
-- [ ] Build a tiny `goblin.blend` with: 3 sprite planes, an armature with 3 bones, one animation action that rotates the head bone.
-- [ ] Implement `blender-addon/exporters/godot/writer.py` — walks the active scene, emits `.proscenio` JSON conforming to the schema.
-- [ ] Add an operator `proscenio.export_godot` that opens a file picker and writes the result.
-- [ ] Replace the smoke-test panel button with the export button.
-- [ ] Round-trip test: export `goblin.blend` → `.proscenio` → import in Godot → animation plays.
+- [x] Build a tiny `goblin.blend` with: 3 sprite planes, an armature with 3 bones, one animation action that rotates the head bone.
+- [x] Implement `blender-addon/exporters/godot/writer.py` — walks the active scene, emits `.proscenio` JSON conforming to the schema.
+- [x] Add an operator `proscenio.export_godot` that opens a file picker and writes the result.
+- [x] Replace the smoke-test panel button with the export button.
+- [x] Round-trip test: export `goblin.blend` → `.proscenio` → import in Godot → animation plays.
 
 ## Tests
 
