@@ -1,3 +1,4 @@
+// @ts-check
 // Proscenio — Photoshop exporter
 // Exports visible layers as PNG plus a position JSON suitable for the
 // Proscenio Blender addon.
@@ -8,10 +9,10 @@
 //   <doc>/images/<layer>.png
 //
 //   {
-//     "doc": "goblin.psd",
+//     "doc": "dummy.psd",
 //     "size": [1024, 1024],
 //     "layers": [
-//       { "name": "torso", "path": "goblin/images/torso.png",
+//       { "name": "torso", "path": "dummy/images/torso.png",
 //         "position": [120, 340], "size": [180, 240] }
 //     ]
 //   }
@@ -24,6 +25,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #target photoshop
+
+/**
+ * @typedef {Object} ManifestEntry
+ * @property {string} name
+ * @property {string} path
+ * @property {[number, number]} position
+ * @property {[number, number]} size
+ *
+ * @typedef {Object} Manifest
+ * @property {string} doc
+ * @property {[number, number]} size
+ * @property {ManifestEntry[]} layers
+ */
 
 (function () {
     if (!app.documents.length) {
@@ -64,6 +78,11 @@
         entries.length + " layer(s) → " + outDir.fsName
     );
 
+    /**
+     * @param {Layers|LayerSets|Layer[]} layers
+     * @param {string} prefix
+     * @param {ManifestEntry[]} out
+     */
     function walkLayers(layers, prefix, out) {
         for (var i = 0; i < layers.length; i++) {
             var layer = layers[i];
