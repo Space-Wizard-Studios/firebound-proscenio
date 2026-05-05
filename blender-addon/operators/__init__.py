@@ -42,7 +42,7 @@ class PROSCENIO_OT_export_godot(bpy.types.Operator, ExportHelper):
     )
 
     def execute(self, context: bpy.types.Context) -> set[str]:
-        from ..exporters.godot import writer
+        from ..exporters.godot import writer  # type: ignore[import-not-found]
 
         try:
             writer.export(self.filepath, pixels_per_unit=self.pixels_per_unit)

@@ -27,14 +27,35 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, TypedDict
 
 import bpy
 from mathutils import Vector
 
 SCHEMA_VERSION = 1
 DEFAULT_PIXELS_PER_UNIT = 100.0
+
+# Closed value sets mirrored from `schemas/proscenio.schema.json`. Update
+# both at the same time when the schema bumps.
+TrackType = Literal["bone_transform", "sprite_frame", "slot_attachment", "visibility"]
+InterpType = Literal["linear", "constant"]
+
+
+class BoneDict(TypedDict):
+    name: str
+    parent: str | None
+    position: list[float]
+    rotation: float
+    scale: list[float]
+    length: float
+
+
+class RestLocal(TypedDict):
+    position: tuple[float, float]
+    rotation: float
+    scale: tuple[float, float]
 
 
 def export(filepath: str | Path, *, pixels_per_unit: float = DEFAULT_PIXELS_PER_UNIT) -> None:
@@ -281,9 +302,9 @@ def _build_sprite(
 
 def _resolve_sprite_bone(obj: bpy.types.Object) -> str:
     if obj.parent_type == "BONE" and obj.parent_bone:
-        return obj.parent_bone
+        return str(obj.parent_bone)
     if obj.vertex_groups:
-        return obj.vertex_groups[0].name
+        return str(obj.vertex_groups[0].name)
     return ""
 
 
@@ -318,7 +339,7 @@ def _build_animations(
     return animations
 
 
-def _action_fcurves(action: bpy.types.Action):
+def _action_fcurves(action: bpy.types.Action) -> Iterator[Any]:
     """Yield FCurves from a Blender 4.4+ layered action or a legacy action."""
     if hasattr(action, "fcurves") and action.fcurves:
         # Legacy action — Blender ≤ 4.3.
