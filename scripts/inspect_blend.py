@@ -2,7 +2,7 @@
 
 Run via:
 
-    blender --background examples/goblin/goblin.blend --python scripts/inspect_blend.py
+    blender --background examples/dummy/dummy.blend --python scripts/inspect_blend.py
 
 Output is written to scripts/inspect_blend.out next to this script — Blender
 headless on Windows is unreliable about flushing stdout to pipes.

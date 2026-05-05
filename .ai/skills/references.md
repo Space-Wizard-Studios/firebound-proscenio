@@ -50,7 +50,7 @@ Repo: <https://github.com/ndee85/coa_tools>
 
 Dead since 2019. JSON export was actively being removed by the maintainer at the time. The Godot importer (`coa_importer/`) was Godot 2.x only.
 
-Worth reading **only** for the **reimport-with-merge algorithm** in the GDScript importer. That single piece of design is recovered and modernized for Godot 4 in Phase 2 (SPEC 002).
+Worth reading **only** for the **reimport-with-merge algorithm** in the GDScript importer. That single piece of design is recovered and modernized for Godot 4 in Phase 2 (SPEC 001).
 
 ## Tier 2 — Godot internals
 

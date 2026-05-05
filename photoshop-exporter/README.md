@@ -27,12 +27,12 @@ The script walks the active document and exports every visible layer:
 
 ## Output layout
 
-Run the script on `goblin.psd`:
+Run the script on `dummy.psd`:
 
 ```text
-goblin.psd
-goblin/
-  goblin.json
+dummy.psd
+dummy/
+  dummy.json
   images/
     torso.png
     head.png
@@ -40,7 +40,7 @@ goblin/
     ...
 ```
 
-`goblin.json` matches the schema in [`.ai/skills/photoshop-jsx-dev.md`](../.ai/skills/photoshop-jsx-dev.md):
+`dummy.json` matches the schema in [`.ai/skills/photoshop-jsx-dev.md`](../.ai/skills/photoshop-jsx-dev.md):
 each entry carries the layer's pixel position and trimmed size, ready for the
 Blender addon to import as planes.
 

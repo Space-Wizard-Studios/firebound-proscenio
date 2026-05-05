@@ -43,7 +43,7 @@ Writer assumes the 2D plane is Blender XZ (Z up, Y into screen). Some users auth
 
 ### Skinning weights export
 
-Vertex group weights are read in the inspector but the writer only emits rigid attachment. Phase 2 (SPEC 004) is the planned home for this — see SPEC 000 Q3.
+Vertex group weights are read in the inspector but the writer only emits rigid attachment. Phase 2 (SPEC 003) is the planned home for this — see SPEC 000 Q3.
 
 ### Atlas region authoring helper
 
@@ -59,7 +59,7 @@ Currently the writer assumes every mesh is a 2D sprite plane. A future check cou
 
 ### Camera orthographic preview helper
 
-A Blender operator that adds a properly configured ortho camera for pixel-perfect preview, matching the goblin's `pixels_per_unit`.
+A Blender operator that adds a properly configured ortho camera for pixel-perfect preview, matching the dummy's `pixels_per_unit`.
 
 ### Blender 4.3 legacy actions compatibility
 
@@ -69,15 +69,15 @@ A Blender operator that adds a properly configured ortho camera for pixel-perfec
 
 ### Reimport non-destructive merge
 
-**Resolved by [SPEC 002](002-reimport-merge/STUDY.md)** — adopt full overwrite plus the wrapper-scene pattern (Option A). Marker-based merge (Option B) deferred unless demand emerges.
+**Resolved by [SPEC 001](001-reimport-merge/STUDY.md)** — adopt full overwrite plus the wrapper-scene pattern (Option A). Marker-based merge (Option B) deferred unless demand emerges.
 
 ### Spritesheet support and `Sprite2D` path
 
-Slated for SPEC 003. Add `Sprite2D` rendering path for sprites that animate via `frame` index. Schema needs a sprite `type` discriminator or implicit detection.
+Slated for SPEC 002. Add `Sprite2D` rendering path for sprites that animate via `frame` index. Schema needs a sprite `type` discriminator or implicit detection.
 
 ### Slot system
 
-Slated for SPEC 005. Sprite-swap groups via `slots` field; importer wires `slot_attachment` tracks.
+Slated for SPEC 004. Sprite-swap groups via `slots` field; importer wires `slot_attachment` tracks.
 
 ### Node name collision polish
 
@@ -135,4 +135,30 @@ Resolved — canonical URL is `https://github.com/Space-Wizard-Studios/firebound
 
 ### Statusline / dev-loop polish
 
-The dev junction setup for the Blender addon is a manual `New-Item -ItemType Junction`. A `scripts/install-dev.ps1` would automate it. Same for copying the goblin fixture into `godot-plugin/test_goblin/`.
+The dev junction setup for the Blender addon is a manual `New-Item -ItemType Junction`. A `scripts/install-dev.ps1` would automate it. Same for copying the dummy fixture into `godot-plugin/test_dummy/`.
+
+## Architecture revisits
+
+These items intentionally violate or expand on a current hard rule. They are **not slated** — listed only so that if the trigger condition appears in a future SPEC discussion, we have prior art on the alternatives we already considered.
+
+### GDExtension / C# escape hatch
+
+**Current rule:** [`AGENTS.md`](../AGENTS.md) hard rule #3 — no GDExtension, no native runtime; the Godot plugin is GDScript-only and runs only at editor import time. See [`.ai/skills/architecture.md`](../.ai/skills/architecture.md) for the rationale.
+
+**Why this entry exists:** the maintainer prefers strong typing, nullables, and a real compiler over GDScript's dynamic feel ("magia e reza braba"). Firebound itself is C# (mono build). Continuing in GDScript is a deliberate trade for plugin reach in the broader 2D community, not an endorsement of GDScript's ergonomics.
+
+**Triggers that would justify reopening the rule:**
+
+- **Deep Firebound integration** — Firebound exposes a runtime API (signals, services, custom nodes) that the imported character must talk to natively, and surfacing that contract through GDScript adapters becomes the bottleneck.
+- **Performance ceiling hit** — `Polygon2D` skinning with high bone counts measured against a real game scene exceeds frame budget; compute-shader skinning via GDExtension becomes the cheapest path.
+- **Live link Blender ↔ Godot** — pose/animation/sprite delta streaming over a socket needs sustained throughput that GDScript's dictionary parsing cannot hit.
+- **Binary `.proscenio` format** — JSON parse time becomes import-loop pain on large projects; binary format reader benefits from native code.
+- **Editor authoring tools that need round-trip serialization back to `.proscenio`** — writing the format from inside Godot at interactive speed.
+
+**What that future SPEC would look like:**
+
+- Likely targets a *separate optional component* (`godot-plugin-csharp/`) that ships alongside the GDScript plugin, gated behind a feature flag, so non-mono users still have the GDScript path.
+- Mono-only audience cut would be **documented openly** as the price of the feature; this is acceptable for Firebound users (already on mono) but acknowledged as a regression for general OSS reach.
+- Anything moved to native must remain **import-time only** unless the SPEC explicitly relaxes the runtime side. Generated `.scn` keeps using built-in nodes.
+
+**See also:** [`.ai/skills/architecture.md`](../.ai/skills/architecture.md), [`.ai/conventions.md`](../.ai/conventions.md), the language-decision discussion in this backlog's revision history.

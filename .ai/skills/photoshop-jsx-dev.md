@@ -19,12 +19,12 @@ A JSON file alongside an `images/` folder, describing each exported layer:
 
 ```json
 {
-  "doc": "goblin.psd",
+  "doc": "dummy.psd",
   "size": [1024, 1024],
   "layers": [
     {
       "name": "torso",
-      "path": "goblin/torso.png",
+      "path": "dummy/torso.png",
       "position": [120, 340],
       "size": [180, 240]
     }

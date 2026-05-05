@@ -47,7 +47,7 @@ gdlint godot-plugin/addons/proscenio/
 
 Manual until CI runners ship both Blender and Godot:
 
-1. Open `examples/goblin/goblin.blend` in Blender.
+1. Open `examples/dummy/dummy.blend` in Blender.
 2. Run the Proscenio export operator.
 3. Drop the resulting `.proscenio` (and texture files) into `godot-plugin/`.
 4. Open the generated scene in Godot, hit Play, verify the animation runs.

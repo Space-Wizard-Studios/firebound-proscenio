@@ -1,11 +1,11 @@
-# SPEC 002 — TODO
+# SPEC 001 — TODO
 
 Closes the reimport-merge question by adopting **Option A** (full overwrite, wrapper scene for customization) and documenting the workflow. See [STUDY.md](STUDY.md) for the full rationale and the alternative options.
 
 ## Decision lock-in
 
 - [ ] Confirm Option A with maintainers before any of the following work begins.
-- [ ] Move "Reimport non-destructive merge" from [`specs/backlog.md`](../backlog.md) to "resolved by SPEC 002" with a one-line summary.
+- [ ] Move "Reimport non-destructive merge" from [`specs/backlog.md`](../backlog.md) to "resolved by SPEC 001" with a one-line summary.
 
 ## Documentation
 
@@ -16,17 +16,17 @@ Closes the reimport-merge question by adopting **Option A** (full overwrite, wra
 
 ## Example asset
 
-- [ ] Add `examples/goblin/Goblin.tscn` — a wrapper scene that instances the generated `goblin.scn`, attaches a tiny `Goblin.gd` (one exported property: a default animation name), and lives next to the source `.proscenio`. This is the documentation-by-example.
-- [ ] Add a one-sentence note in [`examples/goblin/`](../../examples/goblin/) (or update its README, if any) explaining the difference between `goblin.proscenio`, `goblin.scn` (generated), and `Goblin.tscn` (user-authored wrapper).
+- [ ] Add `examples/dummy/Dummy.tscn` — a wrapper scene that instances the generated `dummy.scn`, attaches a tiny `Dummy.gd` (one exported property: a default animation name), and lives next to the source `.proscenio`. This is the documentation-by-example.
+- [ ] Add a one-sentence note in [`examples/dummy/`](../../examples/dummy/) (or update its README, if any) explaining the difference between `dummy.proscenio`, `dummy.scn` (generated), and `Dummy.tscn` (user-authored wrapper).
 
 ## Importer hardening (no behavior change)
 
 The importer already overwrites on every reimport. Add explicit safety so the user is not surprised:
 
-- [ ] If `goblin.scn` already exists when the importer runs, log a single-line confirmation: `Proscenio: regenerating <path> (existing scene will be overwritten)`. Use `print_verbose` so it is suppressible.
+- [ ] If the target `.scn` already exists when the importer runs, log a single-line confirmation: `Proscenio: regenerating <path> (existing scene will be overwritten)`. Use `print_verbose` so it is suppressible.
 - [ ] Add a unit test (GUT) that runs the importer twice on the same `.proscenio` and asserts the resulting `.scn` is byte-identical (or at least produces an identical `PackedScene` tree). Catches non-determinism early.
 
-## Defer (potential SPEC 002.1 if demand emerges)
+## Defer (potential SPEC 001.1 if demand emerges)
 
 Track but do not implement:
 

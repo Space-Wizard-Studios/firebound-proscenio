@@ -23,7 +23,7 @@ export.cfg
 export_presets.cfg
 
 # Dev-only fixture copy inside the Godot dev project — canonical lives in examples/
-godot-plugin/test_goblin/
+godot-plugin/test_dummy/
 
 # Headless test artifacts under scripts/ — re-runnable, not source
 scripts/*.out

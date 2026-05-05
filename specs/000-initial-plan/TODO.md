@@ -17,39 +17,39 @@ Closes the Phase 0 (foundation) work and primes Phase 1 (MVP). Each item is conc
 - [x] Update `AGENTS.md` to point at `specs/` for planning specs (replacing the removed `docs/index.md` link).
 - [x] Update `README.md` to point at `specs/000-initial-plan/STUDY.md` for the current plan.
 
-## Goblin fixture (schema-first, no Blender required)
+## Dummy fixture (schema-first, no Blender required)
 
 The first end-to-end test bypasses the Blender exporter entirely and hand-writes a `.proscenio` file to validate the Godot importer.
 
-- [x] Hand-write `examples/goblin/goblin.proscenio` with: 3 bones (root, torso, head), 3 `Polygon2D` sprites as simple quads, one `idle` animation with one `bone_transform` track that rotates the head ±15°.
-- [x] Add a tiny placeholder `examples/goblin/atlas.png` (commit as LFS via `.gitattributes` rule already in place).
-- [x] Run `check-jsonschema --schemafile schemas/proscenio.schema.json examples/goblin/goblin.proscenio` and fix any failures.
+- [x] Hand-write `examples/dummy/dummy.proscenio` with: 3 bones (root, torso, head), 3 `Polygon2D` sprites as simple quads, one `idle` animation with one `bone_transform` track that rotates the head ±15°.
+- [x] Add a tiny placeholder `examples/dummy/atlas.png` (commit as LFS via `.gitattributes` rule already in place).
+- [x] Run `check-jsonschema --schemafile schemas/proscenio.schema.json examples/dummy/dummy.proscenio` and fix any failures.
 
 ## Godot importer — make MVP work end-to-end
 
 Order matters. Each step must produce a visible result before moving on.
 
-- [x] **Smoke import.** Drop `goblin.proscenio` into `godot-plugin/`. Confirm the importer fires, parses, and produces a saved `.scn`. Fix any surface bugs.
+- [x] **Smoke import.** Drop `dummy.proscenio` into `godot-plugin/`. Confirm the importer fires, parses, and produces a saved `.scn`. Fix any surface bugs.
 - [x] **Skeleton render.** Open the imported scene in the Godot editor. Verify the `Skeleton2D` and `Bone2D` hierarchy is correct visually.
 - [x] **Sprites render.** Verify each `Polygon2D` shows the right region of `atlas.png`. Y-flip and UV correctness checked by eye against the source. *Note: UVs in `.proscenio` are normalized `[0, 1]`; the Godot importer multiplies by atlas pixel size since `Polygon2D.uv` is pixel-space.*
 - [x] **Implement `bone_transform` track wiring.** Currently [`animation_builder.gd`](../../godot-plugin/addons/proscenio/builders/animation_builder.gd) creates empty `Animation` resources. Wire keyframes into Godot's separate position/rotation/scale tracks per `Bone2D`.
 - [x] **Animation playback.** Press Play in Godot, confirm the head rotates as authored.
-- [x] **Plugin-uninstall test.** Move `addons/proscenio/` out of the project. Confirm the imported scene still opens and plays. Critical no-GDExtension verification. *Verified: with the plugin disabled, a wrapper scene instancing the imported goblin still renders with the correct atlas regions and plays the idle animation. The generated `.scn` is self-contained.*
+- [x] **Plugin-uninstall test.** Move `addons/proscenio/` out of the project. Confirm the imported scene still opens and plays. Critical no-GDExtension verification. *Verified: with the plugin disabled, a wrapper scene instancing the imported dummy still renders with the correct atlas regions and plays the idle animation. The generated `.scn` is self-contained.*
 
 ## Blender exporter — minimal path
 
 Once the importer is proven against the hand-written fixture, write the smallest possible exporter that reproduces the same fixture from Blender data.
 
-- [x] Build a tiny `goblin.blend` with: 3 sprite planes, an armature with 3 bones, one animation action that rotates the head bone.
+- [x] Build a tiny `dummy.blend` with: 3 sprite planes, an armature with 3 bones, one animation action that rotates the head bone.
 - [x] Implement `blender-addon/exporters/godot/writer.py` — walks the active scene, emits `.proscenio` JSON conforming to the schema.
 - [x] Add an operator `proscenio.export_godot` that opens a file picker and writes the result.
 - [x] Replace the smoke-test panel button with the export button.
-- [x] Round-trip test: export `goblin.blend` → `.proscenio` → import in Godot → animation plays.
+- [x] Round-trip test: export `dummy.blend` → `.proscenio` → import in Godot → animation plays.
 
 ## Tests
 
-- [x] Add `blender-addon/tests/fixtures/goblin/` with the expected `.proscenio` fixture (the source `.blend` lives at `examples/goblin/goblin.blend` — single source of truth).
-- [x] Replace the placeholder body of `blender-addon/tests/run_tests.py`: re-export `goblin.blend` and diff the result against `tests/fixtures/goblin/expected.proscenio` (normalized via `json.dumps(sort_keys=True)`).
+- [x] Add `blender-addon/tests/fixtures/dummy/` with the expected `.proscenio` fixture (the source `.blend` lives at `examples/dummy/dummy.blend` — single source of truth).
+- [x] Replace the placeholder body of `blender-addon/tests/run_tests.py`: re-export `dummy.blend` and diff the result against `tests/fixtures/dummy/expected.proscenio` (normalized via `json.dumps(sort_keys=True)`).
 - [x] Add `godot-plugin/tests/test_importer.gd`: headless smoke test that exercises the builders and asserts node hierarchy, bone count and names, sprite count, animation library and length. No GUT dependency.
 - [x] Wire both into `.github/workflows/ci.yml` as `test-blender` and `test-godot` jobs (Blender 5.1.1, Godot 4.6.2-stable; matrix expansion in backlog).
 
@@ -58,7 +58,7 @@ Once the importer is proven against the hand-written fixture, write the smallest
 - [x] Port `coa_tools2/Photoshop/coa_export.jsx` into `photoshop-exporter/proscenio_export.jsx`. Layer walk (with group recursion), per-layer PNG export, and JSON manifest matching [`.ai/skills/photoshop-jsx-dev.md`](../../.ai/skills/photoshop-jsx-dev.md). Untested against real PSD in CI — no headless Photoshop available.
 - [x] Document the expected layer convention in [`photoshop-exporter/README.md`](../../photoshop-exporter/README.md). PSD example deferred — requires a real Photoshop session to author.
 
-Phase 1 ends once the goblin round-trip passes and the photoshop exporter produces the per-sprite PNGs + position JSON for the same goblin.
+Phase 1 ends once the dummy round-trip passes and the photoshop exporter produces the per-sprite PNGs + position JSON for the same dummy.
 
 ## Cleanup before declaring Phase 1 done
 
@@ -70,7 +70,7 @@ Phase 1 ends once the goblin round-trip passes and the photoshop exporter produc
 
 These belong to follow-up specs, listed only so they are not lost:
 
-- Reimport-with-merge — SPEC 002.
-- Spritesheets and `Sprite2D` path — SPEC 003.
-- Full skinning weights — SPEC 004.
-- Slot system — SPEC 005.
+- Reimport-with-merge — SPEC 001.
+- Spritesheets and `Sprite2D` path — SPEC 002.
+- Full skinning weights — SPEC 003.
+- Slot system — SPEC 004.

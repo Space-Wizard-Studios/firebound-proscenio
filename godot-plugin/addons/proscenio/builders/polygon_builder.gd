@@ -33,7 +33,7 @@ static func attach_sprites(skeleton: Skeleton2D, sprites_data: Array, atlas: Tex
 				(
 					(
 						"Proscenio: sprite '%s' has weights — full skinning lands in Phase 2 "
-						+ "(SPEC 004); attaching rigidly to bone for now."
+						+ "(SPEC 003); attaching rigidly to bone for now."
 					)
 					% poly.name
 				)

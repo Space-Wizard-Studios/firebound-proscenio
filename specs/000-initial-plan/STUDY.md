@@ -152,8 +152,8 @@ Where is `(0, 0)` for the character?
 
 - **Reimport-merge complexity (Phase 2).** The scene tree diff/merge algorithm is non-trivial and has no clean prior art for Godot 4. Expect a dedicated SPEC before implementation.
 - **Blender API drift across 4.x/5.x.** `coa_tools2` has been chasing this constantly (issues #92, #93, #95, #107, #109, #110, #111). Use only stable `bpy` APIs; pin to documented LTS surface.
-- **`PackedScene.pack()` round-trip.** Untested at scale for our specific node mix. Validate early with the goblin fixture.
-- **Y-flip and rotation negation.** Easy to get wrong. The goblin fixture must include at least one bone with a non-zero rotation and a sprite offset from origin to catch sign errors.
+- **`PackedScene.pack()` round-trip.** Untested at scale for our specific node mix. Validate early with the dummy fixture.
+- **Y-flip and rotation negation.** Easy to get wrong. The dummy fixture must include at least one bone with a non-zero rotation and a sprite offset from origin to catch sign errors.
 
 ## Out of scope (explicit no)
 
@@ -177,8 +177,9 @@ Where is `(0, 0)` for the character?
 
 | Number | Topic |
 | --- | --- |
-| 001 | Phase 1 MVP — goblin end-to-end, schema-fixture-only first |
-| 002 | Reimport with non-destructive merge |
-| 003 | Spritesheet support (introduces `Sprite2D` path) |
-| 004 | Skinning weights and `Polygon2D.skeleton` wiring |
-| 005 | Slot system |
+| 001 | Reimport with non-destructive merge |
+| 002 | Spritesheet support (introduces `Sprite2D` path) |
+| 003 | Skinning weights and `Polygon2D.skeleton` wiring |
+| 004 | Slot system |
+
+> Phase 1 MVP (originally penciled as SPEC 001) shipped under SPEC 000's TODO since the scope was small enough to absorb. SPECs are renumbered from 001 onward to keep the catalog dense.

@@ -1,4 +1,4 @@
-# SPEC 002 — Reimport without losing user work
+# SPEC 001 — Reimport without losing user work
 
 Status: **draft**, design phase. No implementation until the questions below are settled.
 
@@ -6,7 +6,7 @@ Status: **draft**, design phase. No implementation until the questions below are
 
 The Godot importer ([`godot-plugin/addons/proscenio/importer.gd`](../../godot-plugin/addons/proscenio/importer.gd)) regenerates a packed scene from each `.proscenio` on every reimport. A re-export from Blender therefore clobbers any work the user did *to the imported scene itself*: attached scripts, child nodes added in the editor, animations authored in Godot, exported property values.
 
-This is fine for first import but punishes iteration. The user authors a goblin in Blender, imports, attaches a `goblin.gd` to the root, adds a `CollisionShape2D` under the `torso` bone, then re-exports a fixed-up animation from Blender — and loses the script and the collision.
+This is fine for first import but punishes iteration. The user authors a character in Blender, imports, attaches a `dummy.gd` to the root, adds a `CollisionShape2D` under the `torso` bone, then re-exports a fixed-up animation from Blender — and loses the script and the collision.
 
 The decision: pick the merge strategy and document it.
 
@@ -23,7 +23,7 @@ The decision: pick the merge strategy and document it.
 
 The importer rebuilds the scene from scratch and overwrites the previous output. The user wraps the generated scene in their own scene and customizes there.
 
-**How it works.** The user creates `goblin_character.tscn` that *instances* the imported `goblin.scn` (or *inherits* from it). Scripts and extra nodes live on the wrapping scene, not on the generated one. Reimport touches only `goblin.scn`; `goblin_character.tscn` is untouched.
+**How it works.** The user creates `Dummy.tscn` that *instances* the imported `dummy.scn` (or *inherits* from it). Scripts and extra nodes live on the wrapping scene, not on the generated one. Reimport touches only `dummy.scn`; `Dummy.tscn` is untouched.
 
 **Pros.**
 
@@ -89,13 +89,13 @@ Reasons:
 
 ## Open questions
 
-- **Q1.** Where in `godot-plugin/` should the canonical "wrapper scene" example live, and how should it be documented? Tentative: `examples/goblin/Goblin.tscn` instancing `goblin.scn`, with a one-paragraph note in [`.ai/skills/godot-plugin-dev.md`](../../.ai/skills/godot-plugin-dev.md).
+- **Q1.** Where in `godot-plugin/` should the canonical "wrapper scene" example live, and how should it be documented? Tentative: `examples/dummy/Dummy.tscn` instancing `dummy.scn`, with a one-paragraph note in [`.ai/skills/godot-plugin-dev.md`](../../.ai/skills/godot-plugin-dev.md).
 - **Q2.** Is "Editable Children" workflow good enough for users who want to attach a script to a single bone inside the imported scene, or do we need to ship a small helper that scripts a Bone2D safely? Default: don't ship anything until someone asks.
 - **Q3.** Animations authored in Godot — should the wrapper scene's `AnimationPlayer` *merge* the imported `AnimationLibrary` plus user-authored animations into a single named library (so playback is one call), or is it acceptable to have two libraries side by side? Tentative: document that the wrapper can call `AnimationPlayer.add_animation_library("user", user_lib)` alongside the imported `""` library and play across both.
 - **Q4.** If a user re-exports the `.proscenio` with a renamed bone, the generated `.scn` changes structurally. Wrapper scenes that referenced the old bone name (`$Skeleton2D/torso`) break. Acceptable cost? Tentative: yes, document it as the price of a cross-DCC rename. A rename in Blender is a rename in Godot — same as renaming a node in any other engine workflow.
 
 ## Out of scope
 
-- Anything that requires a stable-ID extension to the `.proscenio` schema. That's a v2 conversation and would force SPEC 002 to wait on a format bump.
+- Anything that requires a stable-ID extension to the `.proscenio` schema. That's a v2 conversation and would force SPEC 001 to wait on a format bump.
 - Diffing animations key-by-key. Animations are owned by the DCC in v1; user-authored animations belong to the wrapping scene.
 - Live link / hot reload — separate concern, not in this spec.

@@ -40,7 +40,7 @@ The `atlas` field is an optional path to a single pre-packed texture. **Atlases 
 
 ## Skinning weights (v1)
 
-The `weights` array on a sprite is **accepted by the schema** but **ignored by the v1 Godot importer**. Sprites without weights are attached rigidly to their `bone` (a child of the `Bone2D`, riding the bone transform). Full skinning (`Polygon2D.skeleton` path + `set_bones()`) lands in Phase 2 (SPEC 004). Until then, exporters may emit weights and the importer will log a one-line console warning.
+The `weights` array on a sprite is **accepted by the schema** but **ignored by the v1 Godot importer**. Sprites without weights are attached rigidly to their `bone` (a child of the `Bone2D`, riding the bone transform). Full skinning (`Polygon2D.skeleton` path + `set_bones()`) lands in Phase 2 (SPEC 003). Until then, exporters may emit weights and the importer will log a one-line console warning.
 
 ## Versioning policy
 

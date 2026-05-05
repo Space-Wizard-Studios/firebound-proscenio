@@ -1,13 +1,13 @@
-"""Generate the goblin placeholder atlas.
+"""Generate the dummy placeholder atlas.
 
 Run this once to (re)create `atlas.png`. The generated image is 256x256 with three
 80x80 colored regions stacked vertically along the left edge — head (red), torso
 (blue), legs (green) — and a magenta debug background everywhere else. The exact
-regions match the `texture_region` rectangles inside `goblin.proscenio`.
+regions match the `texture_region` rectangles inside `dummy.proscenio`.
 
 Requires Pillow. Invoke with the Python that has it installed:
 
-    python examples/goblin/generate_atlas.py
+    python examples/dummy/generate_atlas.py
 """
 
 from __future__ import annotations
