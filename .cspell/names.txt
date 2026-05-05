@@ -1,5 +1,7 @@
 Aodaruma
+Aseprite
 claude
+Defold
 Evgene
 firebound
 Firebound
