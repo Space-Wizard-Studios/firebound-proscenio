@@ -16,7 +16,7 @@ const SkeletonBuilder := preload("res://addons/proscenio/builders/skeleton_build
 const PolygonBuilder := preload("res://addons/proscenio/builders/polygon_builder.gd")
 const AnimationBuilder := preload("res://addons/proscenio/builders/animation_builder.gd")
 
-const FIXTURE := "res://tests/fixtures/goblin.proscenio"
+const FIXTURE := "res://tests/fixtures/dummy.proscenio"
 
 var _failures: Array[String] = []
 var _passes: int = 0  # gdlint: ignore=unused-private-class-variable
@@ -41,14 +41,14 @@ func _initialize() -> void:
 	character.add_child(player)
 	AnimationBuilder.populate(player, skeleton, data.get("animations", []))
 
-	_assert_eq(character.name, "goblin", "root name")
+	_assert_eq(character.name, "dummy", "root name")
 	_assert_eq(skeleton.name, "Skeleton2D", "skeleton name")
 
 	var bones := _collect_descendants_of_type(skeleton, "Bone2D")
 	_assert_eq(bones.size(), 3, "bone count")
 	var bone_names := PackedStringArray()
-	for bone in bones:
-		bone_names.append(bone.name)
+	for bone: Node in bones:
+		bone_names.append(String(bone.name))
 	bone_names.sort()
 	_assert_eq(", ".join(bone_names), "head, root, torso", "bone names")
 
@@ -87,7 +87,7 @@ func _collect_descendants_of_type(node: Node, type_name: String) -> Array:
 	return out
 
 
-func _assert_eq(actual, expected, label: String) -> void:
+func _assert_eq(actual: Variant, expected: Variant, label: String) -> void:
 	if actual == expected:
 		_passes += 1
 		print("  ok  %s" % label)
