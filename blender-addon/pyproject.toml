@@ -8,8 +8,10 @@ license = { text = "GPL-3.0-or-later" }
 [dependency-groups]
 dev = [
     "ruff>=0.6",
+    "mypy>=1.13",
     "check-jsonschema>=0.29",
     "pytest>=8",
+    "pre-commit>=4.0",
 ]
 
 [tool.ruff]
@@ -33,3 +35,27 @@ ignore = [
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+warn_unreachable = true
+explicit_package_bases = true
+namespace_packages = true
+mypy_path = "."
+files = ["exporters", "operators", "panels", "core", "importers", "tests"]
+# `tests/fixtures/` holds frozen JSON, not Python.
+# `scripts/` (under repo root, not blender-addon/) holds one-off debug
+# helpers that print bpy hierarchies; typing them strictly is not worth
+# the cost — they re-run from scratch each Blender invocation.
+exclude = ["tests/fixtures"]
+# bpy.types.* resolve to Any (no stubs); allow subclassing them.
+disallow_subclassing_any = false
+# Blender's bpy / mathutils have no published stubs we want to bind to —
+# fake-bpy-module exists but pinning to it is fragile across Blender releases.
+# Treat them as Any-typed at the import boundary.
+[[tool.mypy.overrides]]
+module = ["bpy", "bpy.*", "bpy_extras.*", "mathutils", "mathutils.*"]
+ignore_missing_imports = true
+follow_imports = "skip"

@@ -1,0 +1,62 @@
+# Pre-commit hooks — single gate that mirrors CI locally.
+#
+# Install once:  pip install pre-commit && pre-commit install
+# Run on demand: pre-commit run --all-files
+#
+# Skipping a hook (`--no-verify`) is a bug. Fix the underlying issue.
+
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v5.0.0
+      hooks:
+          - id: trailing-whitespace
+          - id: end-of-file-fixer
+          - id: check-yaml
+            args: [--allow-multiple-documents]
+          - id: check-toml
+          - id: check-merge-conflict
+          - id: check-added-large-files
+            args: [--maxkb=1024]
+            exclude: ^examples/.*\.(blend|psd|psb|kra|png)$
+
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.8.4
+      hooks:
+          - id: ruff
+            args: [--fix]
+            files: ^blender-addon/
+          - id: ruff-format
+            files: ^blender-addon/
+
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v1.13.0
+      hooks:
+          - id: mypy
+            files: ^blender-addon/
+            args: [--config-file, blender-addon/pyproject.toml]
+            additional_dependencies: []
+            pass_filenames: false
+
+    - repo: https://github.com/Scony/godot-gdscript-toolkit
+      rev: 4.3.3
+      hooks:
+          - id: gdformat
+            files: ^godot-plugin/.*\.gd$
+          - id: gdlint
+            files: ^godot-plugin/.*\.gd$
+
+    - repo: https://github.com/python-jsonschema/check-jsonschema
+      rev: 0.31.0
+      hooks:
+          - id: check-jsonschema
+            name: validate .proscenio against schema
+            files: \.proscenio$
+            args:
+                - --schemafile
+                - schemas/proscenio.schema.json
+
+    - repo: https://github.com/streetsidesoftware/cspell-cli
+      rev: v8.17.1
+      hooks:
+          - id: cspell
+            args: [--no-progress, --no-summary]
