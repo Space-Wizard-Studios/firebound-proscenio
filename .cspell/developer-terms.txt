@@ -21,6 +21,8 @@ multicriteria
 mypy
 nullables
 nullglob
+parseia
+PROSC
 pycache
 pyproject
 pytest
