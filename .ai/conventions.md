@@ -5,7 +5,8 @@ Inspired by the FairCut conventions, adapted to Proscenio's polyglot pipeline (P
 ## Branches
 
 ```text
-feat/<short-description>      # New feature
+spec/<NNN>-<slug>             # SPEC implementation (ex: spec/001-reimport-merge)
+feat/<short-description>      # Feature work outside a SPEC
 fix/<short-description>       # Bug fix
 docs/<short-description>      # Documentation only
 refactor/<short-description>  # Refactor without behavior change
@@ -13,9 +14,17 @@ chore/<short-description>     # Maintenance, tooling, configs
 ci/<short-description>        # Workflow changes
 ```
 
-Examples: `feat/photoshop-json-importer`, `fix/godot-bone-y-flip`.
+Examples: `spec/001-reimport-merge`, `feat/photoshop-json-importer`, `fix/godot-bone-y-flip`.
 
 When an issue exists, reference it in the commit body (`Refs: #42`), not in the branch name. Keep branch names readable.
+
+## Workflow
+
+- **`main`** holds planning artifacts (`specs/<NNN>-…/STUDY.md` and `TODO.md`, `specs/backlog.md`) and small chores. Spec docs land directly on `main` because they cross PR boundaries and inform parallel work.
+- **`spec/<NNN>-<slug>`** holds the implementation of a numbered SPEC. Branch from `main` once the SPEC's STUDY/TODO are reviewed. Commit gradually as TODO items close. Open a PR back to `main` when the TODO is satisfied.
+- **`feat/`, `fix/`, `chore/`, `ci/`, `docs/`, `refactor/`** branches are for work that does not belong to a numbered SPEC.
+
+Prefer many small commits on the working branch over a single squashed lump — the merge can squash if needed, but the branch history is the audit trail while work is in flight.
 
 ## Files and folders
 
@@ -33,6 +42,78 @@ When an issue exists, reference it in the commit body (`Refs: #42`), not in the 
 ## JSON keys
 
 The `.proscenio` format uses `snake_case` keys throughout (`format_version`, `pixels_per_unit`). Any new field must follow this rule. The schema in [`schemas/proscenio.schema.json`](../schemas/proscenio.schema.json) is the source of truth.
+
+## Static typing
+
+Both first-class languages in this repo support static typing. **Use it everywhere — do not ship dynamic code when typed code is available.**
+
+### GDScript (Godot plugin)
+
+GDScript 2.0 has full static typing. The plugin must be 100% typed.
+
+- **Variables:** `var x: int = 0`, `var bones: Array[Bone2D] = []`. Never `var x = 0`.
+- **Function signatures:** every parameter typed, every return typed (`func build(data: Dictionary) -> Skeleton2D:`). Use `-> void` explicitly when no return.
+- **Typed collections:** `Array[T]`, `Dictionary[K, V]` (Godot 4.4+) over bare `Array` / `Dictionary` whenever the element type is known.
+- **`class_name`** on every script that is loaded by name.
+- **Signals:** declare typed (`signal imported(path: String)`).
+- **Constants:** `const FOO: int = 1`. Type-annotate even when the literal infers cleanly — explicit beats implicit.
+- **`@export`** vars must be typed. Use `@export var atlas: Texture2D` not `@export var atlas`.
+- `gdlint` runs in CI; treat any "untyped" warning as a build break.
+
+### Python (Blender addon, scripts)
+
+- Full type hints on every function signature.
+- Use `from __future__ import annotations` at the top of new files.
+- Pylance / mypy clean before commit. `Any` is allowed only at the `bpy` boundary.
+- Prefer `dataclass` / `TypedDict` over loose dicts when shape is known.
+
+### Why
+
+Type errors caught at parse time cost zero. Type errors caught at runtime cost a Blender re-launch or a Godot reimport plus head-scratching. The asymmetry pays for the typing discipline several times over.
+
+## Validation gates
+
+The repo prefers **failing fast** at the earliest possible layer over discovering bugs through Blender re-launches and Godot reimports. Layered defenses, in order of cheapness:
+
+### Editor / IDE
+
+- **VS Code** Pylance + SonarLint + cspell + gdtoolkit live diagnostics. `.vscode/settings.json` carries the project-specific overrides.
+- **Pyright config** at repo root resolves `bpy` / `mathutils` stubs as missing-but-OK and adds `blender-addon` to `extraPaths`.
+- **Blender's "Treat warnings as errors"** is too coarse for an addon shipped to users; relying on Pylance + ruff suffices.
+- **Godot project** sets `debug/gdscript/warnings/treat_warnings_as_errors=true` so live editor warnings break the import. Mirrored by `gdlint` in CI.
+
+### Pre-commit hooks
+
+A single `.pre-commit-config.yaml` runs all of: `ruff check`, `ruff format`, `mypy --strict`, `gdformat --check`, `gdlint`, `cspell`, and `check-jsonschema` against staged `.proscenio` files. Install once with `pip install pre-commit && pre-commit install`. Treat any local skip (`--no-verify`) as a bug — fix the underlying issue.
+
+### Static analysis
+
+- **`mypy --strict`** for `blender-addon/` and `scripts/`. `Any` only at the `bpy` boundary (documented inline). `pyproject.toml` carries the config.
+- **`gdlint`** with strict typing rules in `.gdlintrc`: typed everything, `class_name` required, no untyped signals, no magic numbers.
+- **`ruff check`** with `E`, `F`, `I`, `B`, `UP`, `N`, `RUF`, `SIM` selected.
+- **`cspell`** custom dictionaries under `.cspell/` cover project-specific vocabulary.
+
+### Schema as a contract
+
+The `.proscenio` JSON Schema is the only cross-component truth. It is enforced at **three** points:
+
+1. **Writer output** — `blender-addon/tests/run_tests.py` schema-validates the freshly exported `.proscenio` before diffing against the golden fixture. The exporter cannot ship a document the importer would reject.
+2. **Importer input** — `godot-plugin/addons/proscenio/importer.gd` checks `format_version` and surfaces a clear error per missing field. Future migrators consume the version guard.
+3. **CI fixtures** — `.github/workflows/ci.yml` runs `check-jsonschema` against every `.proscenio` in `examples/` and `tests/fixtures/`.
+
+When v2 lands, the same gate ensures every existing fixture either migrates or breaks loudly — no silent drift.
+
+### Domain types over loose dicts
+
+In Python, model `.proscenio` shapes as `TypedDict` (or `dataclass`) inside the writer. In GDScript, prefer `class_name`'d helper resources over bare `Dictionary` once shape stabilizes. In both languages: enums (Python `Literal[...]`, GDScript `@export_enum`) over raw strings for closed value sets (track type, interpolation type, etc).
+
+### Defensive throws / asserts
+
+Cheap to write, expensive to skip. In Python, raise `RuntimeError` at the boundary with a context-rich message (`"Proscenio export needs an Armature in the scene"`). In GDScript, `assert(condition, msg)` is stripped from release builds — useful for invariants documented as code. In ExtendScript, `throw new Error(...)` early-fails the script with a usable message.
+
+### Test discipline
+
+Golden-fixture tests for both writer and importer (see [`.ai/skills/testing.md`](skills/testing.md)). Negative-case fixtures (intentionally invalid `.proscenio`) belong in `tests/fixtures/invalid/` and assert the importer surfaces the right error.
 
 ## Versioning
 
