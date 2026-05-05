@@ -205,7 +205,7 @@
   "atlas": "atlas.png",
   "animations": [
     {
-      "name": "goblin.anim.test",
+      "name": "dummy.anim.test",
       "length": 0.958333,
       "loop": true,
       "tracks": [
