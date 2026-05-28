@@ -420,11 +420,24 @@ MANUAL_TESTING (visual, cannot verify headless - needs interactive Blender):
 - **[ ] SIMPLE step 4 wireframe** - the cyan triangulation overlay matches the mesh APPLY produces (silhouette + fold/cut/steiner verts, no dense fill).
 - **[ ] Stage 2 red + modifier** - cut overlay reads RED (matches Stage 4); Shift/Ctrl/Alt dispatch is precise regardless of cursor inside/outside the silhouette.
 
-Phase 2 - gesture model rewrite (~450 LOC). NOT STARTED (separate plan after Phase 1 smokes clean):
+Phase 2 - gesture model rewrite. Plan: [`design/2026-05-28-spec-013-gesture-pen-plan.md`](design/2026-05-28-spec-013-gesture-pen-plan.md). DONE on branch (staged; commits pending). Decisions: full toggle pen; subdivisions baked at finish (no `Stroke.subdivisions` schema field - D6); subdivisions on pen straight segments only.
 
-- **[ ] AS-AM16** toggle-modal pen (tap Shift/Ctrl enters draw mode), RMB/Enter finish, Esc cancel line.
-- **[ ] AS-AM16** X/Z axis lock mid-line.
-- **[ ] AS-AM16** scroll / digit subdivisions per edge + `Stroke.subdivisions` round-trip + live-preview density.
+- **[x] AS-AM16** toggle-modal pen shared by Stage 2 + Stage 4: a clean Shift/Ctrl tap enters draw mode (no holding; Ctrl-key combos keep Ctrl+Z undo). LMB click = pen vert, drag = free-draw, RMB/Enter = finish, Esc = cancel line. Modal event routing reordered so DRAW intercepts Enter/RMB/Esc before nav.
+- **[x] AS-AM16** X/Z axis lock - `X`/`Z` toggle horizontal/vertical lock (mutually exclusive); the next pen vert snaps to the locked axis vs the last vert.
+- **[x] AS-AM16** scroll / digit subdivisions - wheel +/-1, digit 0-9 sets exact; baked into the pen polyline via `subdivide_polyline` at finish. Live preview shows ghost subdivision dots + axis-snapped rubber-band guide.
+- **[x] AS-AM16 follow-ups** (2026-05-28 smoke 2): (a) tooltip + statusbar refresh on tap-toggle / wheel-subdiv / axis-lock (not only mouse move) via `_refresh_pen_tooltip`; (b) pen-click snaps to nearby existing verts (committed strokes + outer contour) so coords land exactly, AND on finish a pen line whose endpoint meets an existing same-kind stroke's endpoint MERGES into it (`_merge_into_existing`) so connected traces are ONE deletable stroke, not two stacked on a shared vert; clicking the line's first vert closes a loop (`_snap_pen_click`); (c) Stage 2 spliced-outer preview (`compute_outer_preview` + green overlay) shows the silhouette APPLY will build after extend edits, updating on commit/undo/delete.
+
+MANUAL_TESTING (gesture, cannot verify headless - needs interactive Blender):
+
+- **[ ] Toggle entry/exit** - tap Shift enters fold-pen (statusbar/tooltip show DRAW); tap again on an empty line exits to NEUTRAL.
+- **[ ] Pen + finish/cancel** - click 3 verts, RMB or Enter commits the line; Esc on a fresh line discards without cancelling the modal; NEUTRAL Enter still advances the stage.
+- **[ ] Ctrl+Z preserved** - Ctrl+Z in NEUTRAL undoes the last stroke (does NOT enter cut-draw).
+- **[ ] Axis lock** - press X -> next segment is horizontal; Z -> vertical; toggling switches.
+- **[ ] Subdivisions** - wheel/digit bumps the tooltip count; a straight 2-click line with subdiv=2 commits with 2 inserted verts per edge (no single long edge).
+- **[ ] Stage 2 parity** - the same pen works in Stage 2 (extend/cut), cut overlay red.
+- **[ ] Tooltip/statusbar live** - tapping a tool (Shift/Ctrl) or scrolling subdivisions updates the tooltip + statusbar immediately, without a mouse move.
+- **[ ] Snap + merge + loop** - drawing a line that ends on an existing same-kind stroke's endpoint merges into ONE stroke (deleting it removes the whole connected trace, not half); clicking the first vert of the in-progress line closes a loop.
+- **[ ] Stage 2 outer preview** - after an extend edit, the green spliced-outer overlay shows the silhouette APPLY will build; updates on undo/delete.
 
 ### Part B scope - SHIPPED on branch (PR pending review)
 
