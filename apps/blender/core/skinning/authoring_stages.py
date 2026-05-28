@@ -76,6 +76,10 @@ class StageOutput:
     """
 
     outer: list[Point2D] = field(default_factory=list)
+    # AS-AM16: world-XZ spliced outer (Stage 2 extend strokes applied) - the
+    # silhouette APPLY will build. Mutated in-place so the overlay handler sees
+    # updates without re-registration.
+    outer_preview: list[Point2D] = field(default_factory=list)
     user_outer_strokes: list[Stroke] = field(default_factory=list)  # Stage 2 (AS-AM3)
     inner_loops: list[list[Point2D]] = field(default_factory=list)
     user_steiners: list[Point2D] = field(default_factory=list)

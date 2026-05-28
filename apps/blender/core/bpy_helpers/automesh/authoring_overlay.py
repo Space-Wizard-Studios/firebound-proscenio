@@ -23,6 +23,8 @@ from ..modal_overlay import draw_text_panel_2d
 _UNIFORM_COLOR_SHADER = "UNIFORM_COLOR"
 _OUTER_COLOR = (0.0, 0.8, 1.0, 0.9)
 _OUTER_DIM = (0.0, 0.4, 0.5, 0.5)
+# green - spliced silhouette APPLY will build (AS-AM16)
+_OUTER_PREVIEW_COLOR = (0.2, 1.0, 0.5, 0.95)
 _INNER_BASE = (0.2, 1.0, 0.4, 0.85)
 _INNER_DIM = (0.1, 0.5, 0.2, 0.5)
 _STEINER_COLOR = (1.0, 0.3, 0.3, 0.7)
@@ -55,6 +57,7 @@ class OverlayHandles(TypedDict):
     does not draw that primitive."""
 
     outer: object | None
+    outer_preview: object | None  # Stage 2 spliced silhouette preview (AS-AM16)
     inner: object | None
     steiners: object | None
     triangulation: object | None  # SIMPLE-mode triangulation preview wireframe (AS-AM15)
@@ -197,6 +200,7 @@ def register_overlay(
     """
     handles: OverlayHandles = {
         "outer": None,
+        "outer_preview": None,
         "inner": None,
         "steiners": None,
         "triangulation": None,
@@ -232,7 +236,15 @@ def register_overlay(
             "POST_VIEW",
         )
     if stage == AuthoringStage.USER_OUTER:
-        # Stage 2: outer strokes only (cut = red, AS-AM17).
+        # Stage 2: outer strokes only (cut = red, AS-AM17). The spliced-outer
+        # preview (AS-AM16) holds the live output.outer_preview list by
+        # reference so the operator can update it in-place after each edit.
+        handles["outer_preview"] = bpy.types.SpaceView3D.draw_handler_add(
+            _draw_polyline,
+            (output.outer_preview, _OUTER_PREVIEW_COLOR, _LINE_WIDTH),
+            "WINDOW",
+            "POST_VIEW",
+        )
         _register_interactive_handlers(
             handles,
             user_outer_strokes,
@@ -240,6 +252,7 @@ def register_overlay(
             stroke_raw_points_ref,
             tooltip_mouse_ref,
             tooltip_text_ref,
+            live_preview_ref=live_preview_ref,
             tooltip_color_ref=tooltip_color_ref,
             delete_hover_ref=delete_hover_ref,
         )
@@ -304,6 +317,7 @@ def unregister_overlay(handles: OverlayHandles) -> None:
     """No-op-safe cleanup; tolerates partial registration."""
     for key in (
         "outer",
+        "outer_preview",
         "inner",
         "steiners",
         "triangulation",
@@ -565,6 +579,8 @@ def _draw_live_preview(state: dict[str, object]) -> None:
       points: list   - placed verts (pen) or sampled path (free-draw), WORLD XZ
       cursor: tuple  - live mouse WORLD XZ for the pen rubber-band, or None
       mode:   str    - "pen" (rubber-band) or "free" (path only)
+      subdivisions: int - ghost subdivision verts to preview on the rubber-band
+      axis:   str    - active axis lock ("", "x", "z"); cursor is pre-snapped
     """
     if not state.get("active"):
         return
@@ -587,10 +603,25 @@ def _draw_live_preview(state: dict[str, object]) -> None:
         cursor = cast("tuple[float, float] | None", state.get("cursor"))
         if state.get("mode") == "pen" and cursor is not None:
             cursor_coord = (cursor[0], 0.0, cursor[1])
+            dim = (color[0], color[1], color[2], _LIVE_RUBBER_ALPHA)
             rubber = batch_for_shader(shader, "LINES", {"pos": [coords[-1], cursor_coord]})
-            shader.uniform_float("color", (color[0], color[1], color[2], _LIVE_RUBBER_ALPHA))
+            shader.uniform_float("color", dim)
             gpu.state.line_width_set(1.5)
             rubber.draw(shader)
+            # AS-AM16: ghost dots for the subdivisions that will be baked into
+            # the segment (cursor is already axis-locked by the operator, so the
+            # rubber-band doubles as the X/Z guide line).
+            subdiv = int(cast("int", state.get("subdivisions") or 0))
+            if subdiv > 0:
+                from ...automesh.stroke_geometry import subdivide_polyline
+
+                ghosts = subdivide_polyline([pts[-1], cursor], subdiv)[1:-1]
+                if ghosts:
+                    ghost_coords = [(g[0], 0.0, g[1]) for g in ghosts]
+                    gbatch = batch_for_shader(shader, "POINTS", {"pos": ghost_coords})
+                    shader.uniform_float("color", dim)
+                    gpu.state.point_size_set(_LIVE_VERT_SIZE * 0.6)
+                    gbatch.draw(shader)
     finally:
         gpu.state.point_size_set(1.0)
         gpu.state.line_width_set(1.0)

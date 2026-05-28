@@ -326,6 +326,27 @@ def _split_outer_strokes(
     return extends, cuts
 
 
+def compute_outer_preview(output: StageOutput, params: StageParams) -> list[Point2D]:
+    """World-XZ spliced outer contour after Stage 2 extend strokes (AS-AM16).
+
+    Returns the silhouette APPLY will actually build (extends spliced in,
+    resampled to contour_vertices) so the artist previews their edits before
+    committing. Returns ``[]`` when there are no extend strokes or the splice
+    is a no-op. Cut strokes carve corridor holes (not the contour), so they
+    do not change this preview.
+    """
+    from ...automesh.outer_splice import splice_extend_strokes
+
+    extends, _cuts = _split_outer_strokes(output.user_outer_strokes)
+    if not extends or len(output.outer) < 3:
+        return []
+    base = list(output.outer)
+    spliced = splice_extend_strokes(base, extends)
+    if spliced is base or len(spliced) < 3:
+        return []
+    return list(arc_length_resample(spliced, params.contour_vertices))
+
+
 def apply_mesh(
     obj: bpy.types.Object,
     image: bpy.types.Image,
