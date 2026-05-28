@@ -393,15 +393,15 @@ A second smoke after the AS-AM1..AS-AM10 work drove three more iterations, all m
 - **[SHIPPED `fb9d886`] Live in-progress preview** (AS-AM12). `_draw_live_preview` renders pen/free-draw verts + colored edges (blue fold / red cut) while drawing + a dimmed rubber-band to the cursor in pen mode. Supersedes the gray raw-stroke handler for Stage 4.
 - **[SHIPPED `9a1dd15`] CodeRabbit review batch** (productivity files): weight_transfer length guard, bind_mesh warn severity, sidecar_io serialization guard, contour raw_mask docstring, multi_mesh_bind test fixes.
 
-### Authoring UX polish - feat/automesh-authoring-ux-polish (IN FLIGHT)
+### Authoring UX polish - feat/automesh-authoring-ux-polish - SHIPPED on branch
 
-Deferred from PR #63 (AS-AM13) - cosmetic/incremental UX, not correctness blockers. Branch: `feat/automesh-authoring-ux-polish`.
+Deferred from PR #63 (AS-AM13) - cosmetic/incremental UX, not correctness blockers. Branch: `feat/automesh-authoring-ux-polish`. All 5 items shipped + validated (43 operator tests + 7/7 fixtures + 261 pure tests green).
 
-- **[ ] Statusbar hint parity with `quick_armature`** - replace the ad-hoc `_draw_statusbar_authoring` rows with the `_emit_chord_layout` pattern (native EVENT_*/MOUSE_* icons + per-stage modifier chords).
-- **[ ] Cursor tooltip parity** - swap the plain `blf.draw` tooltip for `draw_text_panel_2d` (colored + backgrounded, responsive), and add an explicit warning when the artist draws outside the predicted contour.
-- **[ ] Delete hover-highlight** - highlight the stroke under the cursor (Alt held) before the click removes it.
-- **[ ] Inflated contour preview** - Stage 2 shows the raw walker contour (drawn ~1 cell inside the sprite, inflating outward on APPLY). Show the final inflated contour during authoring so strokes snap to the real boundary.
-- **[ ] Stage 5 (`STEINER_PREVIEW`) clarity** - preview shows verts outside the inner loops but not the ones inside; the artist cannot tell what APPLY will create. Clarify the preview (render inside-loop verts too, or relabel).
+- **[x] Statusbar hint parity with `quick_armature`** - `_emit_authoring_chord_layout` renders per-stage gesture chords with native EVENT_*/MOUSE_* icons; `_STAGE_NAMES` trimmed to short titles. (`590f8ba`)
+- **[x] Cursor tooltip parity** - tooltip now uses `draw_text_panel_2d` (colored + backgrounded); flips to a red warning background when a Stage 4 fold/cut is aimed outside the silhouette. (`590f8ba`)
+- **[x] Delete hover-highlight** - the stroke under the cursor is highlighted (bright thick outline) while Alt is held, in Stage 2 + Stage 4, via a shared `_stroke_index_under_cursor` hit-test. (`4de4dac`)
+- **[x] Inflated contour preview** - `compute_outer` now dilates by `max(1, margin_pixels)` to match `build_automesh`, so the previewed silhouette is the real boundary instead of an inset that inflated on APPLY. (`01f712c`)
+- **[x] Stage 5 (`STEINER_PREVIEW`) clarity** - `compute_all_steiners` fills the full outer interior (matching `build_automesh` at the default `margin_pixels=0`) instead of clipping by the innermost modal erosion loop, so the silhouette center is no longer empty. (`23949e9`)
 
 ### Part B scope - SHIPPED on branch (PR pending review)
 
