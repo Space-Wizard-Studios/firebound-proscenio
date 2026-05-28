@@ -135,6 +135,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             "user_outer_strokes": None,
             "raw_stroke": None,
             "live_preview": None,
+            "delete_hover": None,
             "tooltip": None,
         }
         self._timer = None
@@ -180,6 +181,9 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         # Tooltip background color; flips to warn red when a Stage 4 fold/cut
         # gesture is aimed outside the silhouette (would clip/drop on APPLY).
         self._tooltip_color_ref: list[tuple[float, float, float, float]] = [_TOOLTIP_BG_NORMAL]
+        # Points of the stroke under the cursor while Alt is held (delete
+        # preview). Mutated in-place so the highlight draw handler stays valid.
+        self._delete_hover_points: list[tuple[float, float]] = []
 
         # Stage 2 (USER_OUTER) stroke capture state (parallel to Stage 4).
         self._outer_stroke_active: bool = False
@@ -249,6 +253,10 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             # Stage 2 is location-driven (outside = extend, a valid intent),
             # so the tooltip never warns here; keep the neutral background.
             self._tooltip_color_ref[0] = _TOOLTIP_BG_NORMAL
+            if event.alt:
+                self._update_delete_hover(context, event, self._user_outer_strokes)
+            else:
+                self._delete_hover_points.clear()
             _tag_redraw_view3d(context)
             if self._outer_stroke_active:
                 return self._outer_stroke_move(context, event)
@@ -390,31 +398,39 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             return False
         return not self._point_inside_outer(world_pt)
 
+    def _stage4_mousemove(self, context: bpy.types.Context, event: bpy.types.Event) -> set[str]:
+        """Update tooltip text/color, delete-hover, and pen rubber-band on move."""
+        self._tooltip_mouse_ref[0] = (event.mouse_region_x, event.mouse_region_y)
+        text = self._compute_stage4_tooltip_text(event)
+        # Warn when a fold/cut gesture is aimed outside the silhouette:
+        # those verts get clipped/dropped at APPLY (AS-AM1 filter).
+        warn = (
+            (event.shift or event.ctrl)
+            and not event.alt
+            and self._cursor_outside_outer(context, event)
+        )
+        if warn:
+            text += " - outside silhouette!"
+        self._tooltip_text_ref[0] = text
+        self._tooltip_color_ref[0] = _TOOLTIP_BG_WARN if warn else _TOOLTIP_BG_NORMAL
+        if event.alt:
+            self._update_delete_hover(context, event, self._user_strokes)
+        else:
+            self._delete_hover_points.clear()
+        if self._pen_active:
+            self._live_preview["cursor"] = _region_to_world_xz(context, event)
+        _tag_redraw_view3d(context)
+        if self._stroke_active:
+            return self._stroke_move(context, event)
+        return {"RUNNING_MODAL"}
+
     def _handle_user_steiners_event(
         self, context: bpy.types.Context, event: bpy.types.Event
     ) -> set[str] | None:
         """Dispatch Stage 4 (USER_STEINERS) event. Returns None when event
         was not consumed (modal falls through to TIMER + PASS_THROUGH)."""
         if event.type == "MOUSEMOVE":
-            self._tooltip_mouse_ref[0] = (event.mouse_region_x, event.mouse_region_y)
-            text = self._compute_stage4_tooltip_text(event)
-            # Warn when a fold/cut gesture is aimed outside the silhouette:
-            # those verts get clipped/dropped at APPLY (AS-AM1 filter).
-            warn = (
-                (event.shift or event.ctrl)
-                and not event.alt
-                and self._cursor_outside_outer(context, event)
-            )
-            if warn:
-                text += " - outside silhouette!"
-            self._tooltip_text_ref[0] = text
-            self._tooltip_color_ref[0] = _TOOLTIP_BG_WARN if warn else _TOOLTIP_BG_NORMAL
-            if self._pen_active:
-                self._live_preview["cursor"] = _region_to_world_xz(context, event)
-            _tag_redraw_view3d(context)
-            if self._stroke_active:
-                return self._stroke_move(context, event)
-            return {"RUNNING_MODAL"}
+            return self._stage4_mousemove(context, event)
         # Modifier RELEASE finalizes an in-progress pen polyline.
         if event.value == "RELEASE" and event.type in {
             "LEFT_SHIFT",
@@ -586,6 +602,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._user_outer_strokes = read_user_outer_strokes(obj)
             self._outer_stroke_active_ref[0] = False
             self._outer_stroke_raw_points.clear()
+            self._delete_hover_points.clear()
         elif next_stage == AuthoringStage.INNER_LOOPS:
             self._output.inner_loops = compute_inner_loops_for_stage(
                 obj, image, self._output.outer, params
@@ -600,6 +617,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._pen_points.clear()
             self._live_preview["active"] = False
             self._live_preview["cursor"] = None
+            self._delete_hover_points.clear()
         elif next_stage == AuthoringStage.STEINER_PREVIEW:
             picker = _resolve_picker(context)
             bone_segments = collect_bone_segments(picker) if picker is not None else []
@@ -654,6 +672,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._pen_points.clear()
             self._live_preview["active"] = False
             self._live_preview["cursor"] = None
+            self._delete_hover_points.clear()
         type(self)._current_stage_label = _STAGE_NAMES[self._stage]
         type(self)._current_stage = self._stage
         self._handles = refresh_overlay(
@@ -710,6 +729,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             "tooltip_mouse_ref": self._tooltip_mouse_ref,
             "tooltip_text_ref": self._tooltip_text_ref,
             "tooltip_color_ref": self._tooltip_color_ref,
+            "delete_hover_ref": self._delete_hover_points,
         }
 
     def _stage3_overlay_kwargs(self) -> dict[str, object]:
@@ -726,6 +746,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             "tooltip_mouse_ref": self._tooltip_mouse_ref,
             "tooltip_text_ref": self._tooltip_text_ref,
             "tooltip_color_ref": self._tooltip_color_ref,
+            "delete_hover_ref": self._delete_hover_points,
         }
 
     def _stage4plus_overlay_kwargs(self) -> dict[str, object]:
@@ -764,27 +785,47 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             return "Cut silhouette"
         return "Extend outer"
 
-    def _delete_stroke_at_mouse(self, context: bpy.types.Context, event: bpy.types.Event) -> None:
-        """Hit-test: remove stroke if any vert is within _STROKE_PICK_RADIUS_PX of mouse."""
+    def _stroke_index_under_cursor(
+        self, context: bpy.types.Context, event: bpy.types.Event, strokes: list[Stroke]
+    ) -> int | None:
+        """Index of the first stroke with a vert within the pick radius, or None.
+
+        The pick radius is a screen-space pixel distance (_STROKE_PICK_RADIUS_PX)
+        converted to world units at the cursor so picking feels consistent at
+        any zoom level."""
         mouse_world = _region_to_world_xz(context, event)
         if mouse_world is None:
-            return
+            return None
         near_world = _region_to_world_xz_offset(context, event, dx=self._STROKE_PICK_RADIUS_PX)
         if near_world is None:
-            return
-        pick_dist_world = (
-            (near_world[0] - mouse_world[0]) ** 2 + (near_world[1] - mouse_world[1]) ** 2
-        ) ** 0.5
-        pick_d2 = pick_dist_world * pick_dist_world
-        for idx, stroke in enumerate(self._user_strokes):
+            return None
+        pick_d2 = (near_world[0] - mouse_world[0]) ** 2 + (near_world[1] - mouse_world[1]) ** 2
+        for idx, stroke in enumerate(strokes):
             for pt in stroke["points"]:
                 d2 = (pt[0] - mouse_world[0]) ** 2 + (pt[1] - mouse_world[1]) ** 2
                 if d2 <= pick_d2:
-                    self._user_strokes.pop(idx)
-                    obj = context.active_object
-                    if obj is not None:
-                        write_user_strokes(obj, self._user_strokes)
-                    return
+                    return idx
+        return None
+
+    def _update_delete_hover(
+        self, context: bpy.types.Context, event: bpy.types.Event, strokes: list[Stroke]
+    ) -> None:
+        """Set the delete highlight to the stroke under the cursor, or clear it."""
+        self._delete_hover_points.clear()
+        idx = self._stroke_index_under_cursor(context, event, strokes)
+        if idx is not None:
+            self._delete_hover_points.extend(strokes[idx]["points"])
+
+    def _delete_stroke_at_mouse(self, context: bpy.types.Context, event: bpy.types.Event) -> None:
+        """Hit-test: remove stroke if any vert is within _STROKE_PICK_RADIUS_PX of mouse."""
+        idx = self._stroke_index_under_cursor(context, event, self._user_strokes)
+        if idx is None:
+            return
+        self._user_strokes.pop(idx)
+        self._delete_hover_points.clear()
+        obj = context.active_object
+        if obj is not None:
+            write_user_strokes(obj, self._user_strokes)
 
     def _resolve_interior_spacing(self, context: bpy.types.Context) -> float:
         """Return the interior_spacing param from scene props (same source as _snapshot_params)."""

@@ -37,6 +37,9 @@ _DOT_SIZE_STEINER = 4.0
 _DOT_SIZE_STROKE_VERT = 6.0
 _LIVE_VERT_SIZE = 7.0  # in-progress pen/free-draw verts (slightly larger than committed)
 _LIVE_RUBBER_ALPHA = 0.5  # dimmed rubber-band segment to cursor (pen mode)
+_DELETE_HOVER_COLOR = (1.0, 1.0, 1.0, 0.95)  # bright highlight on the stroke Alt+click removes
+_DELETE_HOVER_VERT_SIZE = 10.0
+_DELETE_HOVER_LINE_WIDTH = 3.0
 
 # Tooltip (POST_PIXEL) draw constants. Rendered via draw_text_panel_2d
 # (colored + backgrounded) for parity with quick_armature's cursor hint.
@@ -58,6 +61,7 @@ class OverlayHandles(TypedDict):
     user_outer_strokes: object | None  # Stage 2 outer strokes (chunk-remove)
     raw_stroke: object | None
     live_preview: object | None  # Stage 4 in-progress pen/free-draw (colored verts+edges)
+    delete_hover: object | None  # highlight on the stroke under the cursor while Alt held
     tooltip: object | None  # POST_PIXEL intent text; Stage 2 + Stage 4 only
 
 
@@ -105,6 +109,7 @@ def _register_interactive_handlers(
     stage_context: str = "interior",
     live_preview_ref: dict[str, object] | None = None,
     tooltip_color_ref: list[tuple[float, float, float, float]] | None = None,
+    delete_hover_ref: list[tuple[float, float]] | None = None,
 ) -> None:
     """Register draw handlers for interactive stages (USER_OUTER, USER_STEINERS).
 
@@ -142,6 +147,13 @@ def _register_interactive_handlers(
             "WINDOW",
             "POST_VIEW",
         )
+    if delete_hover_ref is not None:
+        handles["delete_hover"] = bpy.types.SpaceView3D.draw_handler_add(
+            _draw_delete_hover,
+            (delete_hover_ref,),
+            "WINDOW",
+            "POST_VIEW",
+        )
     if tooltip_mouse_ref is not None and tooltip_text_ref is not None:
         handles["tooltip"] = bpy.types.SpaceView3D.draw_handler_add(
             _draw_tooltip,
@@ -162,6 +174,7 @@ def register_overlay(
     tooltip_text_ref: list[str] | None = None,
     live_preview_ref: dict[str, object] | None = None,
     tooltip_color_ref: list[tuple[float, float, float, float]] | None = None,
+    delete_hover_ref: list[tuple[float, float]] | None = None,
 ) -> OverlayHandles:
     """Add POST_VIEW draw handlers per stage's overlay set.
 
@@ -193,6 +206,7 @@ def register_overlay(
         "user_outer_strokes": None,
         "raw_stroke": None,
         "live_preview": None,
+        "delete_hover": None,
         "tooltip": None,
     }
     if stage >= AuthoringStage.OUTER and output.outer:
@@ -229,6 +243,7 @@ def register_overlay(
             tooltip_text_ref,
             stage_context="outer",
             tooltip_color_ref=tooltip_color_ref,
+            delete_hover_ref=delete_hover_ref,
         )
     elif stage == AuthoringStage.USER_STEINERS:
         # Stage 4: interior strokes (red cut), plus outer strokes kept visible
@@ -244,6 +259,7 @@ def register_overlay(
             stage_context="interior",
             live_preview_ref=live_preview_ref,
             tooltip_color_ref=tooltip_color_ref,
+            delete_hover_ref=delete_hover_ref,
         )
         if user_outer_strokes is not None:
             handles["user_outer_strokes"] = bpy.types.SpaceView3D.draw_handler_add(
@@ -289,6 +305,7 @@ def unregister_overlay(handles: OverlayHandles) -> None:
         "user_outer_strokes",
         "raw_stroke",
         "live_preview",
+        "delete_hover",
         "tooltip",
     ):
         handle = handles.get(key)
@@ -311,6 +328,7 @@ def refresh_overlay(
     tooltip_text_ref: list[str] | None = None,
     live_preview_ref: dict[str, object] | None = None,
     tooltip_color_ref: list[tuple[float, float, float, float]] | None = None,
+    delete_hover_ref: list[tuple[float, float]] | None = None,
 ) -> OverlayHandles:
     """Replace handlers when stage data changes (slider drag or stage advance)."""
     unregister_overlay(handles)
@@ -325,6 +343,7 @@ def refresh_overlay(
         tooltip_text_ref=tooltip_text_ref,
         live_preview_ref=live_preview_ref,
         tooltip_color_ref=tooltip_color_ref,
+        delete_hover_ref=delete_hover_ref,
     )
 
 
@@ -552,6 +571,33 @@ def _draw_live_preview(state: dict[str, object]) -> None:
             shader.uniform_float("color", (color[0], color[1], color[2], _LIVE_RUBBER_ALPHA))
             gpu.state.line_width_set(1.5)
             rubber.draw(shader)
+    finally:
+        gpu.state.point_size_set(1.0)
+        gpu.state.line_width_set(1.0)
+        gpu.state.blend_set("NONE")
+
+
+def _draw_delete_hover(points_ref: list[tuple[float, float]]) -> None:
+    """Highlight the stroke under the cursor that Alt+click would delete.
+
+    ``points_ref`` is mutated in-place by the operator (the hovered stroke's
+    points, empty when nothing is hovered) so this callback always reflects
+    the current hover target without re-registration.
+    """
+    if not points_ref:
+        return
+    coords = [(p[0], 0.0, p[1]) for p in points_ref]
+    shader = gpu.shader.from_builtin(_UNIFORM_COLOR_SHADER)
+    gpu.state.blend_set("ALPHA")
+    try:
+        shader.bind()
+        shader.uniform_float("color", _DELETE_HOVER_COLOR)
+        batch_v = batch_for_shader(shader, "POINTS", {"pos": coords})
+        gpu.state.point_size_set(_DELETE_HOVER_VERT_SIZE)
+        batch_v.draw(shader)
+        if len(coords) >= 2:
+            gpu.state.line_width_set(_DELETE_HOVER_LINE_WIDTH)
+            _draw_stroke_lines(shader, coords, _DELETE_HOVER_COLOR)
     finally:
         gpu.state.point_size_set(1.0)
         gpu.state.line_width_set(1.0)
