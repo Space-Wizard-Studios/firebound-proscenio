@@ -55,16 +55,17 @@ from ..core.skinning.authoring_stages import (  # type: ignore[import-not-found]
 )
 
 _TIMER_INTERVAL = 0.1
+# Cursor tooltip background colors (passed to the overlay via _tooltip_color_ref).
+_TOOLTIP_BG_NORMAL = (0.0, 0.0, 0.0, 0.6)
+_TOOLTIP_BG_WARN = (0.35, 0.05, 0.05, 0.85)  # red: gesture would clip/drop the stroke
+# Short stage titles; per-stage gesture chords render separately in the
+# statusbar via _emit_authoring_chord_layout, so these stay terse.
 _STAGE_NAMES = {
     AuthoringStage.OUTER: "1/6 Outer contour",
-    AuthoringStage.USER_OUTER: (
-        "2/6 User outer edits (LMB drag in=cut / out=extend [T7] / Alt+click=delete)"
-    ),
+    AuthoringStage.USER_OUTER: "2/6 Edit silhouette",
     AuthoringStage.INNER_LOOPS: "3/6 Inner loops",
-    AuthoringStage.USER_STEINERS: (
-        "4/6 User verts (click=vert / Shift=fold / Ctrl=cut / Alt=delete)"
-    ),
-    AuthoringStage.STEINER_PREVIEW: "5/6 Steiner preview",
+    AuthoringStage.USER_STEINERS: "4/6 Interior detail",
+    AuthoringStage.STEINER_PREVIEW: "5/6 Vertex preview",
     AuthoringStage.APPLY: "6/6 Apply",
 }
 
@@ -97,6 +98,8 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
     _timer: bpy.types.Timer | None
     _statusbar_appended: bool = False
     _current_stage_label: str = _STAGE_NAMES[AuthoringStage.OUTER]
+    # Read by the module-level statusbar draw callback to pick per-stage chords.
+    _current_stage: AuthoringStage = AuthoringStage.OUTER
 
     @classmethod
     def poll(cls, context: bpy.types.Context) -> bool:
@@ -174,6 +177,9 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         # without needing re-registration on every MOUSEMOVE.
         self._tooltip_mouse_ref: list[tuple[int, int]] = [(-1, -1)]
         self._tooltip_text_ref: list[str] = [""]
+        # Tooltip background color; flips to warn red when a Stage 4 fold/cut
+        # gesture is aimed outside the silhouette (would clip/drop on APPLY).
+        self._tooltip_color_ref: list[tuple[float, float, float, float]] = [_TOOLTIP_BG_NORMAL]
 
         # Stage 2 (USER_OUTER) stroke capture state (parallel to Stage 4).
         self._outer_stroke_active: bool = False
@@ -191,6 +197,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._output.outer = compute_outer(obj, image, params)
             self._handles = register_overlay(self._stage, self._output)
             type(self)._current_stage_label = _STAGE_NAMES[self._stage]
+            type(self)._current_stage = self._stage
             self._timer = context.window_manager.event_timer_add(
                 _TIMER_INTERVAL, window=context.window
             )
@@ -239,6 +246,9 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         if event.type == "MOUSEMOVE":
             self._tooltip_mouse_ref[0] = (event.mouse_region_x, event.mouse_region_y)
             self._tooltip_text_ref[0] = self._compute_stage2_tooltip_text(context, event)
+            # Stage 2 is location-driven (outside = extend, a valid intent),
+            # so the tooltip never warns here; keep the neutral background.
+            self._tooltip_color_ref[0] = _TOOLTIP_BG_NORMAL
             _tag_redraw_view3d(context)
             if self._outer_stroke_active:
                 return self._outer_stroke_move(context, event)
@@ -370,6 +380,16 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             return False
         return bool(point_in_polygon(point_world_xz, self._output.outer))
 
+    def _cursor_outside_outer(self, context: bpy.types.Context, event: bpy.types.Event) -> bool:
+        """True when the cursor projects to a point outside the outer contour.
+
+        Used to warn that a Stage 4 fold/cut gesture would be clipped. A
+        failed projection counts as not-outside (no false warning)."""
+        world_pt = _region_to_world_xz(context, event)
+        if world_pt is None:
+            return False
+        return not self._point_inside_outer(world_pt)
+
     def _handle_user_steiners_event(
         self, context: bpy.types.Context, event: bpy.types.Event
     ) -> set[str] | None:
@@ -377,7 +397,18 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         was not consumed (modal falls through to TIMER + PASS_THROUGH)."""
         if event.type == "MOUSEMOVE":
             self._tooltip_mouse_ref[0] = (event.mouse_region_x, event.mouse_region_y)
-            self._tooltip_text_ref[0] = self._compute_stage4_tooltip_text(event)
+            text = self._compute_stage4_tooltip_text(event)
+            # Warn when a fold/cut gesture is aimed outside the silhouette:
+            # those verts get clipped/dropped at APPLY (AS-AM1 filter).
+            warn = (
+                (event.shift or event.ctrl)
+                and not event.alt
+                and self._cursor_outside_outer(context, event)
+            )
+            if warn:
+                text += " - outside silhouette!"
+            self._tooltip_text_ref[0] = text
+            self._tooltip_color_ref[0] = _TOOLTIP_BG_WARN if warn else _TOOLTIP_BG_NORMAL
             if self._pen_active:
                 self._live_preview["cursor"] = _region_to_world_xz(context, event)
             _tag_redraw_view3d(context)
@@ -605,6 +636,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             return self._finish(context, cancel=False)
         self._stage = next_stage
         type(self)._current_stage_label = _STAGE_NAMES[self._stage]
+        type(self)._current_stage = self._stage
         self._handles = refresh_overlay(
             self._handles, self._stage, self._output, **self._overlay_kwargs()
         )
@@ -623,6 +655,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._live_preview["active"] = False
             self._live_preview["cursor"] = None
         type(self)._current_stage_label = _STAGE_NAMES[self._stage]
+        type(self)._current_stage = self._stage
         self._handles = refresh_overlay(
             self._handles, self._stage, self._output, **self._overlay_kwargs()
         )
@@ -676,6 +709,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             "stroke_raw_points_ref": self._outer_stroke_raw_points,
             "tooltip_mouse_ref": self._tooltip_mouse_ref,
             "tooltip_text_ref": self._tooltip_text_ref,
+            "tooltip_color_ref": self._tooltip_color_ref,
         }
 
     def _stage3_overlay_kwargs(self) -> dict[str, object]:
@@ -691,6 +725,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             "live_preview_ref": self._live_preview,
             "tooltip_mouse_ref": self._tooltip_mouse_ref,
             "tooltip_text_ref": self._tooltip_text_ref,
+            "tooltip_color_ref": self._tooltip_color_ref,
         }
 
     def _stage4plus_overlay_kwargs(self) -> dict[str, object]:
@@ -877,20 +912,37 @@ def _region_to_world_xz_offset(
     return (hit.x, hit.z)
 
 
+def _chord(layout: bpy.types.UILayout, *parts: tuple[str, str]) -> None:
+    """Emit one aligned chord row. Each part is (icon, text); an empty
+    icon prints text only, an empty text prints the icon only. Mirrors
+    quick_armature._emit_chord_layout so the hint matches Blender's own
+    modal status bars (knife / loop cut)."""
+    row = layout.row(align=True)
+    for icon, text in parts:
+        row.label(text=text, icon=icon or "NONE")
+
+
+def _emit_authoring_chord_layout(layout: bpy.types.UILayout, stage: AuthoringStage) -> None:
+    """Render per-stage gesture chords with native EVENT_*/MOUSE_* icons."""
+    _chord(layout, ("MOD_REMESH", f"Automesh: {_STAGE_NAMES[stage]}"))
+    if stage == AuthoringStage.USER_OUTER:
+        _chord(layout, ("MOUSE_LMB_DRAG", "out=extend / in=cut"))
+        _chord(layout, ("EVENT_ALT", "+"), ("MOUSE_LMB", "delete"))
+        _chord(layout, ("EVENT_CTRL", "+"), ("EVENT_Z", "undo"))
+    elif stage == AuthoringStage.USER_STEINERS:
+        _chord(layout, ("MOUSE_LMB", "vert"))
+        _chord(layout, ("EVENT_SHIFT", "+"), ("MOUSE_LMB", "fold (click=pen / drag=draw)"))
+        _chord(layout, ("EVENT_CTRL", "+"), ("MOUSE_LMB", "cut (click=pen / drag=draw)"))
+        _chord(layout, ("EVENT_ALT", "+"), ("MOUSE_LMB", "delete"))
+        _chord(layout, ("EVENT_CTRL", "+"), ("EVENT_Z", "undo"))
+    _chord(layout, ("EVENT_RETURN", "next"))
+    _chord(layout, ("EVENT_BACKSPACE", "back"))
+    _chord(layout, ("EVENT_ESC", "cancel"))
+
+
 def _draw_statusbar_authoring(self: bpy.types.Header, _context: bpy.types.Context) -> None:
-    layout = self.layout
-    row = layout.row(align=True)
-    row.label(text="", icon="MOD_REMESH")
-    row.label(text=f"Automesh Authoring: {PROSCENIO_OT_automesh_authoring._current_stage_label}")
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_RETURN")
-    row.label(text="next")
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_BACKSPACE")
-    row.label(text="back")
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_ESC")
-    row.label(text="cancel")
+    _emit_authoring_chord_layout(self.layout, PROSCENIO_OT_automesh_authoring._current_stage)
+    self.layout.separator_spacer()
 
 
 def _tag_redraw_view3d(context: bpy.types.Context) -> None:

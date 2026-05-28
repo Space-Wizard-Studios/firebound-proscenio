@@ -13,12 +13,12 @@ from __future__ import annotations
 import contextlib
 from typing import TypedDict, cast
 
-import blf
 import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
 from ...skinning.authoring_stages import AuthoringStage, StageOutput, Stroke
+from ..modal_overlay import draw_text_panel_2d
 
 _UNIFORM_COLOR_SHADER = "UNIFORM_COLOR"
 _OUTER_COLOR = (0.0, 0.8, 1.0, 0.9)
@@ -38,13 +38,12 @@ _DOT_SIZE_STROKE_VERT = 6.0
 _LIVE_VERT_SIZE = 7.0  # in-progress pen/free-draw verts (slightly larger than committed)
 _LIVE_RUBBER_ALPHA = 0.5  # dimmed rubber-band segment to cursor (pen mode)
 
-# Tooltip (POST_PIXEL) draw constants
-_TOOLTIP_FONT_ID = 0  # default blf font
-_TOOLTIP_FONT_SIZE = 11
-_TOOLTIP_OFFSET_X = 15  # px right of mouse
-_TOOLTIP_OFFSET_Y = -15  # px below mouse (viewport Y is bottom-up)
-_TOOLTIP_COLOR = (1.0, 1.0, 1.0, 1.0)
-_TOOLTIP_SHADOW_COLOR = (0.0, 0.0, 0.0, 0.8)
+# Tooltip (POST_PIXEL) draw constants. Rendered via draw_text_panel_2d
+# (colored + backgrounded) for parity with quick_armature's cursor hint.
+_TOOLTIP_TEXT_SIZE = 11
+_TOOLTIP_OFFSET = (15, 15)  # px right + up of the cursor
+_TOOLTIP_TEXT_COLOR = (1.0, 1.0, 1.0, 1.0)
+_TOOLTIP_BG_DEFAULT = (0.0, 0.0, 0.0, 0.6)
 
 
 class OverlayHandles(TypedDict):
@@ -65,31 +64,35 @@ class OverlayHandles(TypedDict):
 def _draw_tooltip(
     mouse_pos_ref: list[tuple[int, int]],
     text_ref: list[str],
+    color_ref: list[tuple[float, float, float, float]],
 ) -> None:
-    """POST_PIXEL draw handler: render intent text near mouse cursor.
+    """POST_PIXEL draw handler: colored + backgrounded intent text near cursor.
 
-    Both args are single-element lists so the operator can mutate them
-    without re-registering this handler (same pattern as _stroke_raw_points /
-    _stroke_active_ref). Nothing is drawn when mouse is outside the region
-    (mouse_region_x < 0) or when text is empty.
+    All args are single-element lists the operator mutates in-place so this
+    handler always reads current state without re-registration. ``color_ref``
+    carries the background color (operator sets a red warning bg when the
+    cursor is in a position that would clip/drop the stroke). Nothing is drawn
+    when the mouse is outside the region or text is empty.
     """
-    if not text_ref or not text_ref[0]:
-        return
-    if not mouse_pos_ref:
+    if not text_ref or not text_ref[0] or not mouse_pos_ref:
         return
     mx, my = mouse_pos_ref[0]
     if mx < 0 or my < 0:
         return
-    text = text_ref[0]
-    blf.size(_TOOLTIP_FONT_ID, _TOOLTIP_FONT_SIZE)
-    # Shadow pass (offset 1 px down-right for legibility on any bg)
-    blf.color(_TOOLTIP_FONT_ID, *_TOOLTIP_SHADOW_COLOR)
-    blf.position(_TOOLTIP_FONT_ID, mx + _TOOLTIP_OFFSET_X + 1, my + _TOOLTIP_OFFSET_Y - 1, 0)
-    blf.draw(_TOOLTIP_FONT_ID, text)
-    # White text on top
-    blf.color(_TOOLTIP_FONT_ID, *_TOOLTIP_COLOR)
-    blf.position(_TOOLTIP_FONT_ID, mx + _TOOLTIP_OFFSET_X, my + _TOOLTIP_OFFSET_Y, 0)
-    blf.draw(_TOOLTIP_FONT_ID, text)
+    region = bpy.context.region
+    if region is None:
+        return
+    bg = color_ref[0] if color_ref else _TOOLTIP_BG_DEFAULT
+    draw_text_panel_2d(
+        (text_ref[0],),
+        region_width=region.width,
+        region_height=region.height,
+        text_size=_TOOLTIP_TEXT_SIZE,
+        padding=5,
+        bg_color=bg,
+        text_color=_TOOLTIP_TEXT_COLOR,
+        origin_override=(mx + _TOOLTIP_OFFSET[0], my + _TOOLTIP_OFFSET[1]),
+    )
 
 
 def _register_interactive_handlers(
@@ -101,6 +104,7 @@ def _register_interactive_handlers(
     tooltip_text_ref: list[str] | None,
     stage_context: str = "interior",
     live_preview_ref: dict[str, object] | None = None,
+    tooltip_color_ref: list[tuple[float, float, float, float]] | None = None,
 ) -> None:
     """Register draw handlers for interactive stages (USER_OUTER, USER_STEINERS).
 
@@ -141,7 +145,7 @@ def _register_interactive_handlers(
     if tooltip_mouse_ref is not None and tooltip_text_ref is not None:
         handles["tooltip"] = bpy.types.SpaceView3D.draw_handler_add(
             _draw_tooltip,
-            (tooltip_mouse_ref, tooltip_text_ref),
+            (tooltip_mouse_ref, tooltip_text_ref, tooltip_color_ref or [_TOOLTIP_BG_DEFAULT]),
             "WINDOW",
             "POST_PIXEL",
         )
@@ -157,6 +161,7 @@ def register_overlay(
     tooltip_mouse_ref: list[tuple[int, int]] | None = None,
     tooltip_text_ref: list[str] | None = None,
     live_preview_ref: dict[str, object] | None = None,
+    tooltip_color_ref: list[tuple[float, float, float, float]] | None = None,
 ) -> OverlayHandles:
     """Add POST_VIEW draw handlers per stage's overlay set.
 
@@ -223,6 +228,7 @@ def register_overlay(
             tooltip_mouse_ref,
             tooltip_text_ref,
             stage_context="outer",
+            tooltip_color_ref=tooltip_color_ref,
         )
     elif stage == AuthoringStage.USER_STEINERS:
         # Stage 4: interior strokes (red cut), plus outer strokes kept visible
@@ -237,6 +243,7 @@ def register_overlay(
             tooltip_text_ref,
             stage_context="interior",
             live_preview_ref=live_preview_ref,
+            tooltip_color_ref=tooltip_color_ref,
         )
         if user_outer_strokes is not None:
             handles["user_outer_strokes"] = bpy.types.SpaceView3D.draw_handler_add(
@@ -303,6 +310,7 @@ def refresh_overlay(
     tooltip_mouse_ref: list[tuple[int, int]] | None = None,
     tooltip_text_ref: list[str] | None = None,
     live_preview_ref: dict[str, object] | None = None,
+    tooltip_color_ref: list[tuple[float, float, float, float]] | None = None,
 ) -> OverlayHandles:
     """Replace handlers when stage data changes (slider drag or stage advance)."""
     unregister_overlay(handles)
@@ -316,6 +324,7 @@ def refresh_overlay(
         tooltip_mouse_ref=tooltip_mouse_ref,
         tooltip_text_ref=tooltip_text_ref,
         live_preview_ref=live_preview_ref,
+        tooltip_color_ref=tooltip_color_ref,
     )
 
 
