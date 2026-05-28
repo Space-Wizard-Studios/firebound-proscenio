@@ -364,7 +364,7 @@ Stage 3 stroke redesign + extra_edges CDT extension + mixed-flow auto-snapshot. 
 - **[SHIPPED] Stage 3 paradigm: clicks become strokes** (S1-S9). LMB drag captures raw mouse path, Chaikin 2-iter smooth, resample at `interior_spacing`, snap endpoints to outer contour verts within `interior_spacing * 1.5`, persist as `proscenio_user_strokes` JSON. Backward compat: drag < 5px = single Steiner (click behavior preserved). Ctrl+Z pops last stroke. Shift+LMB hit-tests and deletes containing stroke. Strokes reach `build_automesh` as `extra_steiners` (verts) + `extra_edges` (CDT constraint segments). GPU overlay draws committed strokes (blue verts + edges) + kind=point strokes (yellow dots) + in-progress raw path (light gray). Stage 4 preview also renders stroke edges so artist verifies before APPLY.
 - **[SHIPPED] Auto-snapshot from current vertex_groups state (mixed-flow fix - critical)** (M1/M2). When `obj["proscenio_weight_sidecar"]` absent before automesh regen AND `vertex_groups` non-empty AND armature set, build sidecar on-the-fly from current vgroup data via `snapshot_sidecar` (provenance=auto_seed). Closes critical gap where Ctrl+P Armature Auto Weights bind + automesh regen silently wiped weights (user-reported 2026-05-25).
 
-### Part C scope - IN FLIGHT (scope amendment 2026-05-27 post-smoke)
+### Part C scope - SHIPPED on branch (PR #63 MERGED 2026-05-28)
 
 Manual smoke on PR #63 (2026-05-27) revealed:
 
@@ -383,6 +383,25 @@ Adds 10 tasks (~970 LOC + ~18 tests):
 - (NEW) Stage 4 modifier scheme (LMB = fold-line, Shift = cut, Ctrl = delete - was Shift for delete)
 - (NEW) `StageParams.cut_width` slider (default `interior_spacing * 0.3`)
 - (NEW) Tooltip near mouse via `blf.draw` showing current intent per stage + modifier state
+
+### Second smoke + gesture redesign - SHIPPED in PR #63 (2026-05-28)
+
+A second smoke after the AS-AM1..AS-AM10 work drove three more iterations, all merged in PR #63. See design doc "Scope amendment 2026-05-28" (AS-AM7-REV2, AS-AM11..AS-AM13).
+
+- **[SHIPPED `b9283e2`] Cut = corridor hole + cut-to-alpha** (AS-AM7-REV2). The `split_edges` rip (AS-AM7-REV) produced jagged separation on triangle soup; replaced by a corridor lens routed through `holes_world` + the proven `delete_faces_inside_holes` prune. `cut_margin` default `0.04`. Cut strokes keep all samples and sever to the silhouette boundary when an endpoint lands in alpha.
+- **[SHIPPED `80cb50d`] Stage 4 gesture map redesign** (AS-AM11). plain click = point; Shift = fold-line; Ctrl = cut; Alt = delete. Shift/Ctrl each split into pen-tool (click = exact straight segments, finalize on modifier release, no resample) + free-draw (drag). Resolves the Shift=cut / delete reflex clash.
+- **[SHIPPED `fb9d886`] Live in-progress preview** (AS-AM12). `_draw_live_preview` renders pen/free-draw verts + colored edges (blue fold / red cut) while drawing + a dimmed rubber-band to the cursor in pen mode. Supersedes the gray raw-stroke handler for Stage 4.
+- **[SHIPPED `9a1dd15`] CodeRabbit review batch** (productivity files): weight_transfer length guard, bind_mesh warn severity, sidecar_io serialization guard, contour raw_mask docstring, multi_mesh_bind test fixes.
+
+### Authoring UX polish - feat/automesh-authoring-ux-polish (IN FLIGHT)
+
+Deferred from PR #63 (AS-AM13) - cosmetic/incremental UX, not correctness blockers. Branch: `feat/automesh-authoring-ux-polish`.
+
+- **[ ] Statusbar hint parity with `quick_armature`** - replace the ad-hoc `_draw_statusbar_authoring` rows with the `_emit_chord_layout` pattern (native EVENT_*/MOUSE_* icons + per-stage modifier chords).
+- **[ ] Cursor tooltip parity** - swap the plain `blf.draw` tooltip for `draw_text_panel_2d` (colored + backgrounded, responsive), and add an explicit warning when the artist draws outside the predicted contour.
+- **[ ] Delete hover-highlight** - highlight the stroke under the cursor (Alt held) before the click removes it.
+- **[ ] Inflated contour preview** - Stage 2 shows the raw walker contour (drawn ~1 cell inside the sprite, inflating outward on APPLY). Show the final inflated contour during authoring so strokes snap to the real boundary.
+- **[ ] Stage 5 (`STEINER_PREVIEW`) clarity** - preview shows verts outside the inner loops but not the ones inside; the artist cannot tell what APPLY will create. Clarify the preview (render inside-loop verts too, or relabel).
 
 ### Part B scope - SHIPPED on branch (PR pending review)
 
@@ -463,6 +482,7 @@ Items observed during paint-wave manual smoke that may be real bugs OR test-flow
 | post-merge (Wave 13.2-sidecar) | Wave 13.2-sidecar shipped - populated WeightSidecar + reproject across regen + restore operator + panel Snapshot sub-box | Materializes D6 differentiator (Spine / COA2 lose weights on regen; Proscenio survives via UV-anchor barycentric reproject) |
 | post-merge (Wave 13.2-paint) | Wave 13.2-paint shipped - Edit Weights modal + GPU provenance overlay + per-stroke user_paint flip + Skinning panel sub-box | Closes D6/D7/D8/D9/D10/D12/D14 - one-button entry to 2D-safe weight paint with provenance feedback the artist actually sees in the viewport |
 | post-merge (Wave 13.2-interactive-modal) | Wave 13.2-interactive-modal shipped - 5-stage modal preview of the automesh pipeline + click-placed user Steiners + sidecar reproject on APPLY | Closes "Interactive modal automesh authoring" TODO item; preview-only at APPLY (build_automesh extension follows once cleanup prereq lands); coexists with one-shot automesh_from_sprite |
+| PR #63 merged (2026-05-28) | Stroke redesign + productivity bundle shipped (Part A + B + C + second-smoke gesture redesign + live preview) | 6-stage modal with stroke/cut authoring, corridor-hole cut, pen+free-draw gestures, live colored preview. Remaining UX polish (AS-AM13) split to `feat/automesh-authoring-ux-polish` to keep #63 shippable |
 
 ## Out of scope (permanently)
 
