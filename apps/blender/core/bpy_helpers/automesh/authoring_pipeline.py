@@ -225,14 +225,20 @@ def compute_all_steiners(
     bone_segments comes from collect_bone_segments(picker_armature);
     elements are already ((head_x, head_z), (tail_x, tail_z)) per the
     existing helper (no extra unpacking needed).
+
+    The grid fills the FULL outer interior (no inner clip). The modal's
+    ``inner_loops`` are preview-only edge-loop guides (Stage 3), NOT the
+    annulus inner contour build_automesh clips by - that contour is driven
+    by margin_pixels (default 0 -> no clip, full fill). Clipping this preview
+    by the innermost erosion loop left the silhouette center empty, so the
+    artist could not tell that APPLY fills inside the loops too. Filling the
+    full interior matches build_automesh at the default margin_pixels=0.
+    ``inner_loops`` stays in the signature for the deferred build_automesh
+    extension that will honor them as CDT constraints (see TODO known gap).
     """
-    # Use the innermost loop as the annulus "inner" boundary so the
-    # uniform grid is clipped to the annulus shell; when no inner
-    # loops exist, fall back to filling the full outer interior.
-    inner_for_filter: list[Point2D] = inner_loops[-1] if inner_loops else []
     interior = interior_points_for_annulus(
         outer,
-        inner_for_filter,
+        [],
         params.interior_spacing,
         bone_segments=bone_segments,
         bone_density_radius=params.bone_radius if bone_segments else 0.0,
