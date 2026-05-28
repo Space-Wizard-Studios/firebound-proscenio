@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import traceback
-from typing import ClassVar
+from typing import ClassVar, Literal, cast
 
 import bpy
 
@@ -24,6 +24,7 @@ from ..core.bpy_helpers.automesh.authoring_pipeline import (  # type: ignore[imp
     compute_all_steiners,
     compute_inner_loops_for_stage,
     compute_outer,
+    compute_triangulation_preview,
     read_user_outer_strokes,
     read_user_strokes,
     write_user_outer_strokes,
@@ -58,16 +59,58 @@ _TIMER_INTERVAL = 0.1
 # Cursor tooltip background colors (passed to the overlay via _tooltip_color_ref).
 _TOOLTIP_BG_NORMAL = (0.0, 0.0, 0.0, 0.6)
 _TOOLTIP_BG_WARN = (0.35, 0.05, 0.05, 0.85)  # red: gesture would clip/drop the stroke
+# Modifier key event types. The cursor tooltip reflects the held modifier, so
+# it must refresh on these (not only on MOUSEMOVE) or a stationary cursor shows
+# stale intent text while Shift/Ctrl/Alt is tapped.
+_SHIFT_CTRL_KEYS = frozenset({"LEFT_SHIFT", "RIGHT_SHIFT", "LEFT_CTRL", "RIGHT_CTRL"})
+_MODIFIER_KEYS = _SHIFT_CTRL_KEYS | frozenset({"LEFT_ALT", "RIGHT_ALT"})
 # Short stage titles; per-stage gesture chords render separately in the
-# statusbar via _emit_authoring_chord_layout, so these stay terse.
-_STAGE_NAMES = {
-    AuthoringStage.OUTER: "1/6 Outer contour",
-    AuthoringStage.USER_OUTER: "2/6 Edit silhouette",
-    AuthoringStage.INNER_LOOPS: "3/6 Inner loops",
-    AuthoringStage.USER_STEINERS: "4/6 Interior detail",
-    AuthoringStage.STEINER_PREVIEW: "5/6 Vertex preview",
-    AuthoringStage.APPLY: "6/6 Apply",
+# statusbar via _emit_authoring_chord_layout, so these stay terse. The
+# "N/M" prefix is derived per active mode (AS-AM15) by _stage_label, so
+# these are base names only.
+_STAGE_BASE_NAMES = {
+    AuthoringStage.OUTER: "Outer contour",
+    AuthoringStage.USER_OUTER: "Edit silhouette",
+    AuthoringStage.INNER_LOOPS: "Inner loops",
+    AuthoringStage.USER_STEINERS: "Interior detail",
+    AuthoringStage.STEINER_PREVIEW: "Vertex preview",
+    AuthoringStage.APPLY: "Apply",
 }
+# AS-AM15: SIMPLE drops INNER_LOOPS and relabels STEINER_PREVIEW to the
+# real triangulation preview; DENSE keeps the full 6-stage pipeline.
+_SIMPLE_STAGE_ORDER = [
+    AuthoringStage.OUTER,
+    AuthoringStage.USER_OUTER,
+    AuthoringStage.USER_STEINERS,
+    AuthoringStage.STEINER_PREVIEW,
+    AuthoringStage.APPLY,
+]
+_DENSE_STAGE_ORDER = [
+    AuthoringStage.OUTER,
+    AuthoringStage.USER_OUTER,
+    AuthoringStage.INNER_LOOPS,
+    AuthoringStage.USER_STEINERS,
+    AuthoringStage.STEINER_PREVIEW,
+    AuthoringStage.APPLY,
+]
+
+
+def _stages_for_mode(mode: str) -> list[AuthoringStage]:
+    """Ordered stage list for the active interior mode (AS-AM15)."""
+    return list(_SIMPLE_STAGE_ORDER if mode == "SIMPLE" else _DENSE_STAGE_ORDER)
+
+
+def _stage_base_name(stage: AuthoringStage, mode: str) -> str:
+    if stage == AuthoringStage.STEINER_PREVIEW and mode == "SIMPLE":
+        return "Triangulation preview"
+    return _STAGE_BASE_NAMES[stage]
+
+
+def _stage_label(stage: AuthoringStage, mode: str) -> str:
+    """'N/M Name' label; N/M reflects the active mode's stage count."""
+    stages = _stages_for_mode(mode)
+    idx = stages.index(stage)
+    return f"{idx + 1}/{len(stages)} {_stage_base_name(stage, mode)}"
 
 
 class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
@@ -97,9 +140,11 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
     _last_params: StageParams | None
     _timer: bpy.types.Timer | None
     _statusbar_appended: bool = False
-    _current_stage_label: str = _STAGE_NAMES[AuthoringStage.OUTER]
+    _current_stage_label: str = _stage_label(AuthoringStage.OUTER, "SIMPLE")
     # Read by the module-level statusbar draw callback to pick per-stage chords.
     _current_stage: AuthoringStage = AuthoringStage.OUTER
+    # Active interior mode (AS-AM15), mirrored for the statusbar chord layout.
+    _current_interior_mode: str = "SIMPLE"
 
     @classmethod
     def poll(cls, context: bpy.types.Context) -> bool:
@@ -125,11 +170,16 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         params = _snapshot_params(context)
         self._last_params = params
         self._stage = AuthoringStage.OUTER
+        # AS-AM15: stage list depends on interior mode; navigation walks this
+        # ordered list by index instead of raw enum arithmetic.
+        self._interior_mode: str = params.interior_mode
+        self._active_stages: list[AuthoringStage] = _stages_for_mode(self._interior_mode)
         self._output = StageOutput()
         self._handles = {
             "outer": None,
             "inner": None,
             "steiners": None,
+            "triangulation": None,
             "user_dots": None,
             "user_strokes": None,
             "user_outer_strokes": None,
@@ -200,8 +250,9 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         try:
             self._output.outer = compute_outer(obj, image, params)
             self._handles = register_overlay(self._stage, self._output)
-            type(self)._current_stage_label = _STAGE_NAMES[self._stage]
+            type(self)._current_stage_label = _stage_label(self._stage, self._interior_mode)
             type(self)._current_stage = self._stage
+            type(self)._current_interior_mode = self._interior_mode
             self._timer = context.window_manager.event_timer_add(
                 _TIMER_INTERVAL, window=context.window
             )
@@ -234,6 +285,8 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             if event.type == "TIMER" and getattr(event, "timer", None) is self._timer:
                 current = _snapshot_params(context)
                 if current != self._last_params:
+                    if current.interior_mode != self._interior_mode:
+                        self._apply_interior_mode_change(context, current.interior_mode)
                     self._recompute_current_stage(context, current)
                     self._last_params = current
         except Exception:
@@ -248,40 +301,55 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         if event.type == "LEFTMOUSE" and event.value == "PRESS":
             return self._outer_stroke_press(context, event)
         if event.type == "MOUSEMOVE":
-            self._tooltip_mouse_ref[0] = (event.mouse_region_x, event.mouse_region_y)
-            self._tooltip_text_ref[0] = self._compute_stage2_tooltip_text(context, event)
-            # Stage 2 is location-driven (outside = extend, a valid intent),
-            # so the tooltip never warns here; keep the neutral background.
-            self._tooltip_color_ref[0] = _TOOLTIP_BG_NORMAL
-            if event.alt:
-                self._update_delete_hover(context, event, self._user_outer_strokes)
-            else:
-                self._delete_hover_points.clear()
-            _tag_redraw_view3d(context)
+            self._stage2_refresh_feedback(context, event)
             if self._outer_stroke_active:
                 return self._outer_stroke_move(context, event)
             return {"RUNNING_MODAL"}
+        if event.type in _MODIFIER_KEYS and event.value in {"PRESS", "RELEASE"}:
+            # Refresh the tooltip/hover so it reflects the held modifier even
+            # when the cursor is stationary (no MOUSEMOVE fires). Pass through
+            # so the bare modifier keeps its prior (non-consumed) semantics.
+            self._stage2_refresh_feedback(context, event)
+            return {"PASS_THROUGH"}
         if event.type == "LEFTMOUSE" and event.value == "RELEASE" and self._outer_stroke_active:
             return self._outer_stroke_release(context, event)
         if event.type == "Z" and event.ctrl and event.value == "PRESS":
             return self._outer_stroke_undo(context)
         return None
 
+    def _stage2_refresh_feedback(self, context: bpy.types.Context, event: bpy.types.Event) -> None:
+        """Update Stage 2 tooltip text + delete-hover from the current event.
+        Called on MOUSEMOVE and on modifier key press/release."""
+        self._tooltip_mouse_ref[0] = (event.mouse_region_x, event.mouse_region_y)
+        self._tooltip_text_ref[0] = self._compute_stage2_tooltip_text(context, event)
+        # Stage 2 intent is modifier-driven (AS-AM17), so the tooltip never
+        # warns on location; keep the neutral background.
+        self._tooltip_color_ref[0] = _TOOLTIP_BG_NORMAL
+        if event.alt:
+            self._update_delete_hover(context, event, self._user_outer_strokes)
+        else:
+            self._delete_hover_points.clear()
+        _tag_redraw_view3d(context)
+
     def _outer_stroke_press(self, context: bpy.types.Context, event: bpy.types.Event) -> set[str]:
+        # AS-AM17: Stage 2 is modifier-driven (unified with Stage 4):
+        # Shift = extend, Ctrl = cut, Alt = delete. A plain drag (no modifier)
+        # is a no-op so intent is never ambiguous.
         if event.alt:
             self._delete_outer_stroke_at_mouse(context, event)
             _tag_redraw_view3d(context)
+            return {"RUNNING_MODAL"}
+        if event.ctrl:
+            self._outer_stroke_intent = "cut"
+        elif event.shift:
+            self._outer_stroke_intent = "extend"
+        else:
             return {"RUNNING_MODAL"}
         self._outer_stroke_active = True
         self._outer_stroke_active_ref[0] = True
         self._outer_stroke_start_screen = (event.mouse_region_x, event.mouse_region_y)
         world_pt = _region_to_world_xz(context, event)
         self._outer_stroke_raw_points.clear()
-        # Intent decided by first mouse position: inside outer = cut, outside = extend.
-        if world_pt and self._point_inside_outer(world_pt):
-            self._outer_stroke_intent = "cut"
-        else:
-            self._outer_stroke_intent = "extend"
         if world_pt:
             self._outer_stroke_raw_points.append(world_pt)
         return {"RUNNING_MODAL"}
@@ -327,18 +395,9 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         resampled = resample_polyline(smoothed, spacing=spacing)
         if len(resampled) < 2:
             return
-        if self._outer_stroke_intent == "cut":
-            kind = "cut"
-        else:
-            # "extend" intent: detect whether any sample lies outside outer.
-            # If so, stroke crosses the border - warn artist. T7 implements
-            # the actual splice; T6 just persists with kind="stroke".
-            if any(not self._point_inside_outer(p) for p in resampled):
-                report_warn(
-                    self,
-                    "stroke clipped to silhouette (extend portion deferred to T7 splice)",
-                )
-            kind = "stroke"
+        # AS-AM17: intent comes from the modifier captured at PRESS, not from
+        # the stroke's location. cut -> kind="cut", extend -> kind="stroke".
+        kind = "cut" if self._outer_stroke_intent == "cut" else "stroke"
         self._user_outer_strokes.append({"kind": kind, "points": resampled})
 
     def _outer_stroke_undo(self, context: bpy.types.Context) -> set[str]:
@@ -400,6 +459,15 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
 
     def _stage4_mousemove(self, context: bpy.types.Context, event: bpy.types.Event) -> set[str]:
         """Update tooltip text/color, delete-hover, and pen rubber-band on move."""
+        self._stage4_refresh_feedback(context, event)
+        if self._stroke_active:
+            return self._stroke_move(context, event)
+        return {"RUNNING_MODAL"}
+
+    def _stage4_refresh_feedback(self, context: bpy.types.Context, event: bpy.types.Event) -> None:
+        """Update Stage 4 tooltip text/color, delete-hover, and pen rubber-band
+        from the current event. Called on MOUSEMOVE and on modifier key
+        press/release so the held modifier reflects with a stationary cursor."""
         self._tooltip_mouse_ref[0] = (event.mouse_region_x, event.mouse_region_y)
         text = self._compute_stage4_tooltip_text(event)
         # Warn when a fold/cut gesture is aimed outside the silhouette:
@@ -420,9 +488,6 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         if self._pen_active:
             self._live_preview["cursor"] = _region_to_world_xz(context, event)
         _tag_redraw_view3d(context)
-        if self._stroke_active:
-            return self._stroke_move(context, event)
-        return {"RUNNING_MODAL"}
 
     def _handle_user_steiners_event(
         self, context: bpy.types.Context, event: bpy.types.Event
@@ -431,16 +496,15 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         was not consumed (modal falls through to TIMER + PASS_THROUGH)."""
         if event.type == "MOUSEMOVE":
             return self._stage4_mousemove(context, event)
-        # Modifier RELEASE finalizes an in-progress pen polyline.
-        if event.value == "RELEASE" and event.type in {
-            "LEFT_SHIFT",
-            "RIGHT_SHIFT",
-            "LEFT_CTRL",
-            "RIGHT_CTRL",
-        }:
-            if self._pen_active:
+        if event.type in _MODIFIER_KEYS and event.value in {"PRESS", "RELEASE"}:
+            # Modifier RELEASE finalizes an in-progress pen polyline (shift/ctrl).
+            if event.value == "RELEASE" and event.type in _SHIFT_CTRL_KEYS and self._pen_active:
                 return self._finalize_pen(context)
-            return None
+            # Otherwise refresh the tooltip/hover so the held modifier reflects
+            # even when the cursor is stationary (no MOUSEMOVE fires). Pass
+            # through so the bare modifier keeps its prior semantics.
+            self._stage4_refresh_feedback(context, event)
+            return {"PASS_THROUGH"}
         if event.type == "LEFTMOUSE" and event.value == "PRESS":
             return self._lmb_press(context, event)
         if event.type == "LEFTMOUSE" and event.value == "RELEASE" and self._stroke_active:
@@ -590,14 +654,15 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def _advance(self, context: bpy.types.Context) -> set[str]:
-        if self._stage == AuthoringStage.APPLY:
+        idx = self._active_stages.index(self._stage)
+        if idx >= len(self._active_stages) - 1:  # already on APPLY (last stage)
             return {"PASS_THROUGH"}
         obj = context.active_object
         image = _resolve_image(obj) if obj is not None else None
         if obj is None or image is None:
             return self._finish(context, cancel=True)
         params = _snapshot_params(context)
-        next_stage = AuthoringStage(self._stage + 1)
+        next_stage = self._active_stages[idx + 1]
         if next_stage == AuthoringStage.USER_OUTER:
             self._user_outer_strokes = read_user_outer_strokes(obj)
             self._outer_stroke_active_ref[0] = False
@@ -619,15 +684,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._live_preview["cursor"] = None
             self._delete_hover_points.clear()
         elif next_stage == AuthoringStage.STEINER_PREVIEW:
-            picker = _resolve_picker(context)
-            bone_segments = collect_bone_segments(picker) if picker is not None else []
-            self._output.all_steiners = compute_all_steiners(
-                self._output.outer,
-                self._output.inner_loops,
-                self._output.user_steiners,
-                bone_segments,
-                params,
-            )
+            self._refresh_steiner_preview(context, obj, image, params)
         elif next_stage == AuthoringStage.APPLY:
             picker = _resolve_picker(context)
             self._output.user_outer_strokes = self._user_outer_strokes
@@ -653,18 +710,39 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             )
             return self._finish(context, cancel=False)
         self._stage = next_stage
-        type(self)._current_stage_label = _STAGE_NAMES[self._stage]
+        type(self)._current_stage_label = _stage_label(self._stage, self._interior_mode)
         type(self)._current_stage = self._stage
+        self._report_stage_entry(next_stage)
         self._handles = refresh_overlay(
             self._handles, self._stage, self._output, **self._overlay_kwargs()
         )
         _tag_redraw_view3d(context)
         return {"PASS_THROUGH"}
 
+    def _report_stage_entry(self, stage: AuthoringStage) -> None:
+        """Surface a one-line result for the stage just entered so the artist
+        gets feedback on ENTER without having to move the mouse (APPLY reports
+        its own verts/faces summary + finishes, so it is handled separately)."""
+        if stage == AuthoringStage.USER_OUTER:
+            msg = f"{len(self._output.outer)} outer verts"
+        elif stage == AuthoringStage.INNER_LOOPS:
+            msg = f"{len(self._output.inner_loops)} inner loop(s)"
+        elif stage == AuthoringStage.USER_STEINERS:
+            msg = f"{len(self._user_strokes)} interior stroke(s)"
+        elif stage == AuthoringStage.STEINER_PREVIEW:
+            if self._interior_mode == "SIMPLE":
+                msg = f"{len(self._output.triangulation_preview)} triangulation edge(s)"
+            else:
+                msg = f"{len(self._output.all_steiners)} interior vert(s)"
+        else:
+            return
+        report_info(self, f"{_stage_label(stage, self._interior_mode)}: {msg}")
+
     def _retreat(self, context: bpy.types.Context) -> set[str]:
-        if self._stage == AuthoringStage.OUTER:
+        idx = self._active_stages.index(self._stage)
+        if idx == 0:
             return {"PASS_THROUGH"}
-        self._stage = AuthoringStage(self._stage - 1)
+        self._stage = self._active_stages[idx - 1]
         if self._stage == AuthoringStage.USER_STEINERS:
             # Drop any abandoned in-progress pen so a stale live preview is
             # not drawn when the artist steps back into the stage.
@@ -673,13 +751,55 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._live_preview["active"] = False
             self._live_preview["cursor"] = None
             self._delete_hover_points.clear()
-        type(self)._current_stage_label = _STAGE_NAMES[self._stage]
+        type(self)._current_stage_label = _stage_label(self._stage, self._interior_mode)
         type(self)._current_stage = self._stage
+        self._report_stage_entry(self._stage)
         self._handles = refresh_overlay(
             self._handles, self._stage, self._output, **self._overlay_kwargs()
         )
         _tag_redraw_view3d(context)
         return {"PASS_THROUGH"}
+
+    def _apply_interior_mode_change(self, context: bpy.types.Context, mode: str) -> None:
+        """Rebuild the active stage list when the interior mode flips mid-modal
+        (AS-AM15). If the current stage was dropped (INNER_LOOPS on flip to
+        SIMPLE), snap back to USER_OUTER so navigation stays consistent."""
+        self._interior_mode = mode
+        self._active_stages = _stages_for_mode(mode)
+        if self._stage not in self._active_stages:
+            self._stage = AuthoringStage.USER_OUTER
+        type(self)._current_stage_label = _stage_label(self._stage, self._interior_mode)
+        type(self)._current_stage = self._stage
+        type(self)._current_interior_mode = self._interior_mode
+
+    def _refresh_steiner_preview(
+        self,
+        context: bpy.types.Context,
+        obj: bpy.types.Object,
+        image: bpy.types.Image,
+        params: StageParams,
+    ) -> None:
+        """Stage 5 preview compute (AS-AM15). SIMPLE shows the real CDT
+        triangulation wireframe; DENSE shows the dense Steiner point cloud.
+        The two outputs are mutually exclusive so the overlay draws one."""
+        if self._interior_mode == "SIMPLE":
+            self._output.user_outer_strokes = self._user_outer_strokes
+            self._output.user_strokes = self._user_strokes
+            self._output.all_steiners = []
+            self._output.triangulation_preview = compute_triangulation_preview(
+                obj, image, self._output, params
+            )
+        else:
+            picker = _resolve_picker(context)
+            bone_segments = collect_bone_segments(picker) if picker is not None else []
+            self._output.triangulation_preview = []
+            self._output.all_steiners = compute_all_steiners(
+                self._output.outer,
+                self._output.inner_loops,
+                self._output.user_steiners,
+                bone_segments,
+                params,
+            )
 
     def _recompute_current_stage(self, context: bpy.types.Context, params: StageParams) -> None:
         obj = context.active_object
@@ -693,15 +813,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
                 obj, image, self._output.outer, params
             )
         elif self._stage == AuthoringStage.STEINER_PREVIEW:
-            picker = _resolve_picker(context)
-            bone_segments = collect_bone_segments(picker) if picker is not None else []
-            self._output.all_steiners = compute_all_steiners(
-                self._output.outer,
-                self._output.inner_loops,
-                self._output.user_steiners,
-                bone_segments,
-                params,
-            )
+            self._refresh_steiner_preview(context, obj, image, params)
         self._handles = refresh_overlay(
             self._handles, self._stage, self._output, **self._overlay_kwargs()
         )
@@ -718,9 +830,9 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
     def _stage2_overlay_kwargs(self) -> dict[str, object]:
         """Return keyword args for Stage 2 (USER_OUTER) live containers.
 
-        Passes outer stroke list via user_outer_strokes so register_overlay
-        applies stage_context="outer" (orange cut color). Raw-stroke and
-        tooltip refs included for in-progress preview and intent text.
+        Passes the outer stroke list via user_outer_strokes (cut = red,
+        AS-AM17). Raw-stroke and tooltip refs included for in-progress
+        preview and intent text.
         """
         return {
             "user_outer_strokes": self._user_outer_strokes,
@@ -775,15 +887,15 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
     def _compute_stage2_tooltip_text(
         self, context: bpy.types.Context, event: bpy.types.Event
     ) -> str:
-        """Return intent text for Stage 2 (USER_OUTER) based on modifier + mouse location."""
+        """Return intent text for Stage 2 (USER_OUTER) based on the modifier
+        held (AS-AM17 modifier-driven; no longer location-driven)."""
         if event.alt:
             return "Delete outer stroke (hover + click)"
-        world_pt = _region_to_world_xz(context, event)
-        if world_pt is None:
-            return ""
-        if self._point_inside_outer(world_pt):
-            return "Cut silhouette"
-        return "Extend outer"
+        if event.ctrl:
+            return "Cut silhouette (drag)"
+        if event.shift:
+            return "Extend outer (drag)"
+        return "Shift=Extend / Ctrl=Cut / Alt=Delete"
 
     def _stroke_index_under_cursor(
         self, context: bpy.types.Context, event: bpy.types.Event, strokes: list[Stroke]
@@ -870,6 +982,7 @@ def _snapshot_params(context: bpy.types.Context) -> StageParams:
         bone_radius=float(skinning.automesh_bone_radius),
         bone_factor=int(skinning.automesh_bone_factor),
         cut_margin=float(skinning.authoring_cut_margin),
+        interior_mode=cast(Literal["SIMPLE", "DENSE"], skinning.automesh_interior_mode),
     )
 
 
@@ -963,11 +1076,14 @@ def _chord(layout: bpy.types.UILayout, *parts: tuple[str, str]) -> None:
         row.label(text=text, icon=icon or "NONE")
 
 
-def _emit_authoring_chord_layout(layout: bpy.types.UILayout, stage: AuthoringStage) -> None:
+def _emit_authoring_chord_layout(
+    layout: bpy.types.UILayout, stage: AuthoringStage, mode: str
+) -> None:
     """Render per-stage gesture chords with native EVENT_*/MOUSE_* icons."""
-    _chord(layout, ("MOD_REMESH", f"Automesh: {_STAGE_NAMES[stage]}"))
+    _chord(layout, ("MOD_REMESH", f"Automesh: {_stage_label(stage, mode)}"))
     if stage == AuthoringStage.USER_OUTER:
-        _chord(layout, ("MOUSE_LMB_DRAG", "out=extend / in=cut"))
+        _chord(layout, ("EVENT_SHIFT", "+"), ("MOUSE_LMB_DRAG", "extend"))
+        _chord(layout, ("EVENT_CTRL", "+"), ("MOUSE_LMB_DRAG", "cut"))
         _chord(layout, ("EVENT_ALT", "+"), ("MOUSE_LMB", "delete"))
         _chord(layout, ("EVENT_CTRL", "+"), ("EVENT_Z", "undo"))
     elif stage == AuthoringStage.USER_STEINERS:
@@ -982,15 +1098,21 @@ def _emit_authoring_chord_layout(layout: bpy.types.UILayout, stage: AuthoringSta
 
 
 def _draw_statusbar_authoring(self: bpy.types.Header, _context: bpy.types.Context) -> None:
-    _emit_authoring_chord_layout(self.layout, PROSCENIO_OT_automesh_authoring._current_stage)
+    _emit_authoring_chord_layout(
+        self.layout,
+        PROSCENIO_OT_automesh_authoring._current_stage,
+        PROSCENIO_OT_automesh_authoring._current_interior_mode,
+    )
     self.layout.separator_spacer()
 
 
 def _tag_redraw_view3d(context: bpy.types.Context) -> None:
-    """Trigger a viewport repaint so GPU overlay updates land without
-    user interaction (zoom/pan). Iterates every VIEW_3D area in every
-    window since the modal may have been invoked from one but the user
-    may be looking at another."""
+    """Trigger a viewport + statusbar repaint so GPU overlay updates AND the
+    stage chord layout land without user interaction (zoom/pan/mouse move).
+    Iterates every VIEW_3D + STATUSBAR area in every window since the modal
+    may have been invoked from one but the user may be looking at another.
+    The statusbar reads class-level stage state, so a stage advance/retreat
+    must repaint it explicitly (it otherwise only refreshes on mouse move)."""
     wm = context.window_manager
     if wm is None:
         return
@@ -998,7 +1120,7 @@ def _tag_redraw_view3d(context: bpy.types.Context) -> None:
         if window.screen is None:
             continue
         for area in window.screen.areas:
-            if area.type == "VIEW_3D":
+            if area.type in {"VIEW_3D", "STATUSBAR"}:
                 area.tag_redraw()
 
 

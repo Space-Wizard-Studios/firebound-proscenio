@@ -348,6 +348,25 @@ def apply_mesh(
 
     bone_segments = collect_bone_segments(armature) if armature is not None else None
     prior_sidecar = maybe_pre_regen_snapshot(obj, armature) if armature is not None else None
+    counters = _build_authoring_mesh(obj, image, output, params, bone_segments)
+    if prior_sidecar is not None and armature is not None:
+        repro = maybe_post_regen_reproject(obj, armature, prior_sidecar)
+        counters["reprojected"] = repro["reprojected"]
+        counters["auto_seed"] = repro["auto_seed"]
+    return counters
+
+
+def _build_authoring_mesh(
+    obj: bpy.types.Object,
+    image: bpy.types.Image,
+    output: StageOutput,
+    params: StageParams,
+    bone_segments: list[BoneSegment2D] | None,
+) -> dict[str, int]:
+    """Assemble the CDT inputs + run build_automesh. Shared by apply_mesh
+    (which wraps it with the weight-sidecar reproject) and the SIMPLE
+    triangulation preview (which runs it on a throwaway obj copy). Does NOT
+    touch the weight sidecar, so it is safe to call without an armature."""
     world_scale = 1.0 / _resolve_pixels_per_unit(bpy.context)
     outer_world_raw = compute_outer(obj, image, params)
 
@@ -398,14 +417,49 @@ def apply_mesh(
         extra_steiners=extras_local if extras_local else None,
         extra_edges=extra_edges if extra_edges else None,
         cut_hole_loops=cut_hole_loops if cut_hole_loops else None,
+        interior_mode=params.interior_mode,
     )
     if stroke_verts_dropped > 0:
         counters["stroke_verts_dropped"] = stroke_verts_dropped
-    if prior_sidecar is not None and armature is not None:
-        repro = maybe_post_regen_reproject(obj, armature, prior_sidecar)
-        counters["reprojected"] = repro["reprojected"]
-        counters["auto_seed"] = repro["auto_seed"]
     return counters
+
+
+def compute_triangulation_preview(
+    obj: bpy.types.Object,
+    image: bpy.types.Image,
+    output: StageOutput,
+    params: StageParams,
+) -> list[tuple[Point2D, Point2D]]:
+    """SIMPLE-mode triangulation preview (AS-AM15).
+
+    Runs the real `build_automesh` on a throwaway copy of ``obj`` so the
+    artist sees the exact triangulation APPLY will produce - silhouette +
+    holes + fold/cut/steiner verts, no dense fill - without mutating the
+    source mesh. Returns the resulting mesh edges as WORLD XZ endpoint
+    pairs. Returns ``[]`` for DENSE (which keeps the dense Steiner-point
+    preview drawn from ``all_steiners`` instead).
+
+    Per OQ1, callers compute this on stage-enter + param-dirty and cache
+    the result rather than every TIMER tick (one CDT per refresh).
+    """
+    if params.interior_mode != "SIMPLE":
+        return []
+    temp_obj = obj.copy()
+    temp_obj.data = obj.data.copy()
+    temp_mesh = temp_obj.data
+    try:
+        _build_authoring_mesh(temp_obj, image, output, params, bone_segments=None)
+        matrix = temp_obj.matrix_world
+        verts = temp_mesh.vertices
+        edges_world: list[tuple[Point2D, Point2D]] = []
+        for edge in temp_mesh.edges:
+            a = matrix @ verts[edge.vertices[0]].co
+            b = matrix @ verts[edge.vertices[1]].co
+            edges_world.append(((a.x, a.z), (b.x, b.z)))
+        return edges_world
+    finally:
+        bpy.data.objects.remove(temp_obj, do_unlink=True)
+        bpy.data.meshes.remove(temp_mesh, do_unlink=True)
 
 
 def _resolve_pixels_per_unit(context: bpy.types.Context) -> float:

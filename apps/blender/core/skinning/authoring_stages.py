@@ -64,6 +64,7 @@ class StageParams:
     bone_radius: float
     bone_factor: int
     cut_margin: float = 0.04  # corridor-hole gap width in world units (T-REV5)
+    interior_mode: Literal["SIMPLE", "DENSE"] = "DENSE"  # AS-AM14
 
 
 @dataclass
@@ -80,3 +81,6 @@ class StageOutput:
     user_steiners: list[Point2D] = field(default_factory=list)
     user_strokes: list[Stroke] = field(default_factory=list)
     all_steiners: list[Point2D] = field(default_factory=list)
+    # AS-AM15: SIMPLE-mode triangulation preview - world-XZ edge endpoint
+    # pairs from the real CDT (the Spine "Generate" equivalent).
+    triangulation_preview: list[tuple[Point2D, Point2D]] = field(default_factory=list)

@@ -26,10 +26,11 @@ _OUTER_DIM = (0.0, 0.4, 0.5, 0.5)
 _INNER_BASE = (0.2, 1.0, 0.4, 0.85)
 _INNER_DIM = (0.1, 0.5, 0.2, 0.5)
 _STEINER_COLOR = (1.0, 0.3, 0.3, 0.7)
+_TRIANGULATION_COLOR = (0.2, 0.9, 0.9, 0.85)  # cyan - SIMPLE triangulation preview wireframe
+_TRIANGULATION_LINE_WIDTH = 1.5
 _USER_DOT_COLOR = (1.0, 1.0, 0.2, 0.95)
 _STROKE_VERT_COLOR_FOLD = (0.3, 0.7, 1.0, 1.0)  # blue - fold-line stroke (Stage 4 default)
-_STROKE_VERT_COLOR_CUT_RIP = (1.0, 0.3, 0.3, 1.0)  # red - Stage 4 rip-cut
-_STROKE_VERT_COLOR_CUT_REMOVE = (1.0, 0.6, 0.2, 1.0)  # orange - Stage 2 chunk-remove cut
+_STROKE_VERT_COLOR_CUT_RIP = (1.0, 0.3, 0.3, 1.0)  # red - cut (both Stage 2 + Stage 4, AS-AM17)
 _RAW_STROKE_COLOR = (0.6, 0.6, 0.6, 0.7)
 _LINE_WIDTH = 2.0
 _DOT_SIZE_USER = 8.0
@@ -56,6 +57,7 @@ class OverlayHandles(TypedDict):
     outer: object | None
     inner: object | None
     steiners: object | None
+    triangulation: object | None  # SIMPLE-mode triangulation preview wireframe (AS-AM15)
     user_dots: object | None
     user_strokes: object | None  # Stage 4 interior strokes (fold/rip)
     user_outer_strokes: object | None  # Stage 2 outer strokes (chunk-remove)
@@ -106,7 +108,6 @@ def _register_interactive_handlers(
     stroke_raw_points_ref: list[tuple[float, float]] | None,
     tooltip_mouse_ref: list[tuple[int, int]] | None,
     tooltip_text_ref: list[str] | None,
-    stage_context: str = "interior",
     live_preview_ref: dict[str, object] | None = None,
     tooltip_color_ref: list[tuple[float, float, float, float]] | None = None,
     delete_hover_ref: list[tuple[float, float]] | None = None,
@@ -118,8 +119,7 @@ def _register_interactive_handlers(
     references so they always see the latest operator state without
     needing re-registration on MOUSEMOVE.
 
-    stage_context controls cut-stroke coloring: "outer" = orange (Stage 2
-    chunk-remove), "interior" = red (Stage 4 rip-cut).
+    Cut strokes render RED in both stages (AS-AM17 unified the color).
 
     live_preview_ref (Stage 4 only) wires the colored in-progress pen /
     free-draw preview. When supplied, the thin gray _draw_raw_stroke is
@@ -129,7 +129,7 @@ def _register_interactive_handlers(
     if user_strokes is not None:
         handles["user_strokes"] = bpy.types.SpaceView3D.draw_handler_add(
             _draw_user_strokes,
-            (user_strokes, stage_context),
+            (user_strokes,),
             "WINDOW",
             "POST_VIEW",
         )
@@ -179,11 +179,9 @@ def register_overlay(
     """Add POST_VIEW draw handlers per stage's overlay set.
 
     For Stage 2 (USER_OUTER) pass user_outer_strokes + raw-stroke/tooltip refs.
-    For Stage 4 (USER_STEINERS) pass user_strokes (interior) + user_outer_strokes
-    (outer, kept visible) + tooltip refs. Keeping the two stroke lists separate
-    lets the draw function apply distinct colors per AS-AM9-REV:
-      - user_outer_strokes (stage_context="outer"):  cut = ORANGE (chunk-remove)
-      - user_strokes       (stage_context="interior"): cut = RED   (rip)
+    For Stage 4 (USER_STEINERS) pass user_strokes + user_outer_strokes (kept
+    visible) + tooltip refs. Cut strokes render RED in both stages (AS-AM17
+    unified the color; the prior orange Stage-2 chunk-remove cut was retired).
 
     Live mutable container parameters (all optional):
     - user_strokes: interior Steiner strokes (_user_strokes in operator)
@@ -201,6 +199,7 @@ def register_overlay(
         "outer": None,
         "inner": None,
         "steiners": None,
+        "triangulation": None,
         "user_dots": None,
         "user_strokes": None,
         "user_outer_strokes": None,
@@ -233,7 +232,7 @@ def register_overlay(
             "POST_VIEW",
         )
     if stage == AuthoringStage.USER_OUTER:
-        # Stage 2: outer strokes only, context = "outer" (orange cut color).
+        # Stage 2: outer strokes only (cut = red, AS-AM17).
         _register_interactive_handlers(
             handles,
             user_outer_strokes,
@@ -241,14 +240,13 @@ def register_overlay(
             stroke_raw_points_ref,
             tooltip_mouse_ref,
             tooltip_text_ref,
-            stage_context="outer",
             tooltip_color_ref=tooltip_color_ref,
             delete_hover_ref=delete_hover_ref,
         )
     elif stage == AuthoringStage.USER_STEINERS:
-        # Stage 4: interior strokes (red cut), plus outer strokes kept visible
-        # (orange cut) via a separate handler stored in "user_outer_strokes".
-        # The colored live preview supersedes the gray raw-stroke handler here.
+        # Stage 4: interior strokes, plus outer strokes kept visible via a
+        # separate handler stored in "user_outer_strokes". Cut = red in both
+        # (AS-AM17). The colored live preview supersedes the gray raw-stroke.
         _register_interactive_handlers(
             handles,
             user_strokes,
@@ -256,7 +254,6 @@ def register_overlay(
             stroke_raw_points_ref,
             tooltip_mouse_ref,
             tooltip_text_ref,
-            stage_context="interior",
             live_preview_ref=live_preview_ref,
             tooltip_color_ref=tooltip_color_ref,
             delete_hover_ref=delete_hover_ref,
@@ -264,7 +261,7 @@ def register_overlay(
         if user_outer_strokes is not None:
             handles["user_outer_strokes"] = bpy.types.SpaceView3D.draw_handler_add(
                 _draw_user_strokes,
-                (user_outer_strokes, "outer"),
+                (user_outer_strokes,),
                 "WINDOW",
                 "POST_VIEW",
             )
@@ -275,19 +272,28 @@ def register_overlay(
             "WINDOW",
             "POST_VIEW",
         )
+    # AS-AM15: SIMPLE mode draws the real triangulation wireframe instead of
+    # the dense Steiner point cloud (the two are mutually exclusive by mode).
+    if stage >= AuthoringStage.STEINER_PREVIEW and output.triangulation_preview:
+        handles["triangulation"] = bpy.types.SpaceView3D.draw_handler_add(
+            _draw_edges,
+            (list(output.triangulation_preview), _TRIANGULATION_COLOR, _TRIANGULATION_LINE_WIDTH),
+            "WINDOW",
+            "POST_VIEW",
+        )
     if stage >= AuthoringStage.STEINER_PREVIEW:
-        # Both stroke lists remain visible; register each with its own context.
+        # Both stroke lists remain visible (cut = red for both, AS-AM17).
         if user_strokes is not None:
             handles["user_strokes"] = bpy.types.SpaceView3D.draw_handler_add(
                 _draw_user_strokes,
-                (user_strokes, "interior"),
+                (user_strokes,),
                 "WINDOW",
                 "POST_VIEW",
             )
         if user_outer_strokes is not None:
             handles["user_outer_strokes"] = bpy.types.SpaceView3D.draw_handler_add(
                 _draw_user_strokes,
-                (user_outer_strokes, "outer"),
+                (user_outer_strokes,),
                 "WINDOW",
                 "POST_VIEW",
             )
@@ -300,6 +306,7 @@ def unregister_overlay(handles: OverlayHandles) -> None:
         "outer",
         "inner",
         "steiners",
+        "triangulation",
         "user_dots",
         "user_strokes",
         "user_outer_strokes",
@@ -390,6 +397,32 @@ def _draw_polylines(
         gpu.state.blend_set("NONE")
 
 
+def _draw_edges(
+    edges: list[tuple[tuple[float, float], tuple[float, float]]],
+    color: tuple[float, float, float, float],
+    line_width: float,
+) -> None:
+    """Draw independent edge segments from world-XZ endpoint pairs (AS-AM15
+    SIMPLE triangulation preview)."""
+    if not edges:
+        return
+    verts: list[tuple[float, float, float]] = []
+    for a, b in edges:
+        verts.append((a[0], 0.0, a[1]))
+        verts.append((b[0], 0.0, b[1]))
+    shader = gpu.shader.from_builtin(_UNIFORM_COLOR_SHADER)
+    batch = batch_for_shader(shader, "LINES", {"pos": verts})
+    gpu.state.blend_set("ALPHA")
+    gpu.state.line_width_set(line_width)
+    try:
+        shader.bind()
+        shader.uniform_float("color", color)
+        batch.draw(shader)
+    finally:
+        gpu.state.line_width_set(1.0)
+        gpu.state.blend_set("NONE")
+
+
 def _draw_points(
     points: list[tuple[float, float]],
     color: tuple[float, float, float, float],
@@ -427,40 +460,27 @@ def _draw_stroke_lines(
     batch.draw(shader)
 
 
-def _resolve_stroke_color(
-    kind: str,
-    stage_context: str,
-) -> tuple[float, float, float, float]:
-    """Return the overlay color for a stroke given its kind and stage context.
+def _resolve_stroke_color(kind: str) -> tuple[float, float, float, float]:
+    """Return the overlay color for a stroke given its kind.
 
-    kind="point"  -> YELLOW  (single Steiner dot, always)
-    kind="stroke" -> BLUE    (fold-line, always)
-    kind="cut"    -> RED     (Stage 4 rip, stage_context="interior")
-                 -> ORANGE  (Stage 2 chunk-remove, stage_context="outer")
+    kind="point"  -> YELLOW (single Steiner dot)
+    kind="stroke" -> BLUE   (fold-line)
+    kind="cut"    -> RED    (cut, both Stage 2 + Stage 4, AS-AM17)
     """
     if kind == "point":
         return _USER_DOT_COLOR
     if kind == "cut":
-        if stage_context == "outer":
-            return _STROKE_VERT_COLOR_CUT_REMOVE
         return _STROKE_VERT_COLOR_CUT_RIP
     # kind="stroke" (fold-line) and any unknown kind fall through to blue.
     return _STROKE_VERT_COLOR_FOLD
 
 
-def _draw_user_strokes(
-    strokes: list[Stroke],
-    stage_context: str = "interior",
-) -> None:
-    """Draw committed user strokes, coloring by kind + stage context.
+def _draw_user_strokes(strokes: list[Stroke]) -> None:
+    """Draw committed user strokes, coloring by kind.
 
-    kind=point:  YELLOW dot (8 px) - single Steiner, always.
-    kind=stroke: BLUE verts (6 px) + blue line segments - fold-line, always.
-    kind=cut:    RED  (stage_context="interior", Stage 4 rip-cut)
-                 ORANGE (stage_context="outer",  Stage 2 chunk-remove cut)
-
-    stage_context is resolved at handler registration so artists see distinct
-    colors for cut strokes depending on which stage produced them.
+    kind=point:  YELLOW dot (8 px) - single Steiner.
+    kind=stroke: BLUE verts (6 px) + blue line segments - fold-line.
+    kind=cut:    RED verts + red line segments - cut (both stages, AS-AM17).
 
     The strokes list is held by reference so this callback always reflects
     the latest committed state without re-registration.
@@ -477,7 +497,7 @@ def _draw_user_strokes(
                 continue
             coords = [(p[0], 0.0, p[1]) for p in pts]
             kind = stroke["kind"]
-            color = _resolve_stroke_color(kind, stage_context)
+            color = _resolve_stroke_color(kind)
             if kind == "point":
                 batch = batch_for_shader(shader, "POINTS", {"pos": coords})
                 shader.uniform_float("color", color)
