@@ -54,9 +54,16 @@ def compute_outer(
     in world space, so we apply obj.matrix_world to land each point at
     the sprite's actual viewport position. Without this, the overlay
     renders at the world origin while the mesh sits elsewhere.
+
+    The dilation matches APPLY: build_automesh's extract_contours always
+    dilates the outer mask by ``max(1, margin_pixels)`` (1-cell safety even
+    at margin 0). Tracing the raw mask here would show an inset contour that
+    visibly "inflates outward" on APPLY; mirroring the dilation makes the
+    preview match the final boundary so strokes snap to the real edge.
     """
+    outer_dilate = max(1, params.margin_pixels)
     alpha_grid = read_alpha_grid(image, params.resolution)
-    pixel_contour = extract_outer_contour(alpha_grid, params.alpha_threshold, params.margin_pixels)
+    pixel_contour = extract_outer_contour(alpha_grid, params.alpha_threshold, outer_dilate)
     world_scale = 1.0 / _resolve_pixels_per_unit(bpy.context)
     source_width, source_height = image.size[0], image.size[1]
     local = pixel_contour_to_world(
