@@ -403,19 +403,24 @@ Deferred from PR #63 (AS-AM13) - cosmetic/incremental UX, not correctness blocke
 - **[x] Inflated contour preview** - `compute_outer` now dilates by `max(1, margin_pixels)` to match `build_automesh`, so the previewed silhouette is the real boundary instead of an inset that inflated on APPLY. (`01f712c`)
 - **[x] Stage 5 (`STEINER_PREVIEW`) clarity** - `compute_all_steiners` fills the full outer interior (matching `build_automesh` at the default `margin_pixels=0`) instead of clipping by the innermost modal erosion loop, so the silhouette center is no longer empty. (`23949e9`)
 
-### Mesh interior modes + gesture redesign - IN FLIGHT (2026-05-28 smoke)
+### Mesh interior modes + gesture redesign (2026-05-28 smoke)
 
-Spec: [`design/2026-05-28-spec-013-mesh-modes-and-gestures-design.md`](design/2026-05-28-spec-013-mesh-modes-and-gestures-design.md) (AS-AM14..AS-AM17). Bundled onto `feat/automesh-authoring-ux-polish` (user choice 2026-05-28).
+Spec: [`design/2026-05-28-spec-013-mesh-modes-and-gestures-design.md`](design/2026-05-28-spec-013-mesh-modes-and-gestures-design.md) (AS-AM14..AS-AM17). Plan: [`design/2026-05-28-spec-013-mesh-modes-and-gestures-plan.md`](design/2026-05-28-spec-013-mesh-modes-and-gestures-plan.md). Bundled onto `feat/automesh-authoring-ux-polish` (user choice 2026-05-28). OQ1/2/3 resolved at recommended defaults.
 
-Phase 1 - algorithm + steps + Stage 2 remap (~400 LOC):
+Phase 1 - algorithm + steps + Stage 2 remap (~400 LOC). DONE on branch (staged; commits pending):
 
-- **[ ] AS-AM14** `automesh_interior_mode` enum (SIMPLE/DENSE, default SIMPLE) on props + panel + `StageParams`.
-- **[ ] AS-AM14** SIMPLE CDT path in `build_automesh`/`apply_mesh` (boundary + holes + user verts only, no auto-fill).
-- **[ ] AS-AM15** mode-dependent `active_stages` + index-based nav; SIMPLE drops INNER_LOOPS, step 5 = triangulation preview; statusbar N/M.
-- **[ ] AS-AM15** triangulation preview overlay (real CDT wireframe at step 4 of SIMPLE).
-- **[ ] AS-AM17** Stage 2 modifier-driven (Shift=extend, Ctrl=cut, Alt=delete) + cut RED.
+- **[x] AS-AM14** `automesh_interior_mode` enum (SIMPLE/DENSE, PG default SIMPLE; `StageParams`/`build_automesh` default DENSE for test back-compat) on props + panel (DENSE-only knobs grey out in SIMPLE) + `StageParams`.
+- **[x] AS-AM14** SIMPLE CDT path in `build_automesh`/`apply_mesh` (silhouette + holes + user verts only, uniform grid + bone-density fill skipped). Headless: SIMPLE sparser than DENSE. Standalone `automesh_from_sprite` operator also threads `interior_mode` (prop + invoke reads PG) - caught in smoke 2026-05-28 where the op ignored the mode and always ran DENSE.
+- **[x] AS-AM15** mode-dependent `active_stages` + index-based nav (`_stages_for_mode`/`_stage_label`); SIMPLE drops INNER_LOOPS; statusbar N/M derived; mode flip mid-modal rebuilds the list + snaps off a dropped stage.
+- **[x] AS-AM15** triangulation preview at SIMPLE step 4 - `compute_triangulation_preview` runs the real build on a throwaway obj copy (anti-drift, non-destructive) + cyan wireframe overlay (`_draw_edges`). Recompute on stage-enter + param-dirty (OQ1).
+- **[x] AS-AM17** Stage 2 modifier-driven (Shift=extend, Ctrl=cut, Alt=delete; plain drag = no-op) unified with Stage 4; cut overlay RED (orange `_STROKE_VERT_COLOR_CUT_REMOVE` retired, `stage_context` plumbing removed).
 
-Phase 2 - gesture model rewrite (~450 LOC):
+MANUAL_TESTING (visual, cannot verify headless - needs interactive Blender):
+
+- **[ ] SIMPLE step 4 wireframe** - the cyan triangulation overlay matches the mesh APPLY produces (silhouette + fold/cut/steiner verts, no dense fill).
+- **[ ] Stage 2 red + modifier** - cut overlay reads RED (matches Stage 4); Shift/Ctrl/Alt dispatch is precise regardless of cursor inside/outside the silhouette.
+
+Phase 2 - gesture model rewrite (~450 LOC). NOT STARTED (separate plan after Phase 1 smokes clean):
 
 - **[ ] AS-AM16** toggle-modal pen (tap Shift/Ctrl enters draw mode), RMB/Enter finish, Esc cancel line.
 - **[ ] AS-AM16** X/Z axis lock mid-line.
