@@ -403,6 +403,24 @@ Deferred from PR #63 (AS-AM13) - cosmetic/incremental UX, not correctness blocke
 - **[x] Inflated contour preview** - `compute_outer` now dilates by `max(1, margin_pixels)` to match `build_automesh`, so the previewed silhouette is the real boundary instead of an inset that inflated on APPLY. (`01f712c`)
 - **[x] Stage 5 (`STEINER_PREVIEW`) clarity** - `compute_all_steiners` fills the full outer interior (matching `build_automesh` at the default `margin_pixels=0`) instead of clipping by the innermost modal erosion loop, so the silhouette center is no longer empty. (`23949e9`)
 
+### Mesh interior modes + gesture redesign - IN FLIGHT (2026-05-28 smoke)
+
+Spec: [`design/2026-05-28-spec-013-mesh-modes-and-gestures-design.md`](design/2026-05-28-spec-013-mesh-modes-and-gestures-design.md) (AS-AM14..AS-AM17). Bundled onto `feat/automesh-authoring-ux-polish` (user choice 2026-05-28).
+
+Phase 1 - algorithm + steps + Stage 2 remap (~400 LOC):
+
+- **[ ] AS-AM14** `automesh_interior_mode` enum (SIMPLE/DENSE, default SIMPLE) on props + panel + `StageParams`.
+- **[ ] AS-AM14** SIMPLE CDT path in `build_automesh`/`apply_mesh` (boundary + holes + user verts only, no auto-fill).
+- **[ ] AS-AM15** mode-dependent `active_stages` + index-based nav; SIMPLE drops INNER_LOOPS, step 5 = triangulation preview; statusbar N/M.
+- **[ ] AS-AM15** triangulation preview overlay (real CDT wireframe at step 4 of SIMPLE).
+- **[ ] AS-AM17** Stage 2 modifier-driven (Shift=extend, Ctrl=cut, Alt=delete) + cut RED.
+
+Phase 2 - gesture model rewrite (~450 LOC):
+
+- **[ ] AS-AM16** toggle-modal pen (tap Shift/Ctrl enters draw mode), RMB/Enter finish, Esc cancel line.
+- **[ ] AS-AM16** X/Z axis lock mid-line.
+- **[ ] AS-AM16** scroll / digit subdivisions per edge + `Stroke.subdivisions` round-trip + live-preview density.
+
 ### Part B scope - SHIPPED on branch (PR pending review)
 
 Productivity polish + B3 silhouette fix. 9 commits (`e80c91b..aba0a73`), ~800 LOC. Tasks 16-24 of plan.
