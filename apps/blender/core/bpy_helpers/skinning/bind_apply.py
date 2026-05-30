@@ -117,7 +117,7 @@ def _collect_envelope_radii(armature: bpy.types.Object) -> dict[str, float]:
     """Read per-bone ``proscenio_envelope_radius`` Custom Property.
 
     Missing keys default to ``_ENVELOPE_DEFAULT_RADIUS`` (1.0).
-    Edit Weights modal (Wave 13.2-paint) becomes the UI surface
+    Edit Weights modal (the paint work) becomes the UI surface
     for these radii; bind alone exposes them via the manual
     Custom Property editor.
     """

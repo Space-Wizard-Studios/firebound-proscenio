@@ -1,4 +1,4 @@
-"""EnumProperty dynamic-items + PointerProperty poll callbacks (SPEC 009 wave 9.7).
+"""EnumProperty dynamic-items + PointerProperty poll callbacks (the code-modularity work).
 
 Isolates the small bpy-side gotchas that surround the
 ``ProscenioObjectProps`` driver picker:

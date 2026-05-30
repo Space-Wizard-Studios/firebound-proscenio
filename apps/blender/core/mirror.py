@@ -13,10 +13,10 @@ fields. The fix is to mirror **every** field on **any** update.
 
 Map covers the full Object-side schema:
 
-- sprite_type, hframes, vframes, frame, centered (SPEC 005)
-- region_mode, region_x/y/w/h (SPEC 005.1.c.1)
-- is_slot, slot_default (SPEC 004)
-- is_outliner_favorite (SPEC 005.1.d.4)
+- sprite_type, hframes, vframes, frame, centered (the authoring panel)
+- region_mode, region_x/y/w/h (the authoring panel.1.c.1)
+- is_slot, slot_default (the slot system)
+- is_outliner_favorite (the outliner subpanel)
 """
 
 from __future__ import annotations

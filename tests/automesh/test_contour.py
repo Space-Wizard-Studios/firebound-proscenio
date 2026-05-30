@@ -1,4 +1,4 @@
-"""Unit tests for SPEC 013 pure-Python alpha contour walker.
+"""Unit tests for the weight-paint-automesh spec pure-Python alpha contour walker.
 
 bpy-free. Exercises the contour tracing + binary morphology helpers
 consumed by ``core/bpy_helpers/automesh_bmesh.py``.
@@ -334,7 +334,7 @@ class TestExtractContours:
     def test_b3_narrow_corridor_not_a_hole(self) -> None:
         """Regression: narrow inter-finger corridor must not appear as an enclosed hole.
 
-        B3 root cause (SPEC 013): at resolution=0.5 the 3-4 source-pixel gaps between
+        B3 root cause (the weight-paint-automesh spec): at resolution=0.5 the 3-4 source-pixel gaps between
         fingers downscale to 1-2 grid cells. The old code dilated the foreground by 1
         cell before calling extract_holes; that dilation closed 1-cell-wide corridors,
         turning border-connected external background into apparently-enclosed regions

@@ -1,8 +1,8 @@
-"""Authoring pipeline dispatch (SPEC 013.2 interactive-modal, T10).
+"""Authoring pipeline dispatch (the interactive-modal work, T10).
 
 Per-stage compute helpers that bridge between pure modules and the
 running modal operator. Final apply_mesh pipes through build_automesh
-+ Wave 13.2-sidecar reproject so existing weights survive APPLY.
++ the sidecar work reproject so existing weights survive APPLY.
 """
 
 from __future__ import annotations
@@ -328,7 +328,7 @@ def _split_outer_strokes(
 
 
 def compute_outer_preview(output: StageOutput, params: StageParams) -> list[Point2D]:
-    """World-XZ spliced outer contour after Stage 2 extend strokes (AS-AM16).
+    """World-XZ spliced outer contour after Stage 2 extend strokes.
 
     Returns the silhouette APPLY will actually build (extends spliced in,
     resampled to contour_vertices) so the artist previews their edits before
@@ -358,7 +358,7 @@ def apply_mesh(
     params: StageParams,
     armature: bpy.types.Object | None,
 ) -> dict[str, int]:
-    """Final write: build_automesh + Wave 13.2-sidecar reproject.
+    """Final write: build_automesh + the sidecar work reproject.
 
     Stroke handling (T-REV5):
     - kind='stroke' (fold-line): extra_steiners + extra_edges constraints.
@@ -455,7 +455,7 @@ def compute_triangulation_preview(
     output: StageOutput,
     params: StageParams,
 ) -> list[tuple[Point2D, Point2D]]:
-    """SIMPLE-mode triangulation preview (AS-AM15).
+    """SIMPLE-mode triangulation preview.
 
     Runs the real `build_automesh` on a throwaway copy of ``obj`` so the
     artist sees the exact triangulation APPLY will produce - silhouette +
@@ -615,7 +615,7 @@ def _build_stroke_node_indices(
     outer contour vert, the stroke vert is DROPPED and the edge references
     the outer vert's index directly (avoids a duplicate co-located vert).
 
-    Silhouette filter (AS-AM1): before allocating CDT indices, each inner
+    Silhouette filter: before allocating CDT indices, each inner
     vert is tested via _vert_inside_silhouette. Dropped verts are excluded
     from extras_local. In the returned `node_indices` sequence, dropped
     positions are represented as `None` SENTINELS so the consecutive-pair
@@ -699,14 +699,14 @@ def _cut_stroke_to_hole_loop(
     holes_world_local: list[list[Point2D]] | None,
     cut_half: float,
 ) -> tuple[list[Point2D] | None, int]:
-    """Build the corridor hole loop for a kind='cut' stroke (T-REV5 + AS-AM7-REV2).
+    """Build the corridor hole loop for a kind='cut' stroke (T-REV5 + ).
 
     Returns (lens_loop, dropped_count). lens_loop is None when the stroke is
     too short or lies entirely outside the silhouette. The loop is a closed
     polygon (left offset + right offset reversed) used as a CDT hole - the
     triangulation excludes its interior + never crosses it (clean corridor).
 
-    AS-AM7-REV2 (cut-to-alpha): unlike fold-lines, cut verts are NOT filtered
+     (cut-to-alpha): unlike fold-lines, cut verts are NOT filtered
     to inside-silhouette. The full stroke (including samples that land in alpha
     OUTSIDE the silhouette) is offset into the corridor. When the corridor
     crosses the outer boundary, the CDT-hole severs the silhouette there - so
@@ -762,7 +762,7 @@ def _strokes_to_cdt_inputs(
       a clean gap with no slivers (vs T5 post-prune) and no jaggedness (vs
       T-REV2 split_edges rip).
 
-    Silhouette filter (AS-AM1): every vert is tested BEFORE index allocation.
+    Silhouette filter: every vert is tested BEFORE index allocation.
     Verts outside outer / inside inner / inside any hole are dropped so stale
     extra_edges indices never reach the CDT. dropped_count accumulates and is
     surfaced to the operator for a WARNING report.

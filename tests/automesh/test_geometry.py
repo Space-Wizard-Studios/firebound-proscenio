@@ -1,4 +1,4 @@
-"""Unit tests for SPEC 013 automesh geometry pipeline.
+"""Unit tests for the weight-paint-automesh spec automesh geometry pipeline.
 
 bpy-free. Exercises the Laplacian smoothing + arc-length resample +
 annulus edge construction consumed by

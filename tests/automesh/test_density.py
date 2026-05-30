@@ -1,4 +1,4 @@
-"""Unit tests for SPEC 013 automesh interior-density helpers.
+"""Unit tests for the weight-paint-automesh spec automesh interior-density helpers.
 
 bpy-free. Exercises point-in-polygon, distance-to-segment, uniform
 grid generation, annulus clipping, and bone-aware subdivision -

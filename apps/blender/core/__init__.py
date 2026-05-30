@@ -1,4 +1,4 @@
-"""Proscenio core helpers (SPEC 009 wave 9.6 split).
+"""Proscenio core helpers (the code-modularity work split).
 
 This package hosts the small, focused modules the operators / panels /
 writer share. The contract is:
@@ -10,13 +10,13 @@ writer share. The contract is:
   module top. Tests that touch these patch ``bpy`` first, or skip
   when running outside Blender.
 - ``core/validation/`` is a subpackage of bpy-free validators (SPEC
-  009 wave 9.5).
+  009).
 
 Top-level modules (bpy-free):
 
 - ``cp_keys.py``         Custom Property string constants registry
-- ``feature_status.py``  Feature-readiness dispatch table (5.1.d.5)
-- ``help_topics.py``     In-panel help topic registry (5.1.d.5)
+- ``feature_status.py``  Feature-readiness dispatch table (the in-panel help system)
+- ``help_topics.py``     In-panel help topic registry (the in-panel help system)
 - ``hydrate.py``         CP -> PG hydration logic
 - ``mirror.py``          PG -> CP mirror logic
 - ``pg_cp_fallback.py``  PG-first / CP-fallback reader

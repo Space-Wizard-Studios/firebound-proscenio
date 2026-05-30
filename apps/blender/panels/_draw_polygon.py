@@ -1,10 +1,10 @@
-"""Polygon body + weight paint draws (SPEC 005 + 5.1.b).
+"""Polygon body + weight paint draws (the authoring panel + 5.1.b).
 
 Polygon mode block: poly count, vertex group count, reproject UV
 button, isolated material toggle, shared region box. Plus the inline
 weight-paint brush mirror used when the user is in PAINT_WEIGHT mode.
 
-Pulled out of ``panels/active_sprite.py`` by SPEC 009 wave 9.10.
+Pulled out of ``panels/active_sprite.py`` by the code-modularity work.
 """
 
 from __future__ import annotations
