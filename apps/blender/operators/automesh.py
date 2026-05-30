@@ -248,7 +248,10 @@ class PROSCENIO_OT_automesh_from_sprite(bpy.types.Operator):
             )
 
         bone_segments = None
-        if self.density_under_bones:
+        # SIMPLE skips the uniform grid + bone-density fill in build_automesh,
+        # so collecting bone_segments + the "uniform density" report_info is
+        # wasted work and misleading (CodeRabbit nitpick).
+        if self.density_under_bones and self.interior_mode == "DENSE":
             scene_props = getattr(context.scene, "proscenio", None)
             picker = getattr(scene_props, "active_armature", None) if scene_props else None
             if picker is not None and picker.type == "ARMATURE":

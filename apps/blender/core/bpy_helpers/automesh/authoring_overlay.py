@@ -17,6 +17,7 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
+from ...automesh.stroke_geometry import subdivide_polyline
 from ...skinning.authoring_stages import AuthoringStage, StageOutput, Stroke
 from ..modal_overlay import draw_text_panel_2d
 
@@ -552,8 +553,6 @@ def _draw_live_preview(state: dict[str, object]) -> None:
             # rubber-band doubles as the X/Z guide line).
             subdiv = int(cast("int", state.get("subdivisions") or 0))
             if subdiv > 0:
-                from ...automesh.stroke_geometry import subdivide_polyline
-
                 ghosts = subdivide_polyline([pts[-1], cursor], subdiv)[1:-1]
                 if ghosts:
                     ghost_coords = [(g[0], 0.0, g[1]) for g in ghosts]

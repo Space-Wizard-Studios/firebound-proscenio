@@ -64,7 +64,6 @@ _TOOLTIP_BG_WARN = (0.35, 0.05, 0.05, 0.85)  # red: gesture would clip/drop the 
 # it must refresh on these (not only on MOUSEMOVE) or a stationary cursor shows
 # stale intent text while Shift/Ctrl/Alt is tapped.
 _SHIFT_CTRL_KEYS = frozenset({"LEFT_SHIFT", "RIGHT_SHIFT", "LEFT_CTRL", "RIGHT_CTRL"})
-_MODIFIER_KEYS = _SHIFT_CTRL_KEYS | frozenset({"LEFT_ALT", "RIGHT_ALT"})
 # AS-AM16 toggle-pen: top-row + numpad digit event types -> subdivision count.
 _DIGIT_KEYS = {
     "ZERO": 0,
