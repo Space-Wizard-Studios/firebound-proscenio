@@ -1,4 +1,4 @@
-# blink_eyes fixture (SPEC 007)
+# blink_eyes fixture (the testing-fixtures spec)
 
 Tests the **`sprite_frame` track type** end-to-end: a Blender mesh
 tagged as sprite_frame, its `frame` property animated through a Blender
@@ -28,7 +28,7 @@ examples/generated/blink_eyes/
 
 - The **spritesheet** (`eye_spritesheet.png`) is what the sprite_frame
   mesh references at runtime. `hframes=4`, `vframes=1` slice it.
-- The **per-frame PNGs** are kept around so SPEC 006's
+- The **per-frame PNGs** are kept around so the photoshop importer's
   `<name>_<index>` Photoshop-layer convention can be tested by re-
   packing them into the sheet (the expected workflow once the importer
   ships).

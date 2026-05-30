@@ -197,4 +197,4 @@ Permanently rejected:
 ## Successor SPECs
 
 - A future spec pairing the quick-armature work with the slot system's slot machinery would ship the DragonBones-style auto-attach gesture (`Ctrl+Shift+drag` over a sprite = bone + slot bind in one stroke). Captured in STUDY successor section.
-- A "Quick Mesh" operator (COA-Tools-style click-stroke vertex contour drawing) would lift the the first cut modal-overlay scaffolding wholesale. If/when it lands, refactor `core/bpy_helpers/modal_overlay.py` from this spec helpers into a `ModalOverlay` class managing handle lifecycle.
+- A "Quick Mesh" operator (COA-Tools-style click-stroke vertex contour drawing) would lift the first cut modal-overlay scaffolding wholesale. If/when it lands, refactor `core/bpy_helpers/modal_overlay.py` from this spec helpers into a `ModalOverlay` class managing handle lifecycle.

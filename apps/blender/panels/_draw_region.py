@@ -1,4 +1,4 @@
-"""Texture region authoring box (the authoring panel 5.1.c.1).
+"""Texture region authoring box (the authoring panel the mirror-fix work).
 
 Shared between the sprite_frame and polygon body draws - both need
 the auto / manual mode toggle and the four region floats. Pulled into

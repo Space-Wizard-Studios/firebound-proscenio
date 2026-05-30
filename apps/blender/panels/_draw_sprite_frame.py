@@ -1,4 +1,4 @@
-"""Sprite-frame body draw (the slot system D13 + 5.1.c.1 region readout).
+"""Sprite-frame body draw (the slot system D13 + the mirror-fix work region readout).
 
 Renders the sprite-frame metadata block: hframes / vframes / frame /
 centered, the atlas+region readout, the preview-shader setup buttons,

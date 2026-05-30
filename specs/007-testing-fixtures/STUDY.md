@@ -2,7 +2,7 @@
 
 ## Problem
 
-The original `dummy/` fixture covers only one workflow (a single shared atlas with N sub-rects per sprite). After validating the atlas packer (5.1.c.2 + 5.1.c.2.1 + 5.1.c.2.2) on dummy, the gaps in coverage are obvious:
+The original `dummy/` fixture covers only one workflow (a single shared atlas with N sub-rects per sprite). After validating the atlas packer (the atlas packer + the atlas-packer feature + the atlas-packer feature) on dummy, the gaps in coverage are obvious:
 
 - **No `1 sprite = 1 PNG` test.** The packer was implemented to handle this case - the common Photoshop-first path - but no fixture exercises it.
 - **No real `sprite_frame` animation test.** `effect/` (Godot-side fixture, hand-written `.proscenio`) tests the importer, but nothing tests the writer emitting a `sprite_frame` track from a real Blender action.
@@ -61,7 +61,7 @@ Each top-level mesh in `doll.blend` is one sprite layer. Mesh names use the Blen
 | polygon, multi-bone weights | `chest` / `belly` / `waist` (weighted across the spine chain), pelvic meshes weighted across `pelvis.L`/`pelvis.R` | Demonstrates weight-paint distribution + falloff. |
 | (planned) sprite_frame | `eye.L`, `eye.R` (atualmente polygon no doll.blend) | Originalmente planejado: 4 frames open/mid/closing/closed + `blink` action. Cobertura sprite_frame movida pra `blink_eyes/` + `mouth_drive/` - doll mantém eyes polygon até authoring deliberado. |
 | polygon, slot-ready | `brow.L`, `brow.R` | Future home for the slot system (the slot system) swapping brow-up / brow-down. |
-| polygon, driver-driven texture swap | `forearm.L`, `forearm.R` | Driver on `forearm` rotation flips front/back forearm sprite. Lands when the slot system + driver shortcut (5.1.d) ship. |
+| polygon, driver-driven texture swap | `forearm.L`, `forearm.R` | Driver on `forearm` rotation flips front/back forearm sprite. Lands when the slot system + driver shortcut (the authoring-panel shortcuts) ship. |
 
 ### Visual style
 

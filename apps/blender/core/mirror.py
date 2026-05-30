@@ -1,4 +1,4 @@
-"""PropertyGroup → Custom Property mirror logic (post-005.1.c.1 fix).
+"""PropertyGroup → Custom Property mirror logic (post-00the mirror-fix work fix).
 
 Lives outside ``properties/__init__.py`` so the unit tests can exercise
 the mirror without dragging in ``bpy``. Pure Python - only requires

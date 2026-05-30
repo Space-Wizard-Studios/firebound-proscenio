@@ -88,4 +88,4 @@ Builds three test fixtures (`blink_eyes/`, `shared_atlas/`, `doll/`) covering th
 - Slot fixture for `doll/`'s `hand.L.attachment` - lands with the slot system.
 - PS importer fixture (`simple_psd/`) - lands with the photoshop importer.
 - UV animation fixture (`flow_water/`) - premature without the UV animation work.
-- Driver-based texture swap on `forearm.L/R` - lands when the slot system + 5.1.d driver shortcut both ship.
+- Driver-based texture swap on `forearm.L/R` - lands when the slot system + the authoring-panel shortcuts driver shortcut both ship.

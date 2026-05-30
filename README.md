@@ -98,7 +98,7 @@ Heavy lift lives here. Features grouped by workflow theme.
 - Spritesheet metadata: `hframes` / `vframes` / `frame` / `centered`, animatable.
 - Per-sprite `proscenio.is_slot` flag and `proscenio_slot_index` (keyframable).
 
-#### Slot system (SPEC 004)
+#### Slot system (the slot system)
 
 - **Create Slot** operator: anchors an Empty under the active bone and parents the selected meshes as attachments.
 - **Active Slot** subpanel: pick the default attachment at scene load (SOLO icon), reorder attachments, animate `proscenio_slot_index` to flip per keyframe.
@@ -106,7 +106,7 @@ Heavy lift lives here. Features grouped by workflow theme.
 
 #### Organization
 
-- **Custom Outliner** subpanel (5.1.d.4): sprite-centric flat list with substring filter and favorites toggle. Replaces Blender's native outliner only for the Proscenio hierarchy; the native outliner remains untouched.
+- **Custom Outliner** subpanel (the outliner subpanel): sprite-centric flat list with substring filter and favorites toggle. Replaces Blender's native outliner only for the Proscenio hierarchy; the native outliner remains untouched.
 
 #### Validation
 

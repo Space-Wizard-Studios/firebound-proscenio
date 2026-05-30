@@ -503,7 +503,7 @@ Lives at `scene.proscenio.skinning`. Naming pattern parallel to `scene.proscenio
 
 ### Out of scope (deferred to successor SPECs or backlog)
 
-- **Auto-attach mesh to slot.** Coupling between vertex groups and the slot system slot system; deferred until slot-system maturity.
+- **Auto-attach mesh to slot.** Coupling between vertex groups and the slot system; deferred until slot-system maturity.
 - **Bezier brush stroke for the alpha-boundary trace.** COA Tools 2 uses straight-segment strokes; this spec follows the same minimal model.
 - **GPU-accelerated weight sampling.** All weight math is bmesh + Python loops. If performance becomes a complaint on >5000-vertex meshes, escalate to backlog.
 - **Multi-mesh batch bind.** Operator targets a single active mesh. Batch bind = follow-up candidate.

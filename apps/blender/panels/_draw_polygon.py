@@ -1,4 +1,4 @@
-"""Polygon body + weight paint draws (the authoring panel + 5.1.b).
+"""Polygon body + weight paint draws (the authoring panel + the weight-paint inline controls).
 
 Polygon mode block: poly count, vertex group count, reproject UV
 button, isolated material toggle, shared region box. Plus the inline
@@ -32,7 +32,7 @@ def draw_body(
 
 
 def draw_weight_paint(layout: bpy.types.UILayout, context: bpy.types.Context) -> None:
-    """Mirror Blender's weight-paint brush controls inline (5.1.b)."""
+    """Mirror Blender's weight-paint brush controls inline (the weight-paint inline controls)."""
     box = layout.box()
     box.label(text="Weight paint", icon="BRUSH_DATA")
     tool_settings = context.tool_settings

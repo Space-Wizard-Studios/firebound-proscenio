@@ -23,7 +23,7 @@ Foundation:
 | T5 | Stage navigation keys | ENTER advance / BACKSPACE back / ESC cancel | Matches the TODO L226 sketch + Blender modal conventions (Quick Armature uses ENTER confirm + ESC cancel) |
 | T6 | Live re-run on parameter change | Throttled timer ~100ms - modal detects dirty PG state + recomputes current stage | Sliders feel responsive without recomputing per mouse move |
 | T7 | Trigger surface | Skinning panel button (new sub-box between Automesh + Bind) + F3 search via `bl_label` | Matches paint wave precedent (button + F3, no global keymap) |
-| T8 | GPU overlay shader | POST_VIEW SpaceView3D draw handlers via `modal_overlay._shader()` (UNIFORM_COLOR) | Reuses the the quick-armature spec / 013.2 paint shader stack; one entry point, one cleanup path |
+| T8 | GPU overlay shader | POST_VIEW SpaceView3D draw handlers via `modal_overlay._shader()` (UNIFORM_COLOR) | Reuses the quick-armature spec / 013.2 paint shader stack; one entry point, one cleanup path |
 | T9 | Per-stage parameters | `scene.proscenio.skinning.authoring_*` fields (PG persists across .blend reloads) | Same persistence pattern as the panel work bind fields |
 | T10 | Final APPLY pipeline | Pipes through existing `build_automesh` + `_delete_faces_inside_holes` with outer + inner_loops + user_steiners + bone_steiners as constraints | Reuses the first cut implementation; only the constraint set changes |
 | T11 | Cleanup prerequisite (cognitive-47 monolith refactor, TODO L271) | SKIPPED - not blocking | Documented as risk: if `build_automesh` proves too tangled to lift, in-wave extract refactor OR split prerequisite mini-wave |
