@@ -1,6 +1,6 @@
 # Backlog
 
-Items that are not in any active SPEC. Each entry promotes into a numbered spec under `specs/` when work begins. Order within a section is rough priority.
+Items that are not in any active spec. Each entry promotes into a numbered spec under `specs/` when work begins. Order within a section is rough priority.
 
 ## Format and schema
 
@@ -292,7 +292,7 @@ The dev junction setup for the Blender addon is a manual `New-Item -ItemType Jun
 
 ## Architecture revisits
 
-These items intentionally violate or expand on a current hard rule. They are **not slated** - listed only so that if the trigger condition appears in a future SPEC discussion, we have prior art on the alternatives we already considered.
+These items intentionally violate or expand on a current hard rule. They are **not slated** - listed only so that if the trigger condition appears in a future spec discussion, we have prior art on the alternatives we already considered.
 
 ### GDExtension / C# escape hatch
 
@@ -308,10 +308,10 @@ These items intentionally violate or expand on a current hard rule. They are **n
 - **Binary `.proscenio` format** - JSON parse time becomes import-loop pain on large projects; binary format reader benefits from native code.
 - **Editor authoring tools that need round-trip serialization back to `.proscenio`** - writing the format from inside Godot at interactive speed.
 
-**What that future SPEC would look like:**
+**What that future spec would look like:**
 
 - Likely targets a *separate optional component* (`apps/godot-csharp/`) that ships alongside the GDScript plugin, gated behind a feature flag, so non-mono users still have the GDScript path.
 - Mono-only audience cut would be **documented openly** as the price of the feature; this is acceptable for Firebound users (already on mono) but acknowledged as a regression for general OSS reach.
-- Anything moved to native must remain **import-time only** unless the SPEC explicitly relaxes the runtime side. Generated `.scn` keeps using built-in nodes.
+- Anything moved to native must remain **import-time only** unless the spec explicitly relaxes the runtime side. Generated `.scn` keeps using built-in nodes.
 
 **See also:** [`.ai/skills/architecture.md`](../.ai/skills/architecture.md), [`.ai/conventions.md`](../.ai/conventions.md), the language-decision discussion in this backlog's revision history.

@@ -78,7 +78,7 @@ Built into the `.blend` initially:
 | (planned) `blink` | 12 | `eye.L.proscenio.frame` + `eye.R.proscenio.frame` | sprite_frame track test atualmente em `blink_eyes/` - doll precisaria converter eyes pra sprite_frame antes de adicionar essa action |
 | `walk` | 30, loop | thigh / shin / foot rotation, spine sway | full-body coordination test |
 
-Future actions land as future SPECs require them (talk for the UV animation work lips, etc).
+Future actions land as future specs require them (talk for the UV animation work lips, etc).
 
 ## Decisions to lock
 
@@ -148,7 +148,7 @@ The doll fixture grows feature-by-feature. The two minimal fixtures (`blink_eyes
 
 ## Migration plan
 
-After this SPEC ships, a follow-up PR retires the legacy fixtures:
+After this spec ships, a follow-up PR retires the legacy fixtures:
 
 | Today | Tomorrow | Coverage migrated to |
 | --- | --- | --- |

@@ -22,7 +22,7 @@ Reference issues in the commit body (`Refs: #42`), not in the branch name. Keep 
 
 ## Workflow
 
-- `main` holds planning artifacts (SPEC studies and TODOs, backlogs) and small chores. Planning docs land directly on `main` because they cross PR boundaries and inform parallel work.
+- `main` holds planning artifacts (spec studies and TODOs, backlogs) and small chores. Planning docs land directly on `main` because they cross PR boundaries and inform parallel work.
 - Implementation work lives on a topic branch (typically `feat/spec-<NNN>-<slug>` or `fix/<slug>`) and merges back via PR.
 - Commit gradually as work progresses. The merge can squash if the PR scope warrants it, but the branch history is the audit trail while work is in flight. A long PR benefits from many small commits; a tight bugfix is fine as one.
 

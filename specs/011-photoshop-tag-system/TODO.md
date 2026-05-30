@@ -17,7 +17,7 @@ Photoshop tag system + plugin UI mini-app. See [STUDY.md](STUDY.md) for the lock
 - [x] D9 - tag authoring: bracket tags in name OR click in panel; both kept in sync; bracket wins on conflict.
 - [x] D10 - mini-app stays single React panel, no new deps.
 - [x] D11 - tag spelling locked at `[spritesheet]` (artist-recognised term; parser does a one-line lookup to translate to `kind: "sprite_frame"` at emit time).
-- [x] D12 - color labels dropped as a tagging channel. Bracket tag + XMP mirror are the single source of truth; color labels may resurface as a passive badge in a later SPEC but never set semantics here.
+- [x] D12 - color labels dropped as a tagging channel. Bracket tag + XMP mirror are the single source of truth; color labels may resurface as a passive badge in a later spec but never set semantics here.
 - [x] D13 - validator severity locked at warn-never-block.
 - [x] D14 - XMP support floor resolved by the photoshop UXP migration JSX retirement PS minimum bump to PS 25 / CC 2024+; `uxp.xmp` ships there, no fallback needed.
 
@@ -107,7 +107,7 @@ the way.
 - **Logger module** ([`apps/photoshop/src/util/log.ts`](../../apps/photoshop/src/util/log.ts)) with 6 levels (trace/debug/info/warn/error/off), localStorage persistence, cross-panel sync via 500ms cache, and `window.proscenio.setLogLevel` debug surface. Added because the UXP DevTools console is the only debugger available and we needed gated tracing.
 - **Polling fallback** for UXP builds where `action.addNotificationListener` returns `void` (no teardown handle, no events). Implemented for `useDocumentChanges`, `useActiveLayerPath` (300ms), `useTagTree` (1.5s). Bails when `document.hidden` is true so background panels do not burn cycles.
 - **Structural reuse** in `buildTagTreeReusing` to keep `TagTreeNode` references stable across polls when nothing changed. Drives `React.memo` short-circuit on `prev.node === next.node` (single pointer compare instead of structural walk). Fast path also skips `parseLayerName` regex when the row is being reused.
-- **Pixels-per-unit UI control** in the Export tab (with persisted value + live "Canvas height = N units" hint). Out of scope of the SPEC but the manifest field exists and downstream needs a way to set it without code edits.
+- **Pixels-per-unit UI control** in the Export tab (with persisted value + live "Canvas height = N units" hint). Out of scope of the spec but the manifest field exists and downstream needs a way to set it without code edits.
 - **Legacy migration helper** ([`apps/photoshop/src/domain/legacy-migration.ts`](../../apps/photoshop/src/domain/legacy-migration.ts)) for the photoshop tag system work.6's `_<name>` -> `[ignore]` rewrite. Pure planner + UXP applier separated; the planner has unit tests.
 - **Shared layer-find helper** ([`apps/photoshop/src/io/_layer-find.ts`](../../apps/photoshop/src/io/_layer-find.ts)) used by both `layer-rename` and `legacy-migration` (was duplicated).
 - **Shared `elementsEqual<T>`** in [`apps/photoshop/src/util/arrays.ts`](../../apps/photoshop/src/util/arrays.ts) (was duplicated four ways across hooks and section components).

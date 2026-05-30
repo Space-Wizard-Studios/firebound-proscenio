@@ -18,7 +18,7 @@ Each side maintains its own view of the shape:
 | Photoshop | Hand-written `interface` types + ajv check at boundary | Two hand-edits per schema change. `interface` carries no runtime guard beyond ajv. |
 | Godot | `Dictionary` (Variant) downcast at every access | The `unsafe_*` warning family is silenced where the JSON is touched; `Variant` propagates through importer code. No statically-typed Resource layer. |
 
-`.ai/conventions.md` already commits to "Schema as a contract" and "Domain types over loose dicts" - this SPEC is the operationalization of that pledge with an explicit source-of-truth chosen.
+`.ai/conventions.md` already commits to "Schema as a contract" and "Domain types over loose dicts" - this spec is the operationalization of that pledge with an explicit source-of-truth chosen.
 
 ### Why JSON Schema is a weak source of truth
 
@@ -176,7 +176,7 @@ scripts/codegen/
 
 schemas/
   generated/          # checked-in artifacts; CI fails if stale
-  *.schema.json       # current hand-maintained; migrated into generated/ during this SPEC
+  *.schema.json       # current hand-maintained; migrated into generated/ during this spec
 
 apps/photoshop/src/generated/                  # checked-in artifacts
 apps/godot/addons/proscenio/generated/         # checked-in artifacts
@@ -213,7 +213,7 @@ D5. **TS runtime guard.** Replace ajv with zod (more idiomatic with generated TS
 
 D6. **Stricter-typing flag bump - one PR per language** or one big PR. Recommend per-language; each one's noise is bounded.
 
-D7. **Docs site.** Is the Docusaurus site itself in scope for this SPEC, or do we only produce `docs/content/api/schemas/*.md` artifacts and defer the site wiring? Recommend artifacts only here, with a separate SPEC or chore for the site.
+D7. **Docs site.** Is the Docusaurus site itself in scope for this spec, or do we only produce `docs/content/api/schemas/*.md` artifacts and defer the site wiring? Recommend artifacts only here, with a separate spec or chore for the site.
 
 D8. **Schema location.** Hand-maintained `schemas/*.schema.json` becomes `schemas/generated/*.schema.json`. The old paths either become symlinks (during transition) or are dropped. Confirm which.
 
@@ -231,10 +231,10 @@ OQ4. `.ai/skills/format-spec.md` is the human-readable contract today; if schema
 
 - GDScript class doc -> Markdown (mirror of Firebound's `processApiFiles.js` for `--doctool` XML). Deferred until phase P5 lands; revisit when the Godot side has stabilized after P4.
 - TypeDoc for the Photoshop plugin's React surface. The plugin is small; useful docs there are conceptual, not API-reference.
-- Property-based testing against the generated schemas (hypothesis). Worth a future SPEC once models exist.
+- Property-based testing against the generated schemas (hypothesis). Worth a future spec once models exist.
 - Migration scripts beyond the current `format_version=1` baseline. No new bump is planned here.
 
-## Acceptance (when this SPEC ships)
+## Acceptance (when this spec ships)
 
 A future "this spec is done" looks like:
 

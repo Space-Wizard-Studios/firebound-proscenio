@@ -61,7 +61,7 @@ The Godot importer trusts the exporter - it does not re-flip. If you write a non
 
 The `atlas` field is an optional path to a single packed texture. The Blender addon ships an in-tool **atlas packer** that emits the packed atlas + per-sprite `texture_region` rectangles directly from the rigged scene. Sliced-atlas authoring + Unpack support let the artist round-trip a packed atlas back to source images, edit, and repack. External packers (TexturePacker, Free Texture Packer, etc.) remain compatible - the writer reads whatever `texture_region` the user supplies.
 
-Multi-atlas per character is not supported in v1; multi-atlas characters split into multiple `.proscenio` files. Multi-atlas via an `atlas_pages[]` array is a deferred SPEC tracked in [`docs/DEFERRED.md`](../../docs/DEFERRED.md).
+Multi-atlas per character is not supported in v1; multi-atlas characters split into multiple `.proscenio` files. Multi-atlas via an `atlas_pages[]` array is a deferred spec tracked in [`docs/DEFERRED.md`](../../docs/DEFERRED.md).
 
 ## Skinning weights
 
@@ -126,4 +126,4 @@ Per-key `interp` field: `linear` or `constant`. Default `linear` if omitted.
 - Position / scale tracks: `INTERPOLATION_CUBIC`.
 - `sprite_frame` and `slot_attachment` tracks: `INTERPOLATION_NEAREST` (hard cuts).
 
-This means per-key `interp` is currently ignored for transform tracks - the track-level cubic spline always wins. Per-key interpolation mixing (linear / constant / cubic on different keys of the same track) is a deferred SPEC tracked in [`docs/DEFERRED.md`](../../docs/DEFERRED.md). True Bezier preservation (in/out tangent handles per key) is also deferred - it requires schema fields the v1 shape does not model.
+This means per-key `interp` is currently ignored for transform tracks - the track-level cubic spline always wins. Per-key interpolation mixing (linear / constant / cubic on different keys of the same track) is a deferred spec tracked in [`docs/DEFERRED.md`](../../docs/DEFERRED.md). True Bezier preservation (in/out tangent handles per key) is also deferred - it requires schema fields the v1 shape does not model.

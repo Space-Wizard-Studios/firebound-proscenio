@@ -14,7 +14,7 @@ Concrete observed failures:
 4. **Empty `Proscenio.QuickRig` armature leaks on cancel.** `_finish` ([quick_armature.py:145-150](../../apps/blender/operators/quick_armature.py#L145-L150)) clears the drag head and the status text but never removes the QuickRig armature when zero bones were created. Every accidental Esc adds a new orphan armature to the scene.
 5. **Single connect/disconnect modifier (`Shift`).** Today `Shift` parents-but-not-connects the new bone to the previous bone. There is no "connect" modifier (Spine `Ctrl`, Spriter `Alt+Shift`), no "pick a different parent than last", no in-modal unparent. Branching skeletons (humanoid arms off a spine) require exiting the operator, manually re-parenting in Edit Mode, and re-entering. Painful loop.
 6. **Bone naming is `qbone.NNN` with no rename affordance.** Naming convention from the wider community is `prefix_part_side` (`def_arm_l`, `ctrl_head`). Auto-named `qbone.000` carries zero semantic information; the user must rename in the Outliner after each bone or batch-rename later. the authoring panel already validated that artists hate post-hoc renaming.
-7. **Front-Ortho convention is enforced silently.** Plane projection hardcodes `plane_axis="Y"` ([quick_armature.py:74](../../apps/blender/operators/quick_armature.py#L74)) so bones land on the Y=0 picture plane regardless of view. Correct downstream (the writer assumes XZ), but in Top/Right/Persp the bone lands at Y=0 under a ray cast from the cursor and does not match where the user expected to click. Backlog ["Quick Armature: Front-Ortho UX guard"](../backlog.md#quick-armature-front-ortho-ux-guard) already enumerates the deferred fix - this SPEC absorbs it.
+7. **Front-Ortho convention is enforced silently.** Plane projection hardcodes `plane_axis="Y"` ([quick_armature.py:74](../../apps/blender/operators/quick_armature.py#L74)) so bones land on the Y=0 picture plane regardless of view. Correct downstream (the writer assumes XZ), but in Top/Right/Persp the bone lands at Y=0 under a ray cast from the cursor and does not match where the user expected to click. Backlog ["Quick Armature: Front-Ortho UX guard"](../backlog.md#quick-armature-front-ortho-ux-guard) already enumerates the deferred fix - this spec absorbs it.
 8. **No undo affordance inside the modal.** Each bone is committed via `bpy.ops.object.mode_set` round-trip ([quick_armature.py:125-138](../../apps/blender/operators/quick_armature.py#L125-L138)). User must exit, Ctrl-Z, re-enter to delete the last bone. Spine, Spriter, Adobe Animate all support per-bone undo while the tool is active.
 
 The combination of these is more than the sum of the parts: the user cannot tell where the bone will land, cannot tell if the modal is still active, cannot back out of a single bad bone, and ends up with five `qbone.NNN` bones to rename and one orphan QuickRig armature to delete.
@@ -119,7 +119,7 @@ Categorized so this spec can pick which patterns to lift. Each row maps to a Pro
 | Numeric naming after creation | (rename inline) | (rename) | (rename) | (rename) | (F2 rename) | **first cut** (rename hint or inline) |
 | Bone hierarchy editor (re-parent without breaking anim) | yes | yes (drag-drop tree) | yes | (limited) | (manual) | **future** |
 
-The first-cut column is the this spec minimum viable shape. The "5.1" column is the natural follow-up wave. The "future" column needs its own SPEC.
+The first-cut column is the this spec minimum viable shape. The "5.1" column is the natural follow-up wave. The "future" column needs its own spec.
 
 ## Quality-of-life patterns the community praises
 
@@ -201,7 +201,7 @@ It deliberately does **not** ship:
 - Numeric length input (`Tab` to type) - Edit Mode E key wins here.
 - Per-axis precise constraint chains (`E X X 0.5`) - too keystroke-heavy for the "quick" promise.
 - Subdivision, mirror copy, parent re-routing - Edit Mode is the right surface.
-- Mirror auto-suffix `_L`/`_R` - deferred to a successor SPEC, not core.
+- Mirror auto-suffix `_L`/`_R` - deferred to a successor spec, not core.
 
 The line: Quick Armature owns the "first-stroke" experience; Edit Mode owns refinement.
 
@@ -230,7 +230,7 @@ Mapping observed-pattern coverage to current implementation:
 | Pick-parent-in-viewport | **no** | gap |
 | Auto-attach underlying mesh / sprite | **no** | gap (couples to the slot system / atlas) |
 
-Proscenio today ships the bare drag-to-create primitive and a single chain modifier. Every single quality-of-life pattern from the wider community is missing. The gap is the size of an entire SPEC, which is what justifies this spec.
+Proscenio today ships the bare drag-to-create primitive and a single chain modifier. Every single quality-of-life pattern from the wider community is missing. The gap is the size of an entire spec, which is what justifies this spec.
 
 ## Constraints
 
@@ -311,7 +311,7 @@ Two parallel draw handlers, both registered in `invoke` and removed in `_finish`
 | `Ctrl+Z` (in modal) | Remove last created bone | New |
 | `Ctrl+Shift+Z` (in modal) | Re-create last removed bone | New |
 
-`Alt` is somewhat redundant with the no-modifier default today (since today no-modifier already means unparented). Reserving `Alt` now lets us flip the default in a successor SPEC ("auto-chain like Adobe Animate") without breaking the chord vocabulary.
+`Alt` is somewhat redundant with the no-modifier default today (since today no-modifier already means unparented). Reserving `Alt` now lets us flip the default in a successor spec ("auto-chain like Adobe Animate") without breaking the chord vocabulary.
 
 ### Lifecycle hygiene
 
@@ -430,7 +430,7 @@ The new "chain connected" modifier needs a chord that does not collide with Blen
 
 **Refinement (D10 + D14 supersede D8, commit `16c7995`):** the D10 inversion folded "chain + connect" into the no-modifier default, which removed the need for an explicit `Ctrl+Shift` chord. The connect modifier slot was reallocated to `Alt+drag` = parented + disconnected (parented bone with the head left at the user's press point - covers the branching-skeleton case that originally motivated D8). `Ctrl` got reallocated to grid snap by D12 / D14. Net chord vocabulary at landed shape: `LMB` = connected, `Shift+LMB` = unparented, `Alt+LMB` = disconnected, `Ctrl held during drag` = grid snap, `X` / `Z` = axis lock, `Ctrl+Z` / `Ctrl+Shift+Z` = in-modal undo / redo.
 
-### D9 - Shipping in waves vs single SPEC
+### D9 - Shipping in waves vs single spec
 
 this spec is large. Single drop or multiple commits?
 
@@ -482,7 +482,7 @@ Spine snaps bone rotation to 15-degree increments when Shift is held. Useful for
 
 - **D13.A - No angle snap.** Status quo.
 - **D13.B - Shift during drag (after PRESS) = snap angle to 15-deg increments.** Conflict: `Shift+LMB PRESS` in D10.B = new chain root. Live `Shift` held after PRESS would have to mean something different. Doable via state machine (track Shift state delta) but adds modal complexity.
-- **D13.C - Defer to a future SPEC.** Not enough usage demand observed today.
+- **D13.C - Defer to a future spec.** Not enough usage demand observed today.
 
 **Locked: D13.C.** the second wave is already wide. The chord vocabulary needs to stay clear for the first ship; reusing `Shift` for two meanings within the same drag is a cognitive load multiplier. Revisit if a humanoid rig fixture surfaces the need.
 
@@ -492,7 +492,7 @@ D8 reserved `Ctrl` alone for a future "snap to nearby bone tip" gesture. D12.B c
 
 - **D14.A - `Ctrl` = grid snap. Re-reserve `Alt` for the future bone-tip-snap.** Aligns with Blender's `Ctrl`=snap convention everywhere else.
 - **D14.B - Keep `Ctrl` reserved for bone-tip-snap. Use `Shift+Ctrl` for grid snap.** Preserves D8.C reservation, costs an extra finger.
-- **D14.C - Drop bone-tip-snap reservation entirely; assume a future SPEC will find its own chord.** Don't pre-allocate.
+- **D14.C - Drop bone-tip-snap reservation entirely; assume a future spec will find its own chord.** Don't pre-allocate.
 
 **Locked: D14.A.** Blender convention is `Ctrl`=snap-to-grid universally; users will press it reflexively. Reserving it for a hypothetical future feature wastes the most-discoverable chord. `Alt` is free in this operator today. If/when the bone-tip-snap lands, it can claim `Alt`.
 

@@ -139,7 +139,7 @@ Top-level siblings `eye_0`, `eye_1` no longer collapse. Rationale: the fallback 
 
 Filename templating is exposed as a panel-level setting, not as a tag (one setting affects the entire export, no per-layer override needed). See D8.
 
-Deferred to a follow-up SPEC or `specs/backlog.md`: `[skin:name]`, `[rotate:n]`, `[overlay]`, `[trim:*]`, `[bone]`, `[slot]`, `[bones]`, `[slots]`, `[!*]` escapes, `[slice:l,t,r,b]` (Cocos 9-slice), `[isolated]` (Character Animator's `+` warp-independent), pseudo-keyword recognition (`Head`, `Mouth`, ...), head-turner view groups.
+Deferred to a follow-up spec or `specs/backlog.md`: `[skin:name]`, `[rotate:n]`, `[overlay]`, `[trim:*]`, `[bone]`, `[slot]`, `[bones]`, `[slots]`, `[!*]` escapes, `[slice:l,t,r,b]` (Cocos 9-slice), `[isolated]` (Character Animator's `+` warp-independent), pseudo-keyword recognition (`Head`, `Mouth`, ...), head-turner view groups.
 
 Out of scope permanently: `[scale]+trim` Spine wobble bug class (we use deterministic scale-before-trim - E1).
 
@@ -194,8 +194,8 @@ Plan: implement the Tags tab first (most value), then Validate, then the Reveal-
 
 ## Things explicitly NOT in this spec
 
-- `[skin]` and full skin variant export. Different output topology (multi-manifest); separate SPEC if a real character demands it.
-- `[bone]` / `[slot]`. Proscenio's Blender side already owns the rig; tagging bones in PSD duplicates that responsibility. If a future "PSD-first rigger" SPEC lands, revisit.
+- `[skin]` and full skin variant export. Different output topology (multi-manifest); separate spec if a real character demands it.
+- `[bone]` / `[slot]`. Proscenio's Blender side already owns the rig; tagging bones in PSD duplicates that responsibility. If a future "PSD-first rigger" spec lands, revisit.
 - `[overlay]` clipping masks. Tied to Spine's render model; Blender's render is different.
 - Pseudo-keyword auto-tagging (`Head`, `Mouth`, ...). Tight coupling to a specific rig template; harder to generalise across project types.
 - Head-turner view groups. Specific to face puppetry; out of Proscenio's stated 2D-cutout scope.
@@ -211,5 +211,5 @@ Plan: implement the Tags tab first (most value), then Validate, then the Reveal-
 ## Sequencing relative to other work
 
 - Lands after the photoshop UXP migration JSX retirement (JSX retirement). Before then, the UXP plugin is still in parity-mirror mode with the JSX baseline; introducing tag semantics breaks the byte-equality oracle.
-- Coordinates with deferred the spritesheet sprite2d work (sprite_frame mesh) and the UV animation work (UV animation) via the `[mesh]` tag - implementation can ship as a no-op marker first, then wire up when those SPECs unblock.
-- Schema v2 in this spec implies a Blender importer update (read `anchor`, `origin`, `blend_mode` fields). Tracked as a small companion task on the addon side; no separate SPEC.
+- Coordinates with deferred the spritesheet sprite2d work (sprite_frame mesh) and the UV animation work (UV animation) via the `[mesh]` tag - implementation can ship as a no-op marker first, then wire up when those specs unblock.
+- Schema v2 in this spec implies a Blender importer update (read `anchor`, `origin`, `blend_mode` fields). Tracked as a small companion task on the addon side; no separate spec.

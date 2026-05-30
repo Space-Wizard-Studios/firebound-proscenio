@@ -16,7 +16,7 @@ Quick Armature UX overhaul. See [STUDY.md](STUDY.md) for the full design + decis
 - [x] D10 - default no-modifier = chain connected (Blender E extrude convention); `Shift+LMB drag` = new chain root (unparented).
 - [x] D11 - `X` / `Z` keys mid-drag = axis lock + colored axis line overlay in POST_VIEW handler.
 - [x] D12 - `Ctrl` held mid-drag = snap projected cursor to scene grid (hardcoded 1.0 world unit for first ship).
-- [x] D13 - angle snap deferred to future SPEC; chord vocabulary collision with `Shift` is not worth resolving today.
+- [x] D13 - angle snap deferred to future spec; chord vocabulary collision with `Shift` is not worth resolving today.
 - [x] D14 - `Ctrl` = grid snap (D12); `Alt` re-reserved for future "snap to nearby bone tip" gesture (was D8's reservation).
 - [x] D15 - defaults exposed via `bpy.types.Scene.proscenio.quick_armature` PropertyGroup + inline UI in Skeleton subpanel; F3 redo override remains for per-invoke tweaks.
 
@@ -194,7 +194,7 @@ Permanently rejected:
 
 - Floating Confirm/Cancel buttons in the viewport (header text + cursor warning tooltip cover the same UX without modal hit-testing complexity).
 
-## Successor SPECs
+## Successor specs
 
 - A future spec pairing the quick-armature work with the slot system's slot machinery would ship the DragonBones-style auto-attach gesture (`Ctrl+Shift+drag` over a sprite = bone + slot bind in one stroke). Captured in STUDY successor section.
 - A "Quick Mesh" operator (COA-Tools-style click-stroke vertex contour drawing) would lift the first cut modal-overlay scaffolding wholesale. If/when it lands, refactor `core/bpy_helpers/modal_overlay.py` from this spec helpers into a `ModalOverlay` class managing handle lifecycle.

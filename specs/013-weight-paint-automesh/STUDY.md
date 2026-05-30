@@ -15,7 +15,7 @@ What is missing is the **upstream half**: the authoring experience that produces
 
 The combined effect: the skinning-weights wire format is technically usable, but actually authoring a skinned character today means hours of manual subdivision + manual weight painting per sprite, redone from scratch any time the mesh changes. The pipeline ships skinning capability; the addon does not yet ship skinning ergonomics. this spec closes that gap.
 
-Concrete observed scenarios that this SPEC must enable in under 30 seconds each:
+Concrete observed scenarios that this spec must enable in under 30 seconds each:
 
 - "Turn this hand PNG into a 200-vertex mesh that bends at the wrist." (automesh)
 - "Bind this arm mesh to the 3-bone arm chain I just drew with Quick Armature." (auto-vertex-groups from bone chain + planar-safe seed)
@@ -397,7 +397,7 @@ Synthesis matrix. Pattern column = capability. Tool columns = ships it? (yes / n
 | Weight transfer between sprites (rig clone) | n/a (single mesh) | n/a | n/a | yes (Glue across ArtMeshes) | yes (Copy/Paste Bone Actions) | n/a | yes (Weighted Deform sources) | yes (Data Transfer modifier) | no (issue #18 #73 open) | **the productivity follow-up** |
 | Live pose-mode preview in weight paint | n/a (modes share) | n/a | n/a | n/a | yes | yes (timeline scrub) | yes | partial (with workarounds) | partial (POSE+WEIGHT_PAINT split via modal) | **first cut** (lift COA2 pattern) |
 
-**First-cut column = this spec the first cut minimum viable shape.** the productivity follow-up = follow-up productivity wave. successor work = aspirational (Auto-Patch, Smart Bones). Future / deferred = successor SPECs.
+**First-cut column = this spec the first cut minimum viable shape.** the productivity follow-up = follow-up productivity wave. successor work = aspirational (Auto-Patch, Smart Bones). Future / deferred = successor specs.
 
 ## Position of Proscenio today
 
@@ -411,27 +411,27 @@ Mapping current state to first-cut patterns above:
 | Active armature picker (source of truth) | **shipped** (the quick-armature spec D16) | [`properties/scene_props.py`](../../apps/blender/properties/scene_props.py) `active_armature` |
 | Modal overlay scaffold (GPU draw + status / header hints) | **shipped** (the quick-armature spec) | [`core/bpy_helpers/modal_overlay.py`](../../apps/blender/core/bpy_helpers/modal_overlay.py) |
 | Photoshop `[mesh]`-tagged layer ingest | **shipped** (the photoshop tag system) | [`importers/photoshop/planes.py`](../../apps/blender/importers/photoshop/planes.py) |
-| Alpha-trace automesh from sprite | **no** | gap (this SPEC) |
-| Annulus topology (outer+inner contour + fill) | **no** | gap (this SPEC) |
-| Planar-safe auto-weights (no heat solver) | **no** | gap (this SPEC) |
-| Auto-vertex-group from bone chain | **no** | gap (this SPEC) |
-| 2D-aware weight paint preset (Front Faces off, 2D Falloff, mirror via picker) | **no** | gap (this SPEC) |
-| GPU overlay weight viz (per-vertex colorband) | **no** | gap (this SPEC) |
-| One-button modal wrapper for paint mode | **no** | gap (this SPEC) |
-| Weight sidecar (preserve through regen) | **no** | gap (this SPEC, **key differentiator**) |
-| Pre-flight diagnosis on auto-weight failure | **no** | gap (this SPEC) |
-| Mesh-data preservation anchor (base sprite verts survive regen) | **no** | gap (this SPEC) |
-| Tablet release detection in draw modal | **no** | gap (this SPEC, lifecycle hygiene) |
+| Alpha-trace automesh from sprite | **no** | gap (this spec) |
+| Annulus topology (outer+inner contour + fill) | **no** | gap (this spec) |
+| Planar-safe auto-weights (no heat solver) | **no** | gap (this spec) |
+| Auto-vertex-group from bone chain | **no** | gap (this spec) |
+| 2D-aware weight paint preset (Front Faces off, 2D Falloff, mirror via picker) | **no** | gap (this spec) |
+| GPU overlay weight viz (per-vertex colorband) | **no** | gap (this spec) |
+| One-button modal wrapper for paint mode | **no** | gap (this spec) |
+| Weight sidecar (preserve through regen) | **no** | gap (this spec, **key differentiator**) |
+| Pre-flight diagnosis on auto-weight failure | **no** | gap (this spec) |
+| Mesh-data preservation anchor (base sprite verts survive regen) | **no** | gap (this spec) |
+| Tablet release detection in draw modal | **no** | gap (this spec, lifecycle hygiene) |
 | Soft vs Hard bone toggle | **no** | the productivity follow-up |
 | Bone strength region painting | **no** | the productivity follow-up |
 | Auto-patch joint cover | **no** | successor work |
 | Weight transfer between sprites | **no** | the productivity follow-up |
 
-11 first-cut gaps in this SPEC. the first cut ships them; the productivity follow-up and the successor work ship the productivity + aspirational layers.
+11 first-cut gaps in this spec. the first cut ships them; the productivity follow-up and the successor work ship the productivity + aspirational layers.
 
 ## Design surface
 
-The SPEC splits into five concerns:
+The spec splits into five concerns:
 
 1. **Mesh generation (automesh).** Pure-Python alpha-contour walker (Moore neighbour or marching squares on `bpy.types.Image.pixels` buffer - no OpenCV) builds outer + inner contour + annulus triangulation. Configurable resolution, alpha threshold, margin. Re-runnable with `coa_base_sprite`-style preservation anchor.
 2. **Bone binding + initial weights.** AMENDED the panel work: default is now Blender's native bone heat (`parent_with_automatic_weights`) - 2D pickers with bones tangent to the picture plane don't hit the failure mode D4 originally guarded against, and bone heat produces visibly better falloff. Proscenio's custom planar-distance falloff algorithm + envelope + single-nearest + empty modes remain available as opt-in fallbacks via the `bind_init_mode` enum (panel dropdown + F3 redo). Pre-flight diagnoses (D11) run before EVERY bind path including BONE_HEAT. See D4 / D5 amendments.
@@ -501,15 +501,15 @@ class ProscenioSkinningProps(bpy.types.PropertyGroup):
 
 Lives at `scene.proscenio.skinning`. Naming pattern parallel to `scene.proscenio.quick_armature` (the quick-armature spec D15).
 
-### Out of scope (deferred to successor SPECs or backlog)
+### Out of scope (deferred to successor specs or backlog)
 
 - **Auto-attach mesh to slot.** Coupling between vertex groups and the slot system; deferred until slot-system maturity.
 - **Bezier brush stroke for the alpha-boundary trace.** COA Tools 2 uses straight-segment strokes; this spec follows the same minimal model.
 - **GPU-accelerated weight sampling.** All weight math is bmesh + Python loops. If performance becomes a complaint on >5000-vertex meshes, escalate to backlog.
 - **Multi-mesh batch bind.** Operator targets a single active mesh. Batch bind = follow-up candidate.
-- **Live2D-style deformer paradigm.** Proscenio is bone-based; deformers are a different SPEC entirely if ever pursued.
+- **Live2D-style deformer paradigm.** Proscenio is bone-based; deformers are a different spec entirely if ever pursued.
 - **Soft vs Hard bone toggle (Adobe Animate lift)** - follow-up candidate; first-cut delivers proximity falloff which behaves like "soft" by default.
-- **Bone strength region painting (Moho lift)** - follow-up candidate; foundational and high-value but requires a custom widget + viewport draw that doubles SPEC scope if first-cut.
+- **Bone strength region painting (Moho lift)** - follow-up candidate; foundational and high-value but requires a custom widget + viewport draw that doubles spec scope if first-cut.
 - **Auto-patch joint cover at articulations (Toon Boom Harmony lift)** - successor candidate; requires both child-mesh detection and a custom seam generator.
 - **Smart-Bone-style corrective drivers** - a future animation-system spec+ material; couples to animation system not authoring.
 - **Cubism Glue equivalent** (seam binding between two ArtMeshes) - successor work.
@@ -726,11 +726,11 @@ Each section below preserves the option set + rationale for posterity.
 - **Photoshop importer (the photoshop tag system)** evolution: a `[mesh:HIGH]` tag could let the artist hint at desired automesh resolution per layer at PSD authoring time. Out of scope here; backlog-worthy follow-up if real workflows surface it.
 - **Live weight-paint preview in Pose mode** ("pose the bone, see how the mesh deforms in real time without leaving Weight Paint") is a Blender native feature with known papercuts (mode toggle latency, no painting from rest pose). Edit Weights wrapper (D7) already touches both POSE + WEIGHT_PAINT modes; a follow-up could add a "scrub to pose, return to rest" affordance without leaving the modal.
 - **Soft vs Hard bone toggle (D16)** - the productivity follow-up per locked decision.
-- **Bone strength region painting (Moho lift)** - the productivity follow-up. Region widget + viewport draw doubles SPEC scope if first-cut.
+- **Bone strength region painting (Moho lift)** - the productivity follow-up. Region widget + viewport draw doubles spec scope if first-cut.
 - **Auto-patch joint cover at articulations (Toon Boom Harmony lift)** - successor work. Requires child-mesh detection + custom seam generator + integration with slot system.
 - **Cubism Glue equivalent** (seam binding between two ArtMeshes) - successor work. Different operator surface than Auto-Patch (covers any seam, not just articulations).
 - **Smart-Bone-style corrective drivers** - a future animation-system spec+. Couples to animation system not authoring.
-- **Quick Mesh operator** (mentioned in the quick-armature spec's successor list) is the direct sibling to automesh; lift the modal scaffold from this SPEC if pursued.
+- **Quick Mesh operator** (mentioned in the quick-armature spec's successor list) is the direct sibling to automesh; lift the modal scaffold from this spec if pursued.
 - **Mirror humanoid binding** (one mesh on one side, click to mirror to the other) - couples to symmetric rigs. No Proscenio fixture exercises symmetric humanoids end-to-end today.
 - **Multi-mesh batch bind** - apply auto-weights to N selected meshes in one operation. the productivity follow-up.
 - **Weight transfer between sprites** (rig clone across near-duplicate sprites - line / colour / shadow layered Live2D-style) - the productivity follow-up. Foundational request open since COA2 inception ([#18](https://github.com/Aodaruma/coa_tools2/issues/18), [#73](https://github.com/Aodaruma/coa_tools2/issues/73)).

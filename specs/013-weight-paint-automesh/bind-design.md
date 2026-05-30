@@ -4,7 +4,7 @@ Status: design locked via `/brainstorming` session 2026-05-17. Ready for impleme
 
 Scope: bind a mesh to a picker armature via a custom planar-distance algorithm that never hits Blender's bone-heat solver, surface structured diagnoses when something goes wrong, write a sidecar stub that the sidecar work consumes for reproject.
 
-Locked SPEC decisions: D4 (no bone heat default), D5 (PROXIMITY / ENVELOPE / SINGLE_NEAREST / EMPTY enum), D11 (pre-flight structured diagnoses).
+Locked spec decisions: D4 (no bone heat default), D5 (PROXIMITY / ENVELOPE / SINGLE_NEAREST / EMPTY enum), D11 (pre-flight structured diagnoses).
 
 ## Decisions (brainstorming output)
 

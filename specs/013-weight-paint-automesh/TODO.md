@@ -483,7 +483,7 @@ Items observed during paint-wave manual smoke that may be real bugs OR test-flow
 
 ## Tech debt - addon-wide
 
-- **mypy strict + bpy.props typing cleanup.** The addon scatters `# type: ignore[valid-type]` on every `bpy.props.FloatProperty(...)` / `EnumProperty(...)` / `StringProperty(...)` assignment-as-annotation (the Blender PG hack mypy strict cannot model) and `# type: ignore[import-not-found]` on every relative `..core.skinning.*` import (mypy resolves relative imports from `apps/blender/` cwd and the `.core.X` path fails from `operators/`, `panels/`). Both patterns are universal across `bind_mesh.py`, `set_bone_mode.py`, `brush_preset.py`, `copy_weights_to_selected.py`, `sidecar_io.py`, and reach into helper modules too. Cleanup path: (a) ship `.pyi` stub files declaring proper `bpy.props.*` return types so the assignment-as-annotation hack types correctly without ignore; (b) extend `pyproject.toml` `[tool.mypy]` with per-module `mypy_path` / `explicit_package_bases` so relative imports resolve consistently; (c) audit + remove the now-obsolete ignores in one sweep. Out of scope for current SPECs (touches every operator and panel module); track as standalone refactor when next strict-mypy churn happens.
+- **mypy strict + bpy.props typing cleanup.** The addon scatters `# type: ignore[valid-type]` on every `bpy.props.FloatProperty(...)` / `EnumProperty(...)` / `StringProperty(...)` assignment-as-annotation (the Blender PG hack mypy strict cannot model) and `# type: ignore[import-not-found]` on every relative `..core.skinning.*` import (mypy resolves relative imports from `apps/blender/` cwd and the `.core.X` path fails from `operators/`, `panels/`). Both patterns are universal across `bind_mesh.py`, `set_bone_mode.py`, `brush_preset.py`, `copy_weights_to_selected.py`, `sidecar_io.py`, and reach into helper modules too. Cleanup path: (a) ship `.pyi` stub files declaring proper `bpy.props.*` return types so the assignment-as-annotation hack types correctly without ignore; (b) extend `pyproject.toml` `[tool.mypy]` with per-module `mypy_path` / `explicit_package_bases` so relative imports resolve consistently; (c) audit + remove the now-obsolete ignores in one sweep. Out of scope for current specs (touches every operator and panel module); track as standalone refactor when next strict-mypy churn happens.
 
 ## Aspirational
 
@@ -516,7 +516,7 @@ Rejected for this spec; do not propose again without re-opening the decision:
 - Per-brush mirror as the source of truth (D14).
 - ESC as deselect-only inside any draw modal (D10).
 
-## Successor SPECs
+## Successor specs
 
 - **A future animation-polish spec** - inherits the weight-aware vertex-group machinery; Smart-Bone-style corrective drivers land there.
 - **Slot system maturity** unlocks auto-attach mesh to slot + per-slot weight variations.
