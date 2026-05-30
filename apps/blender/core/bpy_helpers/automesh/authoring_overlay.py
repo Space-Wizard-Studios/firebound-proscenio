@@ -33,7 +33,6 @@ _TRIANGULATION_LINE_WIDTH = 1.5
 _USER_DOT_COLOR = (1.0, 1.0, 0.2, 0.95)
 _STROKE_VERT_COLOR_FOLD = (0.3, 0.7, 1.0, 1.0)  # blue - fold-line stroke (Stage 4 default)
 _STROKE_VERT_COLOR_CUT_RIP = (1.0, 0.3, 0.3, 1.0)  # red - cut (both Stage 2 + Stage 4, AS-AM17)
-_RAW_STROKE_COLOR = (0.6, 0.6, 0.6, 0.7)
 _LINE_WIDTH = 2.0
 _DOT_SIZE_USER = 8.0
 _DOT_SIZE_STEINER = 4.0
@@ -64,8 +63,7 @@ class OverlayHandles(TypedDict):
     user_dots: object | None
     user_strokes: object | None  # Stage 4 interior strokes (fold/rip)
     user_outer_strokes: object | None  # Stage 2 outer strokes (chunk-remove)
-    raw_stroke: object | None
-    live_preview: object | None  # Stage 4 in-progress pen/free-draw (colored verts+edges)
+    live_preview: object | None  # in-progress pen/free-draw (colored verts+edges)
     delete_hover: object | None  # highlight on the stroke under the cursor while Alt held
     tooltip: object | None  # POST_PIXEL intent text; Stage 2 + Stage 4 only
 
@@ -107,8 +105,6 @@ def _draw_tooltip(
 def _register_interactive_handlers(
     handles: OverlayHandles,
     user_strokes: list[Stroke] | None,
-    stroke_active_ref: list[bool] | None,
-    stroke_raw_points_ref: list[tuple[float, float]] | None,
     tooltip_mouse_ref: list[tuple[int, int]] | None,
     tooltip_text_ref: list[str] | None,
     live_preview_ref: dict[str, object] | None = None,
@@ -117,29 +113,17 @@ def _register_interactive_handlers(
 ) -> None:
     """Register draw handlers for interactive stages (USER_OUTER, USER_STEINERS).
 
-    Covers committed strokes, in-progress raw stroke preview, and the
-    POST_PIXEL intent tooltip. All handlers receive mutable container
-    references so they always see the latest operator state without
-    needing re-registration on MOUSEMOVE.
+    Covers committed strokes, the colored in-progress pen / free-draw preview,
+    the delete-hover highlight, and the POST_PIXEL intent tooltip. All handlers
+    receive mutable container references so they always see the latest operator
+    state without needing re-registration on MOUSEMOVE.
 
     Cut strokes render RED in both stages (AS-AM17 unified the color).
-
-    live_preview_ref (Stage 4 only) wires the colored in-progress pen /
-    free-draw preview. When supplied, the thin gray _draw_raw_stroke is
-    superseded by the richer _draw_live_preview (verts + colored edges +
-    rubber-band to the cursor in pen mode).
     """
     if user_strokes is not None:
         handles["user_strokes"] = bpy.types.SpaceView3D.draw_handler_add(
             _draw_user_strokes,
             (user_strokes,),
-            "WINDOW",
-            "POST_VIEW",
-        )
-    if stroke_active_ref is not None and stroke_raw_points_ref is not None:
-        handles["raw_stroke"] = bpy.types.SpaceView3D.draw_handler_add(
-            _draw_raw_stroke,
-            (stroke_active_ref, stroke_raw_points_ref),
             "WINDOW",
             "POST_VIEW",
         )
@@ -171,8 +155,6 @@ def register_overlay(
     output: StageOutput,
     user_strokes: list[Stroke] | None = None,
     user_outer_strokes: list[Stroke] | None = None,
-    stroke_active_ref: list[bool] | None = None,
-    stroke_raw_points_ref: list[tuple[float, float]] | None = None,
     tooltip_mouse_ref: list[tuple[int, int]] | None = None,
     tooltip_text_ref: list[str] | None = None,
     live_preview_ref: dict[str, object] | None = None,
@@ -181,16 +163,14 @@ def register_overlay(
 ) -> OverlayHandles:
     """Add POST_VIEW draw handlers per stage's overlay set.
 
-    For Stage 2 (USER_OUTER) pass user_outer_strokes + raw-stroke/tooltip refs.
-    For Stage 4 (USER_STEINERS) pass user_strokes + user_outer_strokes (kept
-    visible) + tooltip refs. Cut strokes render RED in both stages (AS-AM17
-    unified the color; the prior orange Stage-2 chunk-remove cut was retired).
+    For Stage 2 (USER_OUTER) pass user_outer_strokes + tooltip + live-preview
+    refs. For Stage 4 (USER_STEINERS) pass user_strokes + user_outer_strokes
+    (kept visible) + tooltip refs. Cut strokes render RED in both stages
+    (AS-AM17 unified the color).
 
     Live mutable container parameters (all optional):
     - user_strokes: interior Steiner strokes (_user_strokes in operator)
     - user_outer_strokes: outer-contour strokes (_user_outer_strokes in operator)
-    - stroke_active_ref: single-element list wrapping _stroke_active bool
-    - stroke_raw_points_ref: the operator's _stroke_raw_points list
     - tooltip_mouse_ref: single-element list with (mouse_region_x, mouse_region_y) in pixels
     - tooltip_text_ref: single-element list with current intent text string
 
@@ -207,7 +187,6 @@ def register_overlay(
         "user_dots": None,
         "user_strokes": None,
         "user_outer_strokes": None,
-        "raw_stroke": None,
         "live_preview": None,
         "delete_hover": None,
         "tooltip": None,
@@ -248,8 +227,6 @@ def register_overlay(
         _register_interactive_handlers(
             handles,
             user_outer_strokes,
-            stroke_active_ref,
-            stroke_raw_points_ref,
             tooltip_mouse_ref,
             tooltip_text_ref,
             live_preview_ref=live_preview_ref,
@@ -263,8 +240,6 @@ def register_overlay(
         _register_interactive_handlers(
             handles,
             user_strokes,
-            stroke_active_ref,
-            stroke_raw_points_ref,
             tooltip_mouse_ref,
             tooltip_text_ref,
             live_preview_ref=live_preview_ref,
@@ -324,7 +299,6 @@ def unregister_overlay(handles: OverlayHandles) -> None:
         "user_dots",
         "user_strokes",
         "user_outer_strokes",
-        "raw_stroke",
         "live_preview",
         "delete_hover",
         "tooltip",
@@ -343,8 +317,6 @@ def refresh_overlay(
     output: StageOutput,
     user_strokes: list[Stroke] | None = None,
     user_outer_strokes: list[Stroke] | None = None,
-    stroke_active_ref: list[bool] | None = None,
-    stroke_raw_points_ref: list[tuple[float, float]] | None = None,
     tooltip_mouse_ref: list[tuple[int, int]] | None = None,
     tooltip_text_ref: list[str] | None = None,
     live_preview_ref: dict[str, object] | None = None,
@@ -358,8 +330,6 @@ def refresh_overlay(
         output,
         user_strokes=user_strokes,
         user_outer_strokes=user_outer_strokes,
-        stroke_active_ref=stroke_active_ref,
-        stroke_raw_points_ref=stroke_raw_points_ref,
         tooltip_mouse_ref=tooltip_mouse_ref,
         tooltip_text_ref=tooltip_text_ref,
         live_preview_ref=live_preview_ref,
@@ -532,44 +502,13 @@ def _draw_user_strokes(strokes: list[Stroke]) -> None:
         gpu.state.blend_set("NONE")
 
 
-def _draw_raw_stroke(
-    stroke_active_ref: list[bool],
-    raw_points: list[tuple[float, float]],
-) -> None:
-    """Draw the in-progress raw stroke as a light gray thin line.
-
-    stroke_active_ref[0] gates the draw so nothing is emitted between
-    strokes. Both args are mutable containers held by reference so this
-    callback always sees the live operator state.
-    """
-    if not stroke_active_ref[0] or len(raw_points) < 2:
-        return
-    line_coords: list[tuple[float, float, float]] = []
-    for i in range(len(raw_points) - 1):
-        a = raw_points[i]
-        b = raw_points[i + 1]
-        line_coords.append((a[0], 0.0, a[1]))
-        line_coords.append((b[0], 0.0, b[1]))
-    shader = gpu.shader.from_builtin(_UNIFORM_COLOR_SHADER)
-    batch = batch_for_shader(shader, "LINES", {"pos": line_coords})
-    gpu.state.blend_set("ALPHA")
-    gpu.state.line_width_set(1.0)
-    try:
-        shader.bind()
-        shader.uniform_float("color", _RAW_STROKE_COLOR)
-        batch.draw(shader)
-    finally:
-        gpu.state.line_width_set(1.0)
-        gpu.state.blend_set("NONE")
-
-
 def _draw_live_preview(state: dict[str, object]) -> None:
-    """Draw the in-progress Stage 4 pen / free-draw stroke in its intent color.
+    """Draw the in-progress pen / free-draw stroke in its intent color.
 
-    Supersedes the thin gray _draw_raw_stroke for interior authoring so the
-    artist sees committed-quality feedback (verts + colored edges) while a
-    stroke is being placed. In pen mode an extra dimmed rubber-band segment
-    connects the last placed vert to the live cursor.
+    Used by both Stage 2 (USER_OUTER) and Stage 4 (USER_STEINERS): the artist
+    sees committed-quality feedback (verts + colored edges) while a stroke is
+    being placed. In pen mode an extra dimmed rubber-band segment connects
+    the last placed vert to the live cursor.
 
     `state` is a single mutable dict held by reference; the operator mutates
     its fields in-place (never reassigns the dict) so this callback always

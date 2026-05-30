@@ -55,13 +55,14 @@ def compute_outer(
     the sprite's actual viewport position. Without this, the overlay
     renders at the world origin while the mesh sits elsewhere.
 
-    The dilation matches APPLY: build_automesh's extract_contours always
-    dilates the outer mask by ``max(1, margin_pixels)`` (1-cell safety even
-    at margin 0). Tracing the raw mask here would show an inset contour that
-    visibly "inflates outward" on APPLY; mirroring the dilation makes the
-    preview match the final boundary so strokes snap to the real edge.
+    The dilation matches APPLY: build_automesh converts ``margin_pixels``
+    (source-image pixels) to grid cells via ``round(margin_pixels *
+    downscale_factor)`` and passes that to extract_contours, which then floors
+    at 1 cell of safety dilation. The preview applies the same scale so a
+    margin set at the default downscale (resolution=0.25, margin_pixels=5)
+    does not over-dilate by 4x (CR finding 2026-05-29).
     """
-    outer_dilate = max(1, params.margin_pixels)
+    outer_dilate = max(1, round(params.margin_pixels * params.resolution))
     alpha_grid = read_alpha_grid(image, params.resolution)
     pixel_contour = extract_outer_contour(alpha_grid, params.alpha_threshold, outer_dilate)
     world_scale = 1.0 / _resolve_pixels_per_unit(bpy.context)
@@ -342,7 +343,10 @@ def compute_outer_preview(output: StageOutput, params: StageParams) -> list[Poin
         return []
     base = list(output.outer)
     spliced = splice_extend_strokes(base, extends)
-    if spliced is base or len(spliced) < 3:
+    # splice_extend_strokes always returns a fresh list (never the input),
+    # so `is` would never trip - use value equality to catch the no-op case
+    # (every stroke skipped: fully inside / fully outside the silhouette).
+    if len(spliced) < 3 or spliced == base:
         return []
     return list(arc_length_resample(spliced, params.contour_vertices))
 
@@ -465,10 +469,14 @@ def compute_triangulation_preview(
     """
     if params.interior_mode != "SIMPLE":
         return []
-    temp_obj = obj.copy()
-    temp_obj.data = obj.data.copy()
-    temp_mesh = temp_obj.data
+    # Allocate temp object + mesh INSIDE the try so any failure (OOM on a huge
+    # mesh, library-linked source mesh, etc.) cannot leak orphan datablocks.
+    temp_obj: bpy.types.Object | None = None
+    temp_mesh: bpy.types.Mesh | None = None
     try:
+        temp_obj = obj.copy()
+        temp_obj.data = obj.data.copy()
+        temp_mesh = temp_obj.data
         _build_authoring_mesh(temp_obj, image, output, params, bone_segments=None)
         matrix = temp_obj.matrix_world
         verts = temp_mesh.vertices
@@ -479,8 +487,10 @@ def compute_triangulation_preview(
             edges_world.append(((a.x, a.z), (b.x, b.z)))
         return edges_world
     finally:
-        bpy.data.objects.remove(temp_obj, do_unlink=True)
-        bpy.data.meshes.remove(temp_mesh, do_unlink=True)
+        if temp_obj is not None:
+            bpy.data.objects.remove(temp_obj, do_unlink=True)
+        if temp_mesh is not None:
+            bpy.data.meshes.remove(temp_mesh, do_unlink=True)
 
 
 def _resolve_pixels_per_unit(context: bpy.types.Context) -> float:

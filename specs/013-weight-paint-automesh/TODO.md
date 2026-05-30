@@ -415,7 +415,7 @@ Phase 1 - algorithm + steps + Stage 2 remap (~400 LOC). DONE on branch (staged; 
 - **[x] AS-AM15** triangulation preview at SIMPLE step 4 - `compute_triangulation_preview` runs the real build on a throwaway obj copy (anti-drift, non-destructive) + cyan wireframe overlay (`_draw_edges`). Recompute on stage-enter + param-dirty (OQ1).
 - **[x] AS-AM17** Stage 2 modifier-driven (Shift=extend, Ctrl=cut, Alt=delete; plain drag = no-op) unified with Stage 4; cut overlay RED (orange `_STROKE_VERT_COLOR_CUT_REMOVE` retired, `stage_context` plumbing removed).
 
-MANUAL_TESTING (visual, cannot verify headless - needs interactive Blender):
+MANUAL_TESTING - **post-merge smoke validation** (visual, cannot verify headless; reviewer / on-call smokes after merge, NOT a pre-merge blocker):
 
 - **[ ] SIMPLE step 4 wireframe** - the cyan triangulation overlay matches the mesh APPLY produces (silhouette + fold/cut/steiner verts, no dense fill).
 - **[ ] Stage 2 red + modifier** - cut overlay reads RED (matches Stage 4); Shift/Ctrl/Alt dispatch is precise regardless of cursor inside/outside the silhouette.
@@ -427,7 +427,7 @@ Phase 2 - gesture model rewrite. Plan: [`design/2026-05-28-spec-013-gesture-pen-
 - **[x] AS-AM16** scroll / digit subdivisions - wheel +/-1, digit 0-9 sets exact; baked into the pen polyline via `subdivide_polyline` at finish. Live preview shows ghost subdivision dots + axis-snapped rubber-band guide.
 - **[x] AS-AM16 follow-ups** (2026-05-28 smoke 2): (a) tooltip + statusbar refresh on tap-toggle / wheel-subdiv / axis-lock (not only mouse move) via `_refresh_pen_tooltip`; (b) pen-click snaps to nearby existing verts (committed strokes + outer contour) so coords land exactly, AND on finish a pen line whose endpoint meets an existing same-kind stroke's endpoint MERGES into it (`_merge_into_existing`) so connected traces are ONE deletable stroke, not two stacked on a shared vert; clicking the line's first vert closes a loop (`_snap_pen_click`); (c) Stage 2 spliced-outer preview (`compute_outer_preview` + green overlay) shows the silhouette APPLY will build after extend edits, updating on commit/undo/delete.
 
-MANUAL_TESTING (gesture, cannot verify headless - needs interactive Blender):
+MANUAL_TESTING - **post-merge smoke validation** (gesture, cannot verify headless; reviewer / on-call smokes after merge, NOT a pre-merge blocker):
 
 - **[ ] Toggle entry/exit** - tap Shift enters fold-pen (statusbar/tooltip show DRAW); tap again on an empty line exits to NEUTRAL.
 - **[ ] Pen + finish/cancel** - click 3 verts, RMB or Enter commits the line; Esc on a fresh line discards without cancelling the modal; NEUTRAL Enter still advances the stage.

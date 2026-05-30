@@ -208,7 +208,6 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             "user_dots": None,
             "user_strokes": None,
             "user_outer_strokes": None,
-            "raw_stroke": None,
             "live_preview": None,
             "delete_hover": None,
             "tooltip": None,
@@ -303,7 +302,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
                 handled = self._handle_user_steiners_event(context, event)
                 if handled is not None:
                     return handled
-            if event.type == "ESC":
+            if event.type == "ESC" and event.value == "PRESS":
                 return self._finish(context, cancel=True)
             if event.type in {"RET", "NUMPAD_ENTER"} and event.value == "PRESS":
                 return self._advance(context)
@@ -334,7 +333,8 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             obj = context.active_object
             if obj is not None:
                 write_user_outer_strokes(obj, self._user_outer_strokes)
-            self._refresh_outer_preview(context)
+            if self._outer_preview_relevant():
+                self._refresh_outer_preview(context)
             _tag_redraw_view3d(context)
         return {"RUNNING_MODAL"}
 
@@ -362,7 +362,8 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
                     obj = context.active_object
                     if obj is not None:
                         write_user_outer_strokes(obj, self._user_outer_strokes)
-                    self._refresh_outer_preview(context)
+                    if self._outer_preview_relevant():
+                        self._refresh_outer_preview(context)
                     return
 
     def _point_inside_outer(self, point_world_xz: tuple[float, float]) -> bool:
@@ -691,13 +692,17 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         """Update the tooltip text for the current pen state without a mouse
         move. Tap-toggle, wheel/digit subdivisions, and X/Z axis lock are
         keyboard/wheel events that fire no MOUSEMOVE, so the tooltip would
-        otherwise go stale until the cursor moves."""
+        otherwise go stale until the cursor moves.
+
+        Background color is NOT touched here so a warn-red bg set by the last
+        MOUSEMOVE (cursor outside the silhouette) survives a key event; the
+        next MOUSEMOVE recomputes it.
+        """
         stage = self._current_pen_stage()
         if self._draw_active:
             self._tooltip_text_ref[0] = self._pen_tooltip_text(stage)
         else:
             self._tooltip_text_ref[0] = self._neutral_tooltip_text(stage)
-        self._tooltip_color_ref[0] = _TOOLTIP_BG_NORMAL
 
     def _pen_finish(self, context: bpy.types.Context, stage: str) -> set[str]:
         """Bake subdivisions into the pen polyline + commit it; return NEUTRAL."""
@@ -774,13 +779,30 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
                 write_user_strokes(obj, self._user_strokes)
             else:
                 write_user_outer_strokes(obj, self._user_outer_strokes)
-        if stage == "outer":
+        if stage == "outer" and self._outer_preview_relevant():
             self._refresh_outer_preview(context)
         _tag_redraw_view3d(context)
 
+    def _outer_preview_relevant(self) -> bool:
+        """True when the spliced preview can change. Cut strokes carve corridor
+        holes (not the contour) and never feed compute_outer_preview, so a
+        cut-only commit/undo/delete skips the splice + resample when no extend
+        stroke is currently in the list AND the preview is already empty."""
+        if self._output.outer_preview:
+            return True
+        return any(s["kind"] == "stroke" for s in self._user_outer_strokes)
+
     def _refresh_outer_preview(self, context: bpy.types.Context) -> None:
         """Recompute the Stage 2 spliced-outer preview in place (AS-AM16) so the
-        artist sees the silhouette APPLY will build after extend edits."""
+        artist sees the silhouette APPLY will build after extend edits.
+
+        ``compute_outer_preview`` reads ``output.user_outer_strokes``; that
+        field is only synced into ``self._output`` at APPLY / stage 5 entry,
+        so during Stage 2 editing we have to mirror the live operator list
+        first or the preview is computed against an empty list and never
+        renders.
+        """
+        self._output.user_outer_strokes = self._user_outer_strokes
         preview = compute_outer_preview(self._output, _snapshot_params(context))
         self._output.outer_preview[:] = preview
         _tag_redraw_view3d(context)
@@ -800,16 +822,17 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
 
     def _pen_undo_in_draw(self, context: bpy.types.Context, stage: str) -> set[str]:
         """Ctrl+Z while drawing: drop the last placed pen vert if a line is in
-        progress (in-line undo), else fall back to undoing the last committed
-        stroke."""
-        if self._pen_points:
-            self._pen_points.pop()
-            self._pen_active = bool(self._pen_points)
-            self._live_preview["points"] = list(self._pen_points)
-            self._live_preview["active"] = bool(self._pen_points)
-            _tag_redraw_view3d(context)
+        progress; with no pen verts placed this is a no-op rather than a
+        silent undo of the last committed stroke (the artist has no visual
+        cue that fallback would have happened)."""
+        if not self._pen_points:
             return {"RUNNING_MODAL"}
-        return self._pen_undo(context, stage)
+        self._pen_points.pop()
+        self._pen_active = bool(self._pen_points)
+        self._live_preview["points"] = list(self._pen_points)
+        self._live_preview["active"] = bool(self._pen_points)
+        _tag_redraw_view3d(context)
+        return {"RUNNING_MODAL"}
 
     def _pen_mousemove(
         self, context: bpy.types.Context, event: bpy.types.Event, stage: str
@@ -911,7 +934,14 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._user_strokes = read_user_strokes(obj)
             self._reset_draw_state()
         elif next_stage == AuthoringStage.STEINER_PREVIEW:
-            self._refresh_steiner_preview(context, obj, image, params)
+            try:
+                self._refresh_steiner_preview(context, obj, image, params)
+            except ValueError as exc:
+                # A degenerate CDT (self-intersecting fold/cut, empty silhouette)
+                # used to bubble up to modal()'s except Exception and cancel the
+                # whole session. Report + stay on the previous stage instead.
+                report_error(self, f"Preview failed: {exc}")
+                return {"PASS_THROUGH"}
         elif next_stage == AuthoringStage.APPLY:
             picker = _resolve_picker(context)
             self._output.user_outer_strokes = self._user_outer_strokes
@@ -986,11 +1016,19 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
     def _apply_interior_mode_change(self, context: bpy.types.Context, mode: str) -> None:
         """Rebuild the active stage list when the interior mode flips mid-modal
         (AS-AM15). If the current stage was dropped (INNER_LOOPS on flip to
-        SIMPLE), snap back to USER_OUTER so navigation stays consistent."""
+        SIMPLE), snap back to USER_OUTER and clear any in-progress pen state
+        + reload that stage's strokes so a stale Stage 4 live preview cannot
+        leak into Stage 2."""
         self._interior_mode = mode
         self._active_stages = _stages_for_mode(mode)
-        if self._stage not in self._active_stages:
+        snapped = self._stage not in self._active_stages
+        if snapped:
             self._stage = AuthoringStage.USER_OUTER
+            self._reset_draw_state()
+            obj = context.active_object
+            if obj is not None:
+                self._user_outer_strokes = read_user_outer_strokes(obj)
+            self._refresh_outer_preview(context)
         type(self)._current_stage_label = _stage_label(self._stage, self._interior_mode)
         type(self)._current_stage = self._stage
         type(self)._current_interior_mode = self._interior_mode
@@ -1031,12 +1069,23 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             return
         if self._stage == AuthoringStage.OUTER:
             self._output.outer = compute_outer(obj, image, params)
+        elif self._stage == AuthoringStage.USER_OUTER:
+            # AS-AM16: a slider drag while editing the silhouette must also
+            # refresh the base outer + the spliced preview, otherwise both
+            # lag the live params and extends are authored against an
+            # outdated boundary.
+            self._output.outer = compute_outer(obj, image, params)
+            self._refresh_outer_preview(context)
         elif self._stage == AuthoringStage.INNER_LOOPS:
             self._output.inner_loops = compute_inner_loops_for_stage(
                 obj, image, self._output.outer, params
             )
         elif self._stage == AuthoringStage.STEINER_PREVIEW:
-            self._refresh_steiner_preview(context, obj, image, params)
+            try:
+                self._refresh_steiner_preview(context, obj, image, params)
+            except ValueError as exc:
+                report_error(self, f"Preview failed: {exc}")
+                return
         self._handles = refresh_overlay(
             self._handles, self._stage, self._output, **self._overlay_kwargs()
         )
