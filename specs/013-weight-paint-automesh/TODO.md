@@ -278,7 +278,7 @@ What landed:
 - bpy `authoring_session.py` - capture/restore prior viewport state via name-based object lookups.
 - bpy `authoring_overlay.py` - POST_VIEW GPU draw handlers per stage. UNIFORM_COLOR shader (shared with modal_overlay). LINE_STRIP for polylines + POINTS for dots. All GPU state wrapped in try/finally so failures do not leak point_size or blend.
 - bpy `authoring_pipeline.py` - per-stage compute + apply_mesh terminal helper. apply_mesh invokes maybe_pre_regen_snapshot + maybe_post_regen_reproject from the sidecar work so existing weights survive APPLY (B1 fix preserves user_paint provenance).
-- `PROSCENIO_OT_automesh_authoring` modal operator - invoke captures session + computes OUTER + registers overlay + starts 100ms TIMER. ENTER advances; BACKSPACE retreats; ESC cancels. LEFTMOUSE (USER_STEINERS) click-places; Shift+LEFTMOUSE deletes nearest within world threshold. TIMER polls StageParams + recomputes current stage on PG diff (throttled slider re-run).
+- `PROSCENIO_OT_automesh_authoring` modal operator - invoke captures session + computes OUTER + registers overlay + starts 100ms TIMER. ENTER advances; BACKSPACE retreats; ESC cancels. LEFTMOUSE (EDIT_INTERIOR_POINTS) click-places; Shift+LEFTMOUSE deletes nearest within world threshold. TIMER polls StageParams + recomputes current stage on PG diff (throttled slider re-run).
 - Skinning panel gains Automesh authoring sub-box between Automesh one-shot + Bind. Coexists - one-shot stays as the quick path.
 - ProscenioSkinningProps gains authoring_inner_loop_count (default 2) + authoring_inner_loop_spacing (default 0.15).
 - Headless tests: 5 new. Pure tests: 8 new (erosion_loops x5 + authoring_stages x3). Total 69 pure + 21 headless.
@@ -365,7 +365,7 @@ Adds 10 tasks (~970 LOC + ~18 tests):
 
 - (NEW) filter strokes pre-index-allocation + WARNING report on drops (closes index drift bug)
 - (NEW) `interior_points_for_annulus.exclude_zones` kwarg (closes auto-fill cluster bug)
-- (NEW) `AuthoringStage.USER_OUTER` between OUTER and INNER_LOOPS - 5-stage modal becomes 6
+- (NEW) `AuthoringStage.EDIT_OUTLINE` between OUTER and INNER_LOOPS - 5-stage modal becomes 6
 - (NEW) Stroke `kind="cut"` (3rd value) + 2-loop offset + face-prune (reuses hole detection)
 - (NEW) Stage 2 location-driven gestures (LMB outside = extend, LMB inside = cut, Ctrl = delete)
 - (NEW) Stage 4 modifier scheme (LMB = fold-line, Shift = cut, Ctrl = delete - was Shift for delete)
@@ -389,7 +389,7 @@ Deferred from PR #63 - cosmetic/incremental UX, not correctness blockers. Branch
 - **[x] Cursor tooltip parity** - tooltip now uses `draw_text_panel_2d` (colored + backgrounded); flips to a red warning background when a Stage 4 fold/cut is aimed outside the silhouette. (`590f8ba`)
 - **[x] Delete hover-highlight** - the stroke under the cursor is highlighted (bright thick outline) while Alt is held, in Stage 2 + Stage 4, via a shared `_stroke_index_under_cursor` hit-test. (`4de4dac`)
 - **[x] Inflated contour preview** - `compute_outer` now dilates by `max(1, margin_pixels)` to match `build_automesh`, so the previewed silhouette is the real boundary instead of an inset that inflated on APPLY. (`01f712c`)
-- **[x] Stage 5 (`STEINER_PREVIEW`) clarity** - `compute_all_steiners` fills the full outer interior (matching `build_automesh` at the default `margin_pixels=0`) instead of clipping by the innermost modal erosion loop, so the silhouette center is no longer empty. (`23949e9`)
+- **[x] Stage 5 (`PREVIEW_INTERIOR`) clarity** - `compute_all_steiners` fills the full outer interior (matching `build_automesh` at the default `margin_pixels=0`) instead of clipping by the innermost modal erosion loop, so the silhouette center is no longer empty. (`23949e9`)
 
 ### Mesh interior modes + gesture redesign (2026-05-28 smoke)
 

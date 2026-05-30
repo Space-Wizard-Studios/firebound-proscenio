@@ -5,7 +5,7 @@ from modal_overlay. Polylines as LINE_STRIP batches; Steiner / user
 dots as POINTS batches.
 
 POST_PIXEL handler (_draw_tooltip) renders intent text near the mouse
-cursor in Stage 2 (USER_OUTER) and Stage 4 (USER_STEINERS).
+cursor in Stage 2 (EDIT_OUTLINE) and Stage 4 (EDIT_INTERIOR_POINTS).
 """
 
 from __future__ import annotations
@@ -112,7 +112,7 @@ def _register_interactive_handlers(
     tooltip_color_ref: list[tuple[float, float, float, float]] | None = None,
     delete_hover_ref: list[tuple[float, float]] | None = None,
 ) -> None:
-    """Register draw handlers for interactive stages (USER_OUTER, USER_STEINERS).
+    """Register draw handlers for interactive stages (EDIT_OUTLINE, EDIT_INTERIOR_POINTS).
 
     Covers committed strokes, the colored in-progress pen / free-draw preview,
     the delete-hover highlight, and the POST_PIXEL intent tooltip. All handlers
@@ -164,8 +164,8 @@ def register_overlay(
 ) -> OverlayHandles:
     """Add POST_VIEW draw handlers per stage's overlay set.
 
-    For Stage 2 (USER_OUTER) pass user_outer_strokes + tooltip + live-preview
-    refs. For Stage 4 (USER_STEINERS) pass user_strokes + user_outer_strokes
+    For Stage 2 (EDIT_OUTLINE) pass user_outer_strokes + tooltip + live-preview
+    refs. For Stage 4 (EDIT_INTERIOR_POINTS) pass user_strokes + user_outer_strokes
     (kept visible) + tooltip refs. Cut strokes render RED in both stages
     ( unified the color).
 
@@ -208,14 +208,14 @@ def register_overlay(
             "WINDOW",
             "POST_VIEW",
         )
-    if stage >= AuthoringStage.USER_STEINERS and output.user_steiners:
+    if stage >= AuthoringStage.EDIT_INTERIOR_POINTS and output.user_steiners:
         handles["user_dots"] = bpy.types.SpaceView3D.draw_handler_add(
             _draw_points,
             (list(output.user_steiners), _USER_DOT_COLOR, _DOT_SIZE_USER),
             "WINDOW",
             "POST_VIEW",
         )
-    if stage == AuthoringStage.USER_OUTER:
+    if stage == AuthoringStage.EDIT_OUTLINE:
         # Stage 2: outer strokes only (cut = red, ). The spliced-outer
         # preview holds the live output.outer_preview list by
         # reference so the operator can update it in-place after each edit.
@@ -234,7 +234,7 @@ def register_overlay(
             tooltip_color_ref=tooltip_color_ref,
             delete_hover_ref=delete_hover_ref,
         )
-    elif stage == AuthoringStage.USER_STEINERS:
+    elif stage == AuthoringStage.EDIT_INTERIOR_POINTS:
         # Stage 4: interior strokes, plus outer strokes kept visible via a
         # separate handler stored in "user_outer_strokes". Cut = red in both
         #. The colored live preview supersedes the gray raw-stroke.
@@ -254,7 +254,7 @@ def register_overlay(
                 "WINDOW",
                 "POST_VIEW",
             )
-    if stage >= AuthoringStage.STEINER_PREVIEW and output.all_steiners:
+    if stage >= AuthoringStage.PREVIEW_INTERIOR and output.all_steiners:
         handles["steiners"] = bpy.types.SpaceView3D.draw_handler_add(
             _draw_points,
             (list(output.all_steiners), _STEINER_COLOR, _DOT_SIZE_STEINER),
@@ -263,14 +263,14 @@ def register_overlay(
         )
     # : SIMPLE mode draws the real triangulation wireframe instead of
     # the dense Steiner point cloud (the two are mutually exclusive by mode).
-    if stage >= AuthoringStage.STEINER_PREVIEW and output.triangulation_preview:
+    if stage >= AuthoringStage.PREVIEW_INTERIOR and output.triangulation_preview:
         handles["triangulation"] = bpy.types.SpaceView3D.draw_handler_add(
             _draw_edges,
             (list(output.triangulation_preview), _TRIANGULATION_COLOR, _TRIANGULATION_LINE_WIDTH),
             "WINDOW",
             "POST_VIEW",
         )
-    if stage >= AuthoringStage.STEINER_PREVIEW:
+    if stage >= AuthoringStage.PREVIEW_INTERIOR:
         # Both stroke lists remain visible (cut = red for both, ).
         if user_strokes is not None:
             handles["user_strokes"] = bpy.types.SpaceView3D.draw_handler_add(
@@ -506,7 +506,7 @@ def _draw_user_strokes(strokes: list[Stroke]) -> None:
 def _draw_live_preview(state: dict[str, object]) -> None:
     """Draw the in-progress pen / free-draw stroke in its intent color.
 
-    Used by both Stage 2 (USER_OUTER) and Stage 4 (USER_STEINERS): the artist
+    Used by both Stage 2 (EDIT_OUTLINE) and Stage 4 (EDIT_INTERIOR_POINTS): the artist
     sees committed-quality feedback (verts + colored edges) while a stroke is
     being placed. In pen mode an extra dimmed rubber-band segment connects
     the last placed vert to the live cursor.

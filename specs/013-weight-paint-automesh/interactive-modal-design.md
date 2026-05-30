@@ -117,8 +117,8 @@ def compute_inner_loops(
 class AuthoringStage(IntEnum):
     OUTER = 0
     INNER_LOOPS = 1
-    USER_STEINERS = 2
-    STEINER_PREVIEW = 3
+    EDIT_INTERIOR_POINTS = 2
+    PREVIEW_INTERIOR = 3
     APPLY = 4
 
 
@@ -215,8 +215,8 @@ def refresh_overlay(
 # Internal: per-stage batch builders
 # OUTER: cyan polyline (0.0, 0.8, 1.0, 0.9), LINE_STRIP primitive
 # INNER_LOOPS: outer dim + N green polylines (alpha decay per loop index)
-# USER_STEINERS: outer dim + inner dim + yellow dots (1.0, 1.0, 0.0, 0.9), POINTS at 8px
-# STEINER_PREVIEW: outer dim + inner dim + red dots (1.0, 0.3, 0.3, 0.7) at 4px + user yellow 8px
+# EDIT_INTERIOR_POINTS: outer dim + inner dim + yellow dots (1.0, 1.0, 0.0, 0.9), POINTS at 8px
+# PREVIEW_INTERIOR: outer dim + inner dim + red dots (1.0, 0.3, 0.3, 0.7) at 4px + user yellow 8px
 ```
 
 ### bpy - `authoring_session.py` (NEW, ~60 LOC)
@@ -278,7 +278,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             return self._advance(context)
         if event.type == "BACK_SPACE" and event.value == "PRESS":
             return self._retreat(context)
-        if self._stage == AuthoringStage.USER_STEINERS:
+        if self._stage == AuthoringStage.EDIT_INTERIOR_POINTS:
             if event.type == "LEFTMOUSE" and event.value == "PRESS":
                 if event.shift:
                     return self._delete_nearest_steiner(context, event)
@@ -382,13 +382,13 @@ User presses ENTER (OUTER -> INNER_LOOPS):
     _stage = INNER_LOOPS
     update statusbar pill
 
-User presses ENTER (INNER_LOOPS -> USER_STEINERS):
+User presses ENTER (INNER_LOOPS -> EDIT_INTERIOR_POINTS):
   _advance()
     output.user_steiners = read_user_steiners(obj)
     refresh_overlay
-    _stage = USER_STEINERS
+    _stage = EDIT_INTERIOR_POINTS
 
-User left-clicks in viewport (USER_STEINERS):
+User left-clicks in viewport (EDIT_INTERIOR_POINTS):
   modal() catches LEFTMOUSE PRESS without Shift
     _add_steiner(context, event)
       world_xz = region_to_world_xz(event.mouse_region_x, event.mouse_region_y)
@@ -396,20 +396,20 @@ User left-clicks in viewport (USER_STEINERS):
       write_user_steiners(obj, output.user_steiners)
       refresh_overlay
 
-User shift+clicks near a point (USER_STEINERS):
+User shift+clicks near a point (EDIT_INTERIOR_POINTS):
   _delete_nearest_steiner
     find nearest point within threshold; remove; persist; refresh
 
-User presses ENTER (USER_STEINERS -> STEINER_PREVIEW):
+User presses ENTER (EDIT_INTERIOR_POINTS -> PREVIEW_INTERIOR):
   _advance()
     bone_segments = collect_bone_segments(picker_armature) if picker else []
     output.all_steiners = compute_all_steiners(
       outer, inner_loops, user_steiners, bone_segments, params
     )
     refresh_overlay (red dots + user yellow)
-    _stage = STEINER_PREVIEW
+    _stage = PREVIEW_INTERIOR
 
-User presses ENTER (STEINER_PREVIEW -> APPLY):
+User presses ENTER (PREVIEW_INTERIOR -> APPLY):
   _advance()
     counters = apply_mesh(obj, image, output, params, armature)
       # build_automesh with all constraints
@@ -437,8 +437,8 @@ User presses ESC (any stage):
 | Active obj not MESH | ERROR + abort | `active object must be a mesh` |
 | Active mesh has no image texture | ERROR + abort | `active mesh has no image texture - add a material with a TEX_IMAGE node first` |
 | Stage compute raises (alpha walker / erosion / CDT) | WARN + stay on current stage | `stage {name} failed: {exc} - adjust params or BACKSPACE` |
-| User clicks outside silhouette in USER_STEINERS | INFO (no abort) | `Steiner outside silhouette - point added anyway (may be deleted on apply)` |
-| Final APPLY: CDT degenerate | ERROR + stay on STEINER_PREVIEW | `CDT failed: {exc} - reduce loop count or increase spacing` |
+| User clicks outside silhouette in EDIT_INTERIOR_POINTS | INFO (no abort) | `Steiner outside silhouette - point added anyway (may be deleted on apply)` |
+| Final APPLY: CDT degenerate | ERROR + stay on PREVIEW_INTERIOR | `CDT failed: {exc} - reduce loop count or increase spacing` |
 | Exception in modal | hard cleanup via try/finally | console traceback + INFO `Authoring modal restored` |
 
 ## Test plan
@@ -475,8 +475,8 @@ User presses ESC (any stage):
 
 - T1: Enter modal → OUTER overlay (cyan polyline matching sprite silhouette)
 - T2: Scrub resolution slider → overlay re-runs live (throttled ~100ms)
-- T3: Advance to USER_STEINERS → left-click viewport adds yellow dot; shift+click near it removes
-- T4: Advance to STEINER_PREVIEW → red dots cover interior; user yellows remain
+- T3: Advance to EDIT_INTERIOR_POINTS → left-click viewport adds yellow dot; shift+click near it removes
+- T4: Advance to PREVIEW_INTERIOR → red dots cover interior; user yellows remain
 - T5: APPLY → mesh commits with all constraints respected (visual check vs one-shot output at same params)
 - T6: APPLY with prior bind sidecar → sidecar pill shows reprojected count > 0 + user_paint preserved if pre-painted
 

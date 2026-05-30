@@ -32,9 +32,9 @@ from .bridge import (
     read_alpha_grid,
 )
 
-_USER_STEINERS_KEY = "proscenio_user_steiners"
+_EDIT_INTERIOR_POINTS_KEY = "proscenio_user_steiners"
 _USER_STROKES_KEY = "proscenio_user_strokes"
-_USER_OUTER_STROKES_KEY = "proscenio_user_outer_strokes"
+_EDIT_OUTLINE_STROKES_KEY = "proscenio_user_outer_strokes"
 
 # Local imports to keep this module's top-level free of optional
 # bpy-skinning helper coupling for callers that only need the
@@ -116,7 +116,7 @@ def compute_inner_loops_for_stage(
 
 def read_user_steiners(obj: bpy.types.Object) -> list[Point2D]:
     """Read obj['proscenio_user_steiners']; empty list when absent or corrupt."""
-    payload = obj.get(_USER_STEINERS_KEY)
+    payload = obj.get(_EDIT_INTERIOR_POINTS_KEY)
     if payload is None:
         return []
     try:
@@ -140,7 +140,7 @@ def read_user_steiners(obj: bpy.types.Object) -> list[Point2D]:
 
 def write_user_steiners(obj: bpy.types.Object, points: list[Point2D]) -> None:
     """Persist via Custom Property as JSON string for stability."""
-    obj[_USER_STEINERS_KEY] = json.dumps([[p[0], p[1]] for p in points])
+    obj[_EDIT_INTERIOR_POINTS_KEY] = json.dumps([[p[0], p[1]] for p in points])
 
 
 def read_user_strokes(obj: bpy.types.Object) -> list[Stroke]:
@@ -168,11 +168,11 @@ def write_user_strokes(obj: bpy.types.Object, strokes: list[Stroke]) -> None:
 def read_user_outer_strokes(obj: bpy.types.Object) -> list[Stroke]:
     """Read obj['proscenio_user_outer_strokes']; empty list when absent or corrupt.
 
-    Reserved for Stage 2 (USER_OUTER). Capture logic comes in T6/T7; this
+    Reserved for Stage 2 (EDIT_OUTLINE). Capture logic comes in T6/T7; this
     helper is scaffolded here so the persistence key is registered and
     round-trip tests can verify it before capture is wired.
     """
-    payload = obj.get(_USER_OUTER_STROKES_KEY)
+    payload = obj.get(_EDIT_OUTLINE_STROKES_KEY)
     if payload is None:
         return []
     try:
@@ -183,8 +183,8 @@ def read_user_outer_strokes(obj: bpy.types.Object) -> list[Stroke]:
 
 
 def write_user_outer_strokes(obj: bpy.types.Object, strokes: list[Stroke]) -> None:
-    """Persist Stage 2 (USER_OUTER) strokes as JSON string."""
-    obj[_USER_OUTER_STROKES_KEY] = json.dumps(
+    """Persist Stage 2 (EDIT_OUTLINE) strokes as JSON string."""
+    obj[_EDIT_OUTLINE_STROKES_KEY] = json.dumps(
         [{"kind": s["kind"], "points": [[p[0], p[1]] for p in s["points"]]} for s in strokes]
     )
 

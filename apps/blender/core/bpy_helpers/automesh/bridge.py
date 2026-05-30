@@ -578,7 +578,7 @@ def _merge_extra_steiners(
     point near the silhouette edge for joint-cover deformation control).
 
     Used by the interactive modal authoring operator to forward the
-    points the artist clicked during Stage 3 (USER_STEINERS) into the
+    points the artist clicked during Stage 3 (EDIT_INTERIOR_POINTS) into the
     final mesh at Stage 5 (APPLY).
     """
     accepted: list[tuple[float, float]] = []

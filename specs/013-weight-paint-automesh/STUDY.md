@@ -698,7 +698,7 @@ Each section below preserves the option set + rationale for posterity.
 
 ### D19 - Interior fill mode
 
-- D19.A - **Enum `{SIMPLE, DENSE}`, default `SIMPLE`.** SIMPLE skips the uniform grid + bone-density fill; the CDT receives only the outer contour, holes, and the artist's verts (fold/cut/Steiner). DENSE keeps the original path (uniform grid + bone density). The modal step list is mode-dependent: SIMPLE drops the `INNER_LOOPS` step and relabels `STEINER_PREVIEW` as a triangulation preview (the Spine "Generate" equivalent); DENSE keeps the original 6-step flow. Statusbar progress reflects the active mode's step count.
+- D19.A - **Enum `{SIMPLE, DENSE}`, default `SIMPLE`.** SIMPLE skips the uniform grid + bone-density fill; the CDT receives only the outer contour, holes, and the artist's verts (fold/cut/Steiner). DENSE keeps the original path (uniform grid + bone density). The modal step list is mode-dependent: SIMPLE drops the `INNER_LOOPS` step and relabels `PREVIEW_INTERIOR` as a triangulation preview (the Spine "Generate" equivalent); DENSE keeps the original 6-step flow. Statusbar progress reflects the active mode's step count.
 - D19.B - Always DENSE (original first cut).
 - D19.C - Always SIMPLE.
 

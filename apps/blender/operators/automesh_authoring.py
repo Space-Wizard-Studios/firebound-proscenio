@@ -94,27 +94,27 @@ _PEN_SUBDIV_MAX = 20  # wheel can exceed the single-digit set; cap to keep CDT s
 # these are base names only.
 _STAGE_BASE_NAMES = {
     AuthoringStage.OUTER: "Outer contour",
-    AuthoringStage.USER_OUTER: "Edit silhouette",
+    AuthoringStage.EDIT_OUTLINE: "Edit silhouette",
     AuthoringStage.INNER_LOOPS: "Inner loops",
-    AuthoringStage.USER_STEINERS: "Interior detail",
-    AuthoringStage.STEINER_PREVIEW: "Vertex preview",
+    AuthoringStage.EDIT_INTERIOR_POINTS: "Interior detail",
+    AuthoringStage.PREVIEW_INTERIOR: "Vertex preview",
     AuthoringStage.APPLY: "Apply",
 }
-# : SIMPLE drops INNER_LOOPS and relabels STEINER_PREVIEW to the
+# : SIMPLE drops INNER_LOOPS and relabels PREVIEW_INTERIOR to the
 # real triangulation preview; DENSE keeps the full 6-stage pipeline.
 _SIMPLE_STAGE_ORDER = [
     AuthoringStage.OUTER,
-    AuthoringStage.USER_OUTER,
-    AuthoringStage.USER_STEINERS,
-    AuthoringStage.STEINER_PREVIEW,
+    AuthoringStage.EDIT_OUTLINE,
+    AuthoringStage.EDIT_INTERIOR_POINTS,
+    AuthoringStage.PREVIEW_INTERIOR,
     AuthoringStage.APPLY,
 ]
 _DENSE_STAGE_ORDER = [
     AuthoringStage.OUTER,
-    AuthoringStage.USER_OUTER,
+    AuthoringStage.EDIT_OUTLINE,
     AuthoringStage.INNER_LOOPS,
-    AuthoringStage.USER_STEINERS,
-    AuthoringStage.STEINER_PREVIEW,
+    AuthoringStage.EDIT_INTERIOR_POINTS,
+    AuthoringStage.PREVIEW_INTERIOR,
     AuthoringStage.APPLY,
 ]
 
@@ -125,7 +125,7 @@ def _stages_for_mode(mode: str) -> list[AuthoringStage]:
 
 
 def _stage_base_name(stage: AuthoringStage, mode: str) -> str:
-    if stage == AuthoringStage.STEINER_PREVIEW and mode == "SIMPLE":
+    if stage == AuthoringStage.PREVIEW_INTERIOR and mode == "SIMPLE":
         return "Triangulation preview"
     return _STAGE_BASE_NAMES[stage]
 
@@ -264,7 +264,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         # preview). Mutated in-place so the highlight draw handler stays valid.
         self._delete_hover_points: list[tuple[float, float]] = []
 
-        # Stage 2 (USER_OUTER) committed outer strokes. The in-progress pen +
+        # Stage 2 (EDIT_OUTLINE) committed outer strokes. The in-progress pen +
         # free-draw share the Stage 4 buffers (_stroke_*, _pen_*) via the
         # toggle-pen machine; only the commit target differs by stage.
         self._user_outer_strokes: list[Stroke] = []
@@ -293,11 +293,11 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             # : stage handlers get first crack so a pen line in progress
             # can intercept Enter/RMB (finish) + Esc (discard line) BEFORE modal
             # nav. In NEUTRAL they return None for those keys, so nav runs.
-            if self._stage == AuthoringStage.USER_OUTER:
+            if self._stage == AuthoringStage.EDIT_OUTLINE:
                 handled = self._handle_user_outer_event(context, event)
                 if handled is not None:
                     return handled
-            if self._stage == AuthoringStage.USER_STEINERS:
+            if self._stage == AuthoringStage.EDIT_INTERIOR_POINTS:
                 handled = self._handle_user_steiners_event(context, event)
                 if handled is not None:
                     return handled
@@ -322,7 +322,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
     def _handle_user_outer_event(
         self, context: bpy.types.Context, event: bpy.types.Event
     ) -> set[str] | None:
-        """Stage 2 (USER_OUTER) -> shared toggle-pen dispatch (outer). Shift =
+        """Stage 2 (EDIT_OUTLINE) -> shared toggle-pen dispatch (outer). Shift =
         extend, Ctrl = cut, Alt+click = delete (/)."""
         return self._handle_pen_event(context, event, "outer")
 
@@ -390,7 +390,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
     def _handle_user_steiners_event(
         self, context: bpy.types.Context, event: bpy.types.Event
     ) -> set[str] | None:
-        """Stage 4 (USER_STEINERS) -> shared toggle-pen dispatch (interior)."""
+        """Stage 4 (EDIT_INTERIOR_POINTS) -> shared toggle-pen dispatch (interior)."""
         return self._handle_pen_event(context, event, "interior")
 
     # ----- Shared toggle-pen machine (Stage 2 outer + Stage 4 interior) -----
@@ -685,7 +685,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         _tag_redraw_view3d(context)
 
     def _current_pen_stage(self) -> str:
-        return "interior" if self._stage == AuthoringStage.USER_STEINERS else "outer"
+        return "interior" if self._stage == AuthoringStage.EDIT_INTERIOR_POINTS else "outer"
 
     def _refresh_pen_tooltip(self) -> None:
         """Update the tooltip text for the current pen state without a mouse
@@ -921,7 +921,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             return self._finish(context, cancel=True)
         params = _snapshot_params(context)
         next_stage = self._active_stages[idx + 1]
-        if next_stage == AuthoringStage.USER_OUTER:
+        if next_stage == AuthoringStage.EDIT_OUTLINE:
             self._user_outer_strokes = read_user_outer_strokes(obj)
             self._reset_draw_state()
             self._refresh_outer_preview(context)
@@ -929,10 +929,10 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._output.inner_loops = compute_inner_loops_for_stage(
                 obj, image, self._output.outer, params
             )
-        elif next_stage == AuthoringStage.USER_STEINERS:
+        elif next_stage == AuthoringStage.EDIT_INTERIOR_POINTS:
             self._user_strokes = read_user_strokes(obj)
             self._reset_draw_state()
-        elif next_stage == AuthoringStage.STEINER_PREVIEW:
+        elif next_stage == AuthoringStage.PREVIEW_INTERIOR:
             try:
                 self._refresh_steiner_preview(context, obj, image, params)
             except ValueError as exc:
@@ -979,13 +979,13 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         """Surface a one-line result for the stage just entered so the artist
         gets feedback on ENTER without having to move the mouse (APPLY reports
         its own verts/faces summary + finishes, so it is handled separately)."""
-        if stage == AuthoringStage.USER_OUTER:
+        if stage == AuthoringStage.EDIT_OUTLINE:
             msg = f"{len(self._output.outer)} outer verts"
         elif stage == AuthoringStage.INNER_LOOPS:
             msg = f"{len(self._output.inner_loops)} inner loop(s)"
-        elif stage == AuthoringStage.USER_STEINERS:
+        elif stage == AuthoringStage.EDIT_INTERIOR_POINTS:
             msg = f"{len(self._user_strokes)} interior stroke(s)"
-        elif stage == AuthoringStage.STEINER_PREVIEW:
+        elif stage == AuthoringStage.PREVIEW_INTERIOR:
             if self._interior_mode == "SIMPLE":
                 msg = f"{len(self._output.triangulation_preview)} triangulation edge(s)"
             else:
@@ -999,7 +999,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         if idx == 0:
             return {"PASS_THROUGH"}
         self._stage = self._active_stages[idx - 1]
-        if self._stage in {AuthoringStage.USER_STEINERS, AuthoringStage.USER_OUTER}:
+        if self._stage in {AuthoringStage.EDIT_INTERIOR_POINTS, AuthoringStage.EDIT_OUTLINE}:
             # Drop any abandoned in-progress pen so a stale live preview is
             # not drawn when the artist steps back into a pen stage.
             self._reset_draw_state()
@@ -1015,14 +1015,14 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
     def _apply_interior_mode_change(self, context: bpy.types.Context, mode: str) -> None:
         """Rebuild the active stage list when the interior mode flips mid-modal
        . If the current stage was dropped (INNER_LOOPS on flip to
-        SIMPLE), snap back to USER_OUTER and clear any in-progress pen state
+        SIMPLE), snap back to EDIT_OUTLINE and clear any in-progress pen state
         + reload that stage's strokes so a stale Stage 4 live preview cannot
         leak into Stage 2."""
         self._interior_mode = mode
         self._active_stages = _stages_for_mode(mode)
         snapped = self._stage not in self._active_stages
         if snapped:
-            self._stage = AuthoringStage.USER_OUTER
+            self._stage = AuthoringStage.EDIT_OUTLINE
             self._reset_draw_state()
             obj = context.active_object
             if obj is not None:
@@ -1068,7 +1068,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             return
         if self._stage == AuthoringStage.OUTER:
             self._output.outer = compute_outer(obj, image, params)
-        elif self._stage == AuthoringStage.USER_OUTER:
+        elif self._stage == AuthoringStage.EDIT_OUTLINE:
             # : a slider drag while editing the silhouette must also
             # refresh the base outer + the spliced preview, otherwise both
             # lag the live params and extends are authored against an
@@ -1079,7 +1079,7 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
             self._output.inner_loops = compute_inner_loops_for_stage(
                 obj, image, self._output.outer, params
             )
-        elif self._stage == AuthoringStage.STEINER_PREVIEW:
+        elif self._stage == AuthoringStage.PREVIEW_INTERIOR:
             try:
                 self._refresh_steiner_preview(context, obj, image, params)
             except ValueError as exc:
@@ -1092,14 +1092,14 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
 
     def _overlay_kwargs(self) -> dict[str, object]:
         """Return keyword args for register/refresh_overlay for the current stage."""
-        if self._stage == AuthoringStage.USER_OUTER:
+        if self._stage == AuthoringStage.EDIT_OUTLINE:
             return self._stage2_overlay_kwargs()
-        if self._stage == AuthoringStage.USER_STEINERS:
+        if self._stage == AuthoringStage.EDIT_INTERIOR_POINTS:
             return self._stage3_overlay_kwargs()
         return self._stage4plus_overlay_kwargs()
 
     def _stage2_overlay_kwargs(self) -> dict[str, object]:
-        """Return keyword args for Stage 2 (USER_OUTER) live containers.
+        """Return keyword args for Stage 2 (EDIT_OUTLINE) live containers.
 
         Passes the outer stroke list via user_outer_strokes (cut = red,
         ) plus the shared live-preview dict so the  toggle pen
@@ -1329,10 +1329,10 @@ def _emit_authoring_chord_layout(
 ) -> None:
     """Render per-stage gesture chords with native EVENT_*/MOUSE_* icons."""
     _chord(layout, ("MOD_REMESH", f"Automesh: {_stage_label(stage, mode)}"))
-    if stage in {AuthoringStage.USER_OUTER, AuthoringStage.USER_STEINERS}:
+    if stage in {AuthoringStage.EDIT_OUTLINE, AuthoringStage.EDIT_INTERIOR_POINTS}:
         #  toggle pen: tap a modifier to enter draw mode (no holding).
-        verb = "extend" if stage == AuthoringStage.USER_OUTER else "fold"
-        if stage == AuthoringStage.USER_STEINERS:
+        verb = "extend" if stage == AuthoringStage.EDIT_OUTLINE else "fold"
+        if stage == AuthoringStage.EDIT_INTERIOR_POINTS:
             _chord(layout, ("MOUSE_LMB", "point"))
         _chord(layout, ("EVENT_SHIFT", "tap"), ("", f"{verb}-pen"))
         _chord(layout, ("EVENT_CTRL", "tap"), ("", "cut-pen"))

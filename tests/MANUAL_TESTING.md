@@ -499,10 +499,10 @@ Scenario 2 - Slider re-runs throttled:
 
 Expected: cyan polyline re-runs live (~100ms throttle). Stops responding only when slider stops.
 
-Scenario 3 - Advance to USER_STEINERS + click placement:
+Scenario 3 - Advance to EDIT_INTERIOR_POINTS + click placement:
 
 1. Continue from T1. Press ENTER twice.
-2. Stage is USER_STEINERS (prior overlays dim).
+2. Stage is EDIT_INTERIOR_POINTS (prior overlays dim).
 3. Left-click inside the silhouette at 3 different locations.
 
 Expected: each click adds a yellow dot at the clicked point. Object Properties > Custom Properties > `proscenio_user_steiners` updates after each click (refresh by clicking the dropdown).
@@ -516,9 +516,9 @@ Expected: nearest dot disappears.
 
 Scenario 5 - APPLY commits mesh:
 
-1. Continue from T4. Press ENTER twice more (STEINER_PREVIEW, then APPLY).
-2. STEINER_PREVIEW shows red dots for all interior Steiners + yellow user dots still visible.
-3. ENTER on STEINER_PREVIEW triggers APPLY.
+1. Continue from T4. Press ENTER twice more (PREVIEW_INTERIOR, then APPLY).
+2. PREVIEW_INTERIOR shows red dots for all interior Steiners + yellow user dots still visible.
+3. ENTER on PREVIEW_INTERIOR triggers APPLY.
 
 Expected: mesh commits via build_automesh. Info bar: `Authoring applied: N verts, M faces`. Modal exits (FINISHED). Viewport returns to Object mode + prior selection restored.
 

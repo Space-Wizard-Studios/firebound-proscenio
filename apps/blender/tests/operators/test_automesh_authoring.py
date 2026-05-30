@@ -50,7 +50,7 @@ def test_active_stages_simple_drops_inner_loops(automesh_fixture):
 
 def test_stage_label_numbering_tracks_active_len(automesh_fixture):
     """: statusbar N/M derives from the active mode's stage count;
-    STEINER_PREVIEW relabels to 'Triangulation preview' in SIMPLE."""
+    PREVIEW_INTERIOR relabels to 'Triangulation preview' in SIMPLE."""
     from proscenio.core.skinning.authoring_stages import (
         AuthoringStage,  # type: ignore[import-not-found]
     )
@@ -58,10 +58,10 @@ def test_stage_label_numbering_tracks_active_len(automesh_fixture):
         _stage_label,  # type: ignore[import-not-found]
     )
 
-    assert _stage_label(AuthoringStage.STEINER_PREVIEW, "SIMPLE").startswith("4/5")
-    assert "Triangulation preview" in _stage_label(AuthoringStage.STEINER_PREVIEW, "SIMPLE")
-    assert _stage_label(AuthoringStage.STEINER_PREVIEW, "DENSE").startswith("5/6")
-    assert "Vertex preview" in _stage_label(AuthoringStage.STEINER_PREVIEW, "DENSE")
+    assert _stage_label(AuthoringStage.PREVIEW_INTERIOR, "SIMPLE").startswith("4/5")
+    assert "Triangulation preview" in _stage_label(AuthoringStage.PREVIEW_INTERIOR, "SIMPLE")
+    assert _stage_label(AuthoringStage.PREVIEW_INTERIOR, "DENSE").startswith("5/6")
+    assert "Vertex preview" in _stage_label(AuthoringStage.PREVIEW_INTERIOR, "DENSE")
     assert _stage_label(AuthoringStage.OUTER, "SIMPLE").startswith("1/5")
     assert _stage_label(AuthoringStage.APPLY, "DENSE").startswith("6/6")
 

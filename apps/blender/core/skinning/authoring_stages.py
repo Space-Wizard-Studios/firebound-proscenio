@@ -1,7 +1,7 @@
-"""Authoring stage dataclasses (the interactive-modal work, T12;  T3).
+"""Authoring stage dataclasses.
 
 Pure dataclasses describing the modal state machine:
-- AuthoringStage IntEnum: 6 stages in workflow order (USER_OUTER added )
+- AuthoringStage IntEnum: six stages in workflow order
 - StageParams: PG-field snapshot (frozen for equality-based dirty detect)
 - StageOutput: per-stage compute output (consumed by subsequent stages)
 
@@ -18,15 +18,15 @@ Point2D = tuple[float, float]
 
 
 class AuthoringStage(IntEnum):
-    """6-stage modal pipeline (workflow order). Stage 2 USER_OUTER
-    edits the silhouette before any interior work; Stage 4 USER_STEINERS
-    edits the interior. See spec ."""
+    """Six-stage modal pipeline (workflow order). Stage 2 EDIT_OUTLINE
+    edits the silhouette before any interior work; Stage 4 EDIT_INTERIOR_POINTS
+    edits the interior."""
 
     OUTER = 0
-    USER_OUTER = 1
+    EDIT_OUTLINE = 1
     INNER_LOOPS = 2
-    USER_STEINERS = 3
-    STEINER_PREVIEW = 4
+    EDIT_INTERIOR_POINTS = 3
+    PREVIEW_INTERIOR = 4
     APPLY = 5
 
 
