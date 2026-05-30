@@ -167,17 +167,17 @@ One-button entry into a 2D-safe weight paint context with custom overlay + hard 
 
 Tests (pytest, bpy-free):
 
-- `tests/test_paint_preset_2d.py` - apply_preset returns prior values; idempotent restore.
-- `tests/test_bone_collection_visibility.py` - snapshot + restore via SimpleNamespace mocks; covers empty-collections + Blender-3.x-fallback.
+- `tests/skinning/test_paint_preset_2d.py` - apply_preset returns prior values; idempotent restore.
+- `tests/skinning/test_bone_collection_visibility.py` - snapshot + restore via SimpleNamespace mocks; covers empty-collections + Blender-3.x-fallback.
 - Modal smoke deferred to MANUAL_TESTING.md.
 
 ### Weight sidecar + reproject (D6) - the differentiator
 
 Make automesh regen non-destructive. Once a user has painted weights, regenerating the mesh at a different resolution preserves their work via UV-anchored re-projection.
 
-- `core/weight_sidecar.py`: `WeightSidecar` dataclass with vertex_group_names + entries (uv_anchor + weights + provenance) + mesh_topology_hash.
-- `core/weight_reproject.py`: `reproject(sidecar, new_vertex_uvs)`. For each new vertex, find 3 nearest UV anchors, barycentric-interpolate weights, mark `reprojected`. Verts with no close anchor fall back to proximity seed, marked `auto_seed`.
-- `core/bpy_helpers/sidecar_io.py`: serialize to JSON, write to `obj["proscenio_weight_sidecar"]` Custom Property (survives addon disable per the authoring-panel storage rules).
+- `core/skinning/sidecar_schema.py`: `WeightSidecar` dataclass with vertex_group_names + entries (uv_anchor + weights + provenance) + mesh_topology_hash.
+- `core/skinning/weight_reproject.py`: `reproject(sidecar, new_vertex_uvs)`. For each new vertex, find 3 nearest UV anchors, barycentric-interpolate weights, mark `reprojected`. Verts with no close anchor fall back to proximity seed, marked `auto_seed`.
+- `core/bpy_helpers/skinning/sidecar_io.py`: serialize to JSON, write to `obj["proscenio_weight_sidecar"]` Custom Property (survives addon disable per the authoring-panel storage rules).
 - Automesh integration: when `scene.proscenio.skinning.preserve_on_regen` is True and object has non-zero sidecar entries: snapshot current weights, regenerate mesh, reproject onto new topology, INFO with counts.
 - `operators/restore_weight_snapshot.py`: `PROSCENIO_OT_restore_weight_snapshot`. Re-applies sidecar to current mesh without regen.
 - Provenance hooks: bind tags all verts `auto_seed`; edit weights modal tags painted verts `user_paint` via diff. Panel pill: "187 paint / 42 seed / 0 reprojected".
@@ -185,8 +185,8 @@ Make automesh regen non-destructive. Once a user has painted weights, regenerati
 
 Tests (pytest, bpy-free):
 
-- `tests/test_weight_sidecar.py` - serialize/deserialize round-trip, topology hash detects changes, JSON shape stable.
-- `tests/test_weight_reproject.py` - identical-topology = no-op; coarser-to-finer interpolates correctly; verts with no close anchor fall back to auto_seed.
+- `tests/skinning/test_sidecar_schema.py` - serialize/deserialize round-trip, topology hash detects changes, JSON shape stable.
+- `tests/skinning/test_weight_reproject.py` - identical-topology = no-op; coarser-to-finer interpolates correctly; verts with no close anchor fall back to auto_seed.
 
 Sprite-changed-in-Photoshop workflow (from PR #51 smoke discussion) is exactly this feature: artist edits PNG, re-exports, automesh regen reprojects weights via UV anchors instead of forcing manual repaint.
 

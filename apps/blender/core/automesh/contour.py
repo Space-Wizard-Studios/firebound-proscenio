@@ -2,7 +2,7 @@
 
 bpy-free. Lives under ``core/`` so unit tests can exercise the
 contour tracing + morphology math without booting Blender. The
-bpy bridge in ``core/bpy_helpers/automesh_bmesh.py`` reads the
+bpy bridge in ``core/bpy_helpers/automesh/bridge.py`` reads the
 image pixels and feeds the binary mask into the helpers here.
 
 No third-party dependencies. Per the weight-paint-automesh spec Constraints, the addon

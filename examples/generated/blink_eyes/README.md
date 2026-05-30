@@ -76,6 +76,6 @@ blender --background examples/generated/blink_eyes/blink_eyes.blend \
 - Sprite_frame metadata mishandling (`hframes`, `vframes`, `frame`, `centered`).
 - Sliced atlas packer regression - the spritesheet has a clear visible
   content area; if Pack/Apply puts UVs in the wrong place, the eye
-  preview in Blender will obviously be in the wrong slot.
+  preview in Blender lands in the wrong slot.
 - Region-mode (auto / manual) regression - sprite_frame `texture_region`
   should be omitted in auto mode, set explicitly after Apply Packed Atlas.

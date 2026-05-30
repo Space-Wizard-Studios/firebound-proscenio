@@ -1,11 +1,11 @@
-"""Unit tests for the weight-paint-automesh spec pure-Python alpha contour walker.
+"""Unit tests for the pure-Python alpha contour walker.
 
 bpy-free. Exercises the contour tracing + binary morphology helpers
-consumed by ``core/bpy_helpers/automesh_bmesh.py``.
+consumed by ``core/bpy_helpers/automesh/bridge.py``.
 
 Run from the repo root:
 
-    pytest tests/test_alpha_contour.py
+    pytest tests/automesh/test_contour.py
 """
 
 from __future__ import annotations
