@@ -115,6 +115,26 @@ docs(specs): document weight-sidecar reproject decisions
 
 PR titles follow the same shape. Subjects do not contain ticket numbers, dates, or internal task IDs. The body carries motivation when it is not obvious from the diff.
 
+### Periodic audit
+
+The pre-commit hooks reject the most common drift markers (see [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) "drift markers" section). Run a broader sweep against the whole tree on demand - useful before a release or after a long agent-driven session. Commands assume `ripgrep`; substitute `grep -rEIn ... --include=...` if `rg` is not available.
+
+```sh
+# Drift markers across docs + code.
+rg -nIH '\bSPEC \d{3}\b|\bWave \d+\.\d+|\bAS-AM\d+' -g '!node_modules' -g '!dist' -g '!__pycache__'
+
+# Substitution artifacts (left by earlier rewrite passes).
+rg -nIH '\bthe the \b|this spec spec\b' -g '!node_modules' -g '!dist'
+
+# LLM filler phrases.
+rg -nIH '\b(obviously|Let'\''s|Note that|It'\''s important to|Keep in mind)\b' -g '*.md' -g '*.py' -g '*.gd' -g '*.ts' -g '*.tsx'
+
+# Em-dash (project uses hyphen-minus).
+rg -nIH '—' -g '!node_modules' -g '!dist'
+```
+
+A clean sweep returns no output. A noisy sweep means the drift list grew - either fix the hits or extend the allowlist in the pre-commit hook with a stated reason.
+
 ## JSON keys
 
 Cross-component JSON formats (`.proscenio`, PSD manifest) use `snake_case` keys throughout. The schemas under `schemas/` are the source of truth - any new field must follow the same rule and be added to the schema before being emitted or consumed.
