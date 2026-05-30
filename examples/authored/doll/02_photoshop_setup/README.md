@@ -2,7 +2,7 @@
 
 Artist workbench. Copy of `../01_photoshop_base/doll_ps_base.psd` with **manual edits + bracket tags** applied. Re-exporting from here produces the manifest + PNGs that step 03 (Blender rigging) consumes.
 
-This step exercises the full the photoshop tag system v1 tag taxonomy and acts as the **parity oracle** for the photoshop-tag work.8.
+This step exercises the full photoshop-tag-system v1 tag taxonomy and acts as the **parity oracle** for the photoshop tag system.
 
 ## Contents
 

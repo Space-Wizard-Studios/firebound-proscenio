@@ -1,8 +1,8 @@
-# doll fixture (the testing-fixtures spec + 011)
+# doll fixture (testing-fixtures + photoshop-tag-system specs)
 
-The **comprehensive showcase fixture** for the Proscenio pipeline. A full humanoid character authored end-to-end across the four pipeline stages, exercising every the photoshop tag system v1 tag in the process. Originally planned to also cover `sprite_frame` via animated eyes, but the current `.blend` has all meshes as `sprite_type=polygon` (including `eye.L`/`eye.R`) - sprite_frame coverage lives in `examples/generated/blink_eyes/` and `examples/generated/mouth_drive/` instead.
+The **comprehensive showcase fixture** for the Proscenio pipeline. A full humanoid character authored end-to-end across the four pipeline stages, exercising every photoshop-tag-system v1 tag in the process. Originally planned to also cover `sprite_frame` via animated eyes, but the current `.blend` has all meshes as `sprite_type=polygon` (including `eye.L`/`eye.R`) - sprite_frame coverage lives in `examples/generated/blink_eyes/` and `examples/generated/mouth_drive/` instead.
 
-This fixture acts as the **parity oracle for the photoshop-tag work.8** (the photoshop tag system): step 02's tagged PSD exercises every tag in the taxonomy; the rest of the pipeline verifies the tags survive the round-trip.
+This fixture acts as the **parity oracle for the photoshop tag system**: step 02's tagged PSD exercises every tag in the taxonomy; the rest of the pipeline verifies the tags survive the round-trip.
 
 ## Directory layout
 
@@ -93,17 +93,17 @@ Authored in step 03 on top of the rigged plane set.
 | `blink` | 12 | (planned: eye.L + eye.R `proscenio.frame` 0->1->2->3->2->1->0) | sprite_frame track type test - currently lives in `blink_eyes/`; doll eyes remain polygon |
 | `walk` | 30, loop | thigh.L/R + shin.L/R rotation, spine sway | full-body coordination |
 
-Future actions land as future SPECs require.
+Future actions land as future specs require them.
 
-## the photoshop tag system tag coverage (parity oracle)
+## photoshop tag system tag coverage (parity oracle)
 
-Every the photoshop tag system v1 tag is exercised somewhere in `02_photoshop_setup/doll_tagged.psd`. See `02_photoshop_setup/README.md::Tags exercised` for the canonical table. If you add or rename a tag in the photoshop tag system, the parity test re-exports this PSD and diffs against the recorded baseline.
+Every photoshop tag system v1 tag is exercised somewhere in `02_photoshop_setup/doll_tagged.psd`. See `02_photoshop_setup/README.md::Tags exercised` for the canonical table. If you add or rename a tag in the photoshop tag system, the parity test re-exports this PSD and diffs against the recorded baseline.
 
 ## What this fixture catches when broken
 
 - Anything end-to-end touching polygon meshes + weights + actions (the rigged path).
 - Multi-bone weight export regression (pelvic mesh, spine-region meshes, `forearm.L/R`).
-- the photoshop tag system tag taxonomy regression (parity oracle in step 02).
+- photoshop tag system taxonomy regression (parity oracle in step 02).
 - Photoshop manifest round-trip drift (step 01 input vs step 02 re-export).
 - Multi-action authoring regression.
 - Schema bumps that affect more than one feature at once.
