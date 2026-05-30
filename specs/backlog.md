@@ -28,6 +28,18 @@ Schema's `interp` field is per-key but the importer applies a single track-level
 
 Schema validation rejects unknown `format_version`. Once v2 lands, the Blender exporter ships `migrations/v1_to_v2.py` and the Godot importer surfaces a clear migration error pointing to the migrator.
 
+### Continuous UV animation (texture region track)
+
+Existing tracks (`bone_transform`, `sprite_frame`, `slot_attachment`, `visibility`) cover skeletal motion, grid-frame swap, attachment swap, and on/off. They do not cover continuous UV animation: animated water flow, conveyor belts, gradient sweeps, mask reveals, region resize.
+
+**Scope when promoted:** add a `texture_region` track that animates `Sprite2D.region_rect.x/y/w/h` on the Godot side. Targets `sprite_frame` sprites in v1; polygon UV animation deferred (would need shader-driven approach). Authoring side reuses the existing `region_x/y/w/h` floats on `Object.proscenio` - already keyframable in Blender via standard right-click flow.
+
+**Open design questions when promoted:** track type name (`texture_region` vs `uv_animation`), scope (sprite_frame only or polygon too), interp options, schema bump path (format v2 with migrator vs additive v1), Blender authoring UX (keyframe-the-floats vs new operator).
+
+**Trigger:** a user asks for animated water, conveyor-belt, or region-resize effects. If the request is "swap whole image" - slot system covers it. If "swap frame in grid" - sprite_frame already covers it.
+
+**Out of scope definitively:** polygon UV animation (Spine-only feature, niche), shader-driven UV scroll (no schema, runtime-only), per-vertex UV animation (free-form deformation territory, separate concern).
+
 ## Blender addon
 
 ### General rig orientation detection
@@ -43,7 +55,7 @@ Writer assumes the 2D plane is Blender XZ (Z up, Y into screen). Some users auth
 
 ### Skinning weights export
 
-**Resolved by [SPEC 003](003-skinning-weights/STUDY.md)** - writer normalizes per-vertex weight sums and emits the bone-major `weights` array; Godot importer (`polygon_builder.gd`) branches into `Polygon2D.skeleton` + `add_bone()` when weights are present. **Authoring side resolved by [SPEC 013](013-weight-paint-automesh/STUDY.md)** Wave 13.1 - pure-Python automesh, planar-proximity bind, weight paint modal wrapper with 2D-safe preset, weight sidecar that survives mesh regen.
+**Resolved** - writer normalizes per-vertex weight sums and emits the bone-major `weights` array; Godot importer (`polygon_builder.gd`) branches into `Polygon2D.skeleton` + `add_bone()` when weights are present. **Authoring side resolved by [weight-paint-automesh spec](013-weight-paint-automesh/STUDY.md)** Wave 13.1 - pure-Python automesh, planar-proximity bind, weight paint modal wrapper with 2D-safe preset, weight sidecar that survives mesh regen.
 
 ### Atlas region authoring helper
 
@@ -75,7 +87,7 @@ Items deferred from [SPEC 012](012-quick-armature-ux/STUDY.md) STUDY out-of-scop
 - **Numeric length input.** `Tab` to type `0.5` Enter (Blender E-extrude convention). Bigger lift because it needs a text-input field on a modal operator; precision authoring win when implemented.
 - **D11 local-axis lock.** Today X / Z = global axis only. Pressing the same axis twice could switch to the active armature's local axis (Blender extrude convention). Only relevant when an armature is rotated; small effort but small value for the current XZ-plane-locked workflow.
 
-The remaining SPEC 012 deferred items are now [`successor SPECs`](012-quick-armature-ux/STUDY.md#successor-considerations): auto-attach mesh / sprite to bone (needs SPEC 004 maturity), Quick Mesh operator (sibling tool, would lift `core/bpy_helpers/modal_overlay.py` scaffolding), i18n of the cheatsheet copy, addon-wide modal feedback library extraction.
+The remaining quick-armature deferred items are now [successor specs](012-quick-armature-ux/STUDY.md#successor-considerations): auto-attach mesh / sprite to bone (needs slot-system maturity), Quick Mesh operator (sibling tool, would lift `core/bpy_helpers/modal_overlay.py` scaffolding), i18n of the cheatsheet copy, addon-wide modal feedback library extraction.
 
 ### SPEC 013 Wave 13.2 candidates (weight paint + automesh productivity)
 
@@ -105,7 +117,7 @@ Heavier lifts than Wave 13.2; each is a candidate for a follow-up SPEC if the de
 
 ### Split PropertyGroup vs Custom Property storage by intent (target: 1.0.0)
 
-**What:** the current SPEC 005 design mirrors every PropertyGroup field on `Object.proscenio` to a sibling raw Custom Property (`obj["proscenio_type"]`, `obj["proscenio_frame"]`, ...) via `update` callbacks, and `core/hydrate.py` rehydrates the PG from CPs on `load_post`. The 11 fields in `OBJECT_PROPS` are mirrored uniformly, which is over-broad: some fields are editor-time only and could live as PG-canonical with no CP at all, while others are animatable / driver targets where the CP is the durable storage and the PG is just a typed widget projection.
+**What:** the current authoring-panel design mirrors every PropertyGroup field on `Object.proscenio` to a sibling raw Custom Property (`obj["proscenio_type"]`, `obj["proscenio_frame"]`, ...) via `update` callbacks, and `core/hydrate.py` rehydrates the PG from CPs on `load_post`. The 11 fields in `OBJECT_PROPS` are mirrored uniformly, which is over-broad: some fields are editor-time only and could live as PG-canonical with no CP at all, while others are animatable / driver targets where the CP is the durable storage and the PG is just a typed widget projection.
 
 **Why:** PropertyGroup data is backed by IDProperty but its visibility depends on the addon's RNA descriptor being registered. Disable -> save -> reenable cycles can purge orphaned IDProperty data depending on Blender version, so PG is a brittle home for anything that must survive addon-absent file states or be a stable driver target. Raw CPs have none of those constraints, which is why Rigify and similar mature addons keep the *animator-facing* surface (IK/FK switches, layer toggles) on CPs and reserve PGs for *generator-internal* metadata. Mirroring everything pays the cost (doubled write paths, sync risk, undo desync, `deferred_hydrate` timer, dual-key reader fallback in `read_field`) for fields that do not need the resilience. Mirroring nothing loses real resilience for fields that do (`frame` is keyframable into Godot's `AnimationPlayer`; Drive-from-Bone wires drivers onto sprite properties).
 
@@ -132,15 +144,15 @@ Heavier lifts than Wave 13.2; each is a candidate for a follow-up SPEC if the de
 
 ### Reimport non-destructive merge
 
-**Resolved by [SPEC 001](001-reimport-merge/STUDY.md)** - adopt full overwrite plus the wrapper-scene pattern (Option A). Marker-based merge (Option B) deferred unless demand emerges.
+**Resolved** - full overwrite plus the wrapper-scene pattern. Marker-based merge deferred unless demand emerges. See the wrapper-scene pattern entry in [`decisions.md`](decisions.md#core-architecture).
 
 ### Spritesheet support and `Sprite2D` path
 
-**Resolved by [SPEC 002](002-spritesheet-sprite2d/STUDY.md)** - adopt explicit `type` discriminator field per sprite; default `"polygon"` keeps v1 fixtures backwards-compatible. `Sprite2D` ships as the `"sprite_frame"` variant with `hframes`/`vframes`/`frame` and the matching animation track.
+**Resolved** - explicit `type` discriminator field per sprite; default `"polygon"` keeps v1 fixtures backwards-compatible. `Sprite2D` ships as the `"sprite_frame"` variant with `hframes`/`vframes`/`frame` and the matching animation track. See the spritesheet entry in [`decisions.md`](decisions.md#spritesheet-sprite2d-discriminator).
 
 ### Slot system
 
-Slated for SPEC 004. Sprite-swap groups via `slots` field; importer wires `slot_attachment` tracks.
+Resolved. Sprite-swap groups via `slots` field; importer wires `slot_attachment` tracks. See the slot-system entry in [`decisions.md`](decisions.md#slot-system).
 
 ### Node name collision polish
 
@@ -190,7 +202,7 @@ Layer / group named `Head` automatically gets a face-region tag without an expli
 
 #### `[isolated]` warp-independent flag (Character Animator's `+` prefix)
 
-Marks a layer as "animated separately from its parent group" so the rig generator emits a dedicated pose key for it. **Why deferred**: Proscenio's rig model has no concept of "warp pose keys"; bones already encode separability. Reserved tag name: `[isolated]` (the `+` prefix from Character Animator is rejected as non-idiomatic for this project). Trigger to revisit: if SPEC 005 / 008 grow a "per-layer pose channel" concept.
+Marks a layer as "animated separately from its parent group" so the rig generator emits a dedicated pose key for it. **Why deferred**: Proscenio's rig model has no concept of "warp pose keys"; bones already encode separability. Reserved tag name: `[isolated]` (the `+` prefix from Character Animator is rejected as non-idiomatic for this project). Trigger to revisit: if the authoring-panel or future UV-animation work grows a "per-layer pose channel" concept.
 
 #### Stable layer identity in `PngWrite.layerPath`
 
@@ -210,15 +222,15 @@ The tag parser accepts `[name:lh_*]` on a parent group, but the v1 planner does 
 
 #### `kind: "mesh"` semantically equal to `kind: "polygon"` downstream
 
-`[mesh]` emits `kind: "mesh"` on the manifest and the Blender importer stamps a `proscenio_psd_kind = "mesh"` custom property, but no downstream code branches on it yet (the Godot writer treats both as a single quad). **Why deferred**: the distinction exists so SPEC 002 (mesh deformation) and SPEC 008 (UV animation) can tell editable polygons apart from rigid sprites. **Trigger to revisit**: SPEC 002 ships; at that point the importer adds a Subdivision Surface modifier (or equivalent) only to `kind: "mesh"` entries.
+`[mesh]` emits `kind: "mesh"` on the manifest and the Blender importer stamps a `proscenio_psd_kind = "mesh"` custom property, but no downstream code branches on it yet (the Godot writer treats both as a single quad). **Why deferred**: the distinction exists so future mesh-deformation work and the continuous-UV-animation entry can tell editable polygons apart from rigid sprites. **Trigger to revisit**: a mesh-deformation feature ships; at that point the importer adds a Subdivision Surface modifier (or equivalent) only to `kind: "mesh"` entries.
 
 #### Waist height drifts -1 px on the PS round-trip
 
-`waist` ships as 173 px tall in the Blender-emitted manifest, returns as 172 px through the Photoshop exporter. Logged in [`tests/BUGS_FOUND.md`](../tests/BUGS_FOUND.md). **Why deferred**: cosmetic (0.6 % drift on a 173 px region), and the round-trip oracle accepts it within tolerance. **Trigger to revisit**: an artist reports visible Y-offset on the waist mesh in Godot, or a SPEC 010.5 cycle fixes the underlying off-by-one in the JSX-era PSD reader.
+`waist` ships as 173 px tall in the Blender-emitted manifest, returns as 172 px through the Photoshop exporter. Logged in [`tests/BUGS_FOUND.md`](../tests/BUGS_FOUND.md). **Why deferred**: cosmetic (0.6 % drift on a 173 px region), and the round-trip oracle accepts it within tolerance. **Trigger to revisit**: an artist reports visible Y-offset on the waist mesh in Godot, or a future Photoshop-roundtrip cycle fixes the underlying off-by-one in the JSX-era PSD reader.
 
 #### `pixels_per_unit` not round-tripped (defaults to 100 on re-export)
 
-The Blender manifest emits `pixels_per_unit = 1000.0`; the PS round-trip emits `100.0` (hardcoded in the JSX exporter, inherited by the UXP port). Logged in [`tests/BUGS_FOUND.md`](../tests/BUGS_FOUND.md). **Why deferred**: PPU only affects world-space placement in Blender, and the importer reads the PPU back out of the round-trip manifest correctly (it just lands at a different scale). **Trigger to revisit**: SPEC 010.5 plumbs PPU through XMP so the round-trip is lossless.
+The Blender manifest emits `pixels_per_unit = 1000.0`; the PS round-trip emits `100.0` (hardcoded in the JSX exporter, inherited by the UXP port). Logged in [`tests/BUGS_FOUND.md`](../tests/BUGS_FOUND.md). **Why deferred**: PPU only affects world-space placement in Blender, and the importer reads the PPU back out of the round-trip manifest correctly (it just lands at a different scale). **Trigger to revisit**: a future Photoshop-roundtrip cycle plumbs PPU through XMP so the round-trip is lossless.
 
 ### SPEC 011 follow-ups deferred from Waves 11.x
 
@@ -226,9 +238,9 @@ The Blender manifest emits `pixels_per_unit = 1000.0`; the PS round-trip emits `
 
 Wave 11.2 listed a "small PSD with one `[origin]` marker layer per body part, golden-diffed" as a follow-up. The doll oracle (`02_photoshop_setup/doll_tagged.psd`) covers the planner + writer paths for `[origin]` and `[origin:X,Y]` end-to-end, so the dedicated mini-PSD never materialised. **Why deferred**: tests/test_doll_tagged_manifest.py asserts origin presence on both the explicit-coordinate (`belly`, `arm.R`) and marker (`brow_states`) paths; tag_smoke locks the synthetic case. Coverage redundancy is high. **Trigger to revisit**: a regression where the origin handling diverges between PSD authoring styles - then ship the dedicated fixture so the failure mode has its own named test.
 
-#### SPEC 010 doll-roundtrip oracle re-run against schema v2
+#### Doll-roundtrip oracle re-run against schema v2
 
-Wave 10.3 captured a byte-equal JSX baseline against `doll.psd` for the SPEC 010 retirement gate. After SPEC 011 v2 landed, the manifest gained `anchor`, per-entry `origin`, `blend_mode`, `subfolder`, and `kind: "mesh"`. The captured oracle still applies to legacy v1 imports, but a fresh v2 byte-equal capture against `doll_tagged.psd` is open. **Why deferred**: pytest's `test_doll_tagged_manifest.py` already pins the v2 manifest's structural invariants; a byte-equal SHA capture adds little signal beyond locking the exact JSON whitespace and key order. **Trigger to revisit**: the UXP exporter changes its serialisation strategy (key order, indentation, encoding) - then byte-equal capture catches the change before users notice.
+The Photoshop UXP migration captured a byte-equal JSX baseline against `doll.psd` for the retirement gate. After the photoshop-tag-system v2 landed, the manifest gained `anchor`, per-entry `origin`, `blend_mode`, `subfolder`, and `kind: "mesh"`. The captured oracle still applies to legacy v1 imports, but a fresh v2 byte-equal capture against `doll_tagged.psd` is open. **Why deferred**: pytest's `test_doll_tagged_manifest.py` already pins the v2 manifest's structural invariants; a byte-equal SHA capture adds little signal beyond locking the exact JSON whitespace and key order. **Trigger to revisit**: the UXP exporter changes its serialisation strategy (key order, indentation, encoding) - then byte-equal capture catches the change before users notice.
 
 #### Spectrum web component shadow-DOM init cost
 
@@ -236,7 +248,7 @@ Wave 10.3 captured a byte-equal JSX baseline against `doll.psd` for the SPEC 010
 
 #### Migrating flat fixtures into `psd_to_blender/` and `blender_to_godot/`
 
-The new categorization buckets at `examples/generated/{psd_to_blender,blender_to_godot}/` accept new fixtures directly. The pre-existing flat fixtures (`atlas_pack/`, `blink_eyes/`, `mouth_drive/`, `shared_atlas/`, `simple_psd/`, `slot_cycle/`, `slot_swap/`) stay where they are because moving them ripples through every SPEC TODO, the `scripts/fixtures/` index, and several wrapper-scene paths. **Why deferred**: refactor cost > current confusion cost. **Trigger to revisit**: the next time one of those fixtures needs editing for an unrelated reason; piggyback the move onto the same commit.
+The new categorization buckets at `examples/generated/{psd_to_blender,blender_to_godot}/` accept new fixtures directly. The pre-existing flat fixtures (`atlas_pack/`, `blink_eyes/`, `mouth_drive/`, `shared_atlas/`, `simple_psd/`, `slot_cycle/`, `slot_swap/`) stay where they are because moving them ripples through every spec TODO, the `scripts/fixtures/` index, and several wrapper-scene paths. **Why deferred**: refactor cost > current confusion cost. **Trigger to revisit**: the next time one of those fixtures needs editing for an unrelated reason; piggyback the move onto the same commit.
 
 ## Tests and CI
 
@@ -246,7 +258,7 @@ A single-version `test-blender` job ships in [`.github/workflows/ci.yml`](../.gi
 
 ### Godot importer test - full editor reimport
 
-[`apps/godot/tests/test_importer.gd`](../apps/godot/tests/test_importer.gd) exercises the builders directly. A higher-fidelity test would launch the editor headlessly, drop a `.proscenio` into the project, and assert the generated `.scn` opens with the plugin disabled (the no-GDExtension hard rule, automated). Currently verified manually per [SPEC 000 TODO](000-initial-plan/TODO.md).
+[`apps/godot/tests/test_importer.gd`](../apps/godot/tests/test_importer.gd) exercises the builders directly. A higher-fidelity test would launch the editor headlessly, drop a `.proscenio` into the project, and assert the generated `.scn` opens with the plugin disabled (the no-GDExtension hard rule, automated). Currently verified manually as part of the smoke checklist.
 
 ### CI matrix expansion
 

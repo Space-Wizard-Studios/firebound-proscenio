@@ -160,7 +160,7 @@ Workbench file: `examples/generated/atlas_pack/atlas_pack.blend` (9 sprites 3x3,
 - [x] Click `?` em cada subpanel -> abre help popup topic-specific (topic id == feature_id).
 - [x] Pipeline overview popup (root `?`) renderiza topic `pipeline_overview` com sections + see-also.
 - [x] Drive-from-bone help topic conteúdo confere (sections What it does / How to use it presentes).
-- [~] See-also links resolvem em paths reais. **Paths existem on disk** (STATUS.md, specs/000-initial-plan, etc verificados). **Mas:** rendered como `layout.label` puro (`help_dispatch.py:88-89`), não clickable. Visualmente parecem links + ícone URL no header da seção, induz expectativa de click. UX gap loggado em UI_FEEDBACK.md.
+- [~] See-also links resolvem em paths reais. **Paths existem on disk** (STATUS.md, specs/013-weight-paint-automesh, examples/generated/simple_psd, etc verificados). **Mas:** rendered como `layout.label` puro (`help_dispatch.py:88-89`), não clickable. Visualmente parecem links + ícone URL no header da seção, induz expectativa de click. UX gap loggado em UI_FEEDBACK.md.
 - [x] `slot_system` topic abre via Active Slot `?` button. Confirmado em slot_swap_workbench (slot Empty chamado `weapon`).
 - [!] `sprite_frame_preview` topic abre via Active Sprite `?` button (sprite_frame mode). **Bug:** topic existe em `help_topics.py:432` + `feature_status.py:115` mas nenhuma sub-box do panel renderiza `?` button pra ele. `_draw_sprite_frame.py:26` mostra só label puro `box.label(text="Sprite frame", icon="IMAGE_DATA")` - orphan help topic. Bug em BUGS_FOUND.md.
 

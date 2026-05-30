@@ -169,7 +169,7 @@ Sem panel dedicado pra inspeção / configuração de materials. Hoje usuário c
 - Versão (Pipeline v0.1.0) poderia ficar aqui no Help panel
 - Adicionar botão "GitHub" / link pro repo
 - **See-also references nos popups de help NÃO são clickáveis.** `help_dispatch.py:88-89` rendera cada ref como `layout.label(text="  " + ref)` puro - sem operator, sem hyperlink. Header da seção mostra ícone URL induzindo expectativa de click. Usuário só consegue ler os paths e abrir manual fora do Blender. Sugestões (em ordem de impacto):
-  - **A. wm.path_open operator:** envolver cada ref num `layout.operator("wm.path_open")` com `filepath=<abspath>` - abre arquivo/pasta no app default do OS. Funciona pra `STATUS.md`, `specs/004-slot-system/` (abre file manager) etc. Mínimo viável.
+  - **A. wm.path_open operator:** envolver cada ref num `layout.operator("wm.path_open")` com `filepath=<abspath>` - abre arquivo/pasta no app default do OS. Funciona pra `STATUS.md`, `specs/013-weight-paint-automesh/` (abre file manager) etc. Mínimo viável.
   - **B. wm.url_open** se ref começa com `http`. Mistura A+B detectando prefixo.
   - **C. Copy to clipboard button** próximo de cada ref - alternativa baixa-fricção.
   - **D. Ícone visual:** se decidir não fazer A/B, ao menos trocar ícone URL no header da seção pra algo menos clicky (DOT, INFO), pra não enganar.
