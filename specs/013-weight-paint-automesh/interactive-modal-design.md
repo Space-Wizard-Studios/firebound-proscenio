@@ -1,14 +1,14 @@
-# Wave 13.2 - Interactive Modal Automesh Authoring: Design
+# the productivity follow-up - Interactive Modal Automesh Authoring: Design
 
 Status: design locked 2026-05-21. Decisions taken autonomously per user delegation; UX-touching items confirmed via questions.
 
-Scope: 5-stage modal operator that lifts each existing automesh debug stage to an interactive preview (GPU overlay + slider-driven re-run + user input). Coexists with the one-shot `automesh_from_sprite` operator so power users get in-flight course correction without breaking the quick-path workflow. Closes "Interactive modal automesh authoring" line item from SPEC 013 Wave 13.2.
+Scope: 5-stage modal operator that lifts each existing automesh debug stage to an interactive preview (GPU overlay + slider-driven re-run + user input). Coexists with the one-shot `automesh_from_sprite` operator so power users get in-flight course correction without breaking the quick-path workflow. Closes "Interactive modal automesh authoring" line item from this spec the productivity follow-up.
 
 Foundation:
 
-- Wave 13.1 (automesh) shipped the pipeline (alpha walker, smoothing, CDT, hole detection, bone-aware density)
-- Wave 13.2-paint shipped the modal scaffold this wave lifts (session capture/restore, GPU overlay handlers, statusbar pill, try/finally crash safety)
-- Wave 13.2-sidecar shipped reproject so existing weights survive the modal's APPLY stage
+- the first cut (automesh) shipped the pipeline (alpha walker, smoothing, CDT, hole detection, bone-aware density)
+- the paint work shipped the modal scaffold this wave lifts (session capture/restore, GPU overlay handlers, statusbar pill, try/finally crash safety)
+- the sidecar work shipped reproject so existing weights survive the modal's APPLY stage
 
 ## Decisions
 
@@ -16,20 +16,20 @@ Foundation:
 
 | # | Decision | Locked value | Rationale |
 | --- | --- | --- | --- |
-| T1 | Inner loops source | Morphological erosions only v1 (reuse `core/automesh/alpha_contour.dilate/erode`) | Auto-compute keeps the modal deterministic + testable; user-drawn polylines defer to Wave 13.3 |
-| T2 | User-pointed Steiner persistence | Custom Property `obj["proscenio_user_steiners"]: list[(x,z)]` (survives addon disable per SPEC 005) | Consistent with D6 sidecar pattern (artist work persists across automesh regens) |
+| T1 | Inner loops source | Morphological erosions only v1 (reuse `core/automesh/alpha_contour.dilate/erode`) | Auto-compute keeps the modal deterministic + testable; user-drawn polylines defer to successor work |
+| T2 | User-pointed Steiner persistence | Custom Property `obj["proscenio_user_steiners"]: list[(x,z)]` (survives addon disable per the authoring panel) | Consistent with D6 sidecar pattern (artist work persists across automesh regens) |
 | T3 | Stage 4 (Steiner preview) editing | Read-only (Stage 3 IS the edit step) | Single-responsibility per stage; editing in Stage 4 would duplicate Stage 3's interaction model |
-| T4 | Existing sidecar collision | Auto-integrate with `preserve_on_regen` flag - final APPLY invokes `maybe_pre_regen_snapshot` + `maybe_post_regen_reproject` from Wave 13.2-sidecar | Reuses the shipped reproject; B1 fix preserves `user_paint` provenance through the regen |
+| T4 | Existing sidecar collision | Auto-integrate with `preserve_on_regen` flag - final APPLY invokes `maybe_pre_regen_snapshot` + `maybe_post_regen_reproject` from the sidecar work | Reuses the shipped reproject; B1 fix preserves `user_paint` provenance through the regen |
 | T5 | Stage navigation keys | ENTER advance / BACKSPACE back / ESC cancel | Matches the TODO L226 sketch + Blender modal conventions (Quick Armature uses ENTER confirm + ESC cancel) |
 | T6 | Live re-run on parameter change | Throttled timer ~100ms - modal detects dirty PG state + recomputes current stage | Sliders feel responsive without recomputing per mouse move |
 | T7 | Trigger surface | Skinning panel button (new sub-box between Automesh + Bind) + F3 search via `bl_label` | Matches paint wave precedent (button + F3, no global keymap) |
-| T8 | GPU overlay shader | POST_VIEW SpaceView3D draw handlers via `modal_overlay._shader()` (UNIFORM_COLOR) | Reuses the SPEC 012 / 013.2 paint shader stack; one entry point, one cleanup path |
-| T9 | Per-stage parameters | `scene.proscenio.skinning.authoring_*` fields (PG persists across .blend reloads) | Same persistence pattern as Wave 13.2-panel bind fields |
-| T10 | Final APPLY pipeline | Pipes through existing `build_automesh` + `_delete_faces_inside_holes` with outer + inner_loops + user_steiners + bone_steiners as constraints | Reuses Wave 13.1 implementation; only the constraint set changes |
+| T8 | GPU overlay shader | POST_VIEW SpaceView3D draw handlers via `modal_overlay._shader()` (UNIFORM_COLOR) | Reuses the the quick-armature spec / 013.2 paint shader stack; one entry point, one cleanup path |
+| T9 | Per-stage parameters | `scene.proscenio.skinning.authoring_*` fields (PG persists across .blend reloads) | Same persistence pattern as the panel work bind fields |
+| T10 | Final APPLY pipeline | Pipes through existing `build_automesh` + `_delete_faces_inside_holes` with outer + inner_loops + user_steiners + bone_steiners as constraints | Reuses the first cut implementation; only the constraint set changes |
 | T11 | Cleanup prerequisite (cognitive-47 monolith refactor, TODO L271) | SKIPPED - not blocking | Documented as risk: if `build_automesh` proves too tangled to lift, in-wave extract refactor OR split prerequisite mini-wave |
 | T12 | Stage state machine | `IntEnum` with 5 values + frozen `StageParams` + frozen `StageOutput` dataclasses | Pure dataclasses keep state inspectable + testable; IntEnum allows arithmetic (`stage + 1`) for advance/retreat |
 | T13 | Overlay refresh on stage change | `refresh_overlay(handles, stage, output)` rebuilds batches in-place | Single function for both stage-change refresh + slider-driven dirty recompute |
-| T14 | Click-to-place Steiner | LEFTMOUSE PRESS only adds; Shift+LEFTMOUSE removes nearest within threshold | Matches the U2 decision (click-only v1); drag-stroke deferred to Wave 13.3 |
+| T14 | Click-to-place Steiner | LEFTMOUSE PRESS only adds; Shift+LEFTMOUSE removes nearest within threshold | Matches the U2 decision (click-only v1); drag-stroke deferred to successor work |
 | T15 | Cursor world projection | `region_to_world_xz` helper projecting region pixel coords to Y=0 XZ plane | Proscenio convention (camera at -Y looking +Y); same projection Quick Armature uses |
 | T16 | Crash safety | try/finally around all bpy mutations; finally calls `session.restore`; uncaught exception logs traceback + reports INFO | Same pattern as paint wave's edit_weights operator |
 
@@ -38,7 +38,7 @@ Foundation:
 | # | Decision | Locked value |
 | --- | --- | --- |
 | U1 | Modal vs one-shot | **Coexist** - 2 operators side by side; one-shot stays as quick path, modal is the guided path |
-| U2 | Stage 3 Steiner placement | **Click-only point-by-point** - LEFTMOUSE add / Shift+LEFTMOUSE delete nearest. Drag-stroke + free-draw polyline defer to Wave 13.3 |
+| U2 | Stage 3 Steiner placement | **Click-only point-by-point** - LEFTMOUSE add / Shift+LEFTMOUSE delete nearest. Drag-stroke + free-draw polyline defer to successor work |
 
 ## Scope split
 
@@ -48,11 +48,11 @@ Foundation:
 - Per-stage GPU overlay (POST_VIEW UNIFORM_COLOR shader, batched primitives)
 - Live re-run on slider drag (throttled 100ms via TIMER)
 - User Steiner click placement + Custom Property persistence
-- Final APPLY pipes existing `build_automesh` with all constraint sets + reproject existing sidecar via Wave 13.2-sidecar hook
+- Final APPLY pipes existing `build_automesh` with all constraint sets + reproject existing sidecar via the sidecar work hook
 - Skinning panel sub-box (button entry, between Automesh + Bind)
 - Tests (pure + headless) + MANUAL_TESTING 1.23
 
-**Deferred to Wave 13.3:**
+**Deferred to successor work:**
 
 - User-drawn inner loops (free-draw polylines as CDT constraint edges)
 - Drag-stroke Steiner placement (multiple points per drag)
@@ -62,7 +62,7 @@ Foundation:
 **Deferred to later waves:**
 
 - Cleanup prerequisite (cognitive-47 `build_automesh` refactor) - in-wave only if blocking; otherwise track separately
-- Pose-mode preview mid-modal (Wave 13.3 feature)
+- Pose-mode preview mid-modal (successor work feature)
 
 ## Architecture
 
@@ -154,7 +154,7 @@ class StageOutput:
 def compute_outer(obj, image, params) -> list[Point2D]:
     """Run alpha walker -> smooth -> resample; returns outer polyline.
 
-    Reuses Wave 13.1 helpers via core/automesh/.
+    Reuses the first cut helpers via core/automesh/.
     """
 
 def compute_inner_loops_for_stage(outer, params) -> list[list[Point2D]]:
@@ -171,7 +171,7 @@ def compute_all_steiners(
 ) -> list[Point2D]:
     """Uniform interior grid + bone density + merge user steiners.
 
-    Reuses core/automesh/density.py uniform grid helper + Wave 13.1
+    Reuses core/automesh/density.py uniform grid helper + the first cut
     bone-density logic.
     """
 
@@ -482,9 +482,9 @@ User presses ESC (any stage):
 
 ## Out of scope (deferred)
 
-- User-drawn inner loops (free-draw polylines as CDT constraint edges) -> Wave 13.3
-- Drag-stroke Steiner placement (multiple points per drag) -> Wave 13.3
-- Brush stroke for alpha-boundary trace (D1.B paradigm enum) -> Wave 13.3
-- Stage 4 editable Steiners (drag-to-move, delete-with-X) -> Wave 13.3
-- Pose-mode preview mid-modal -> Wave 13.3
+- User-drawn inner loops (free-draw polylines as CDT constraint edges) -> successor work
+- Drag-stroke Steiner placement (multiple points per drag) -> successor work
+- Brush stroke for alpha-boundary trace (D1.B paradigm enum) -> successor work
+- Stage 4 editable Steiners (drag-to-move, delete-with-X) -> successor work
+- Pose-mode preview mid-modal -> successor work
 - Cleanup prerequisite (cognitive-47 build_automesh refactor) -> in-wave only if blocking; otherwise separate effort
