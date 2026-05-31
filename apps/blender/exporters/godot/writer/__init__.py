@@ -114,5 +114,26 @@ def export(filepath: str | Path, *, pixels_per_unit: float = DEFAULT_PIXELS_PER_
     if animations:
         doc["animations"] = animations
 
+    # Shape gate: pydantic re-parses the built dict before writing.
+    # Catches any drift between the writer and the typed domain models
+    # in packages/models/ at export time (loud) instead of at the
+    # downstream consumer (Photoshop ajv, Godot importer). The writer
+    # still emits the same dict shape it always did - this is a
+    # validation step, not a serialization swap (that lands in the
+    # next phase of the typed-models work).
+    try:
+        from proscenio_models import ProscenioDocument
+    except ImportError:
+        # proscenio-models is bundled as a wheel in blender_manifest.toml
+        # but the import resolves through Blender's bundled Python only
+        # after the extension installer ran. Headless invocations that
+        # mount the addon manually (the dev-loop pytest runner) install
+        # the wheel via pip in CI; if it is missing here, skip the gate
+        # rather than break the export so a fresh clone still runs the
+        # writer end-to-end before the bundle is materialised.
+        pass
+    else:
+        ProscenioDocument.model_validate(doc)
+
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(doc, indent=2), encoding="utf-8")
