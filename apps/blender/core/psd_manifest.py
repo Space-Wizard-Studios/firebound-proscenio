@@ -1,7 +1,7 @@
 """PSD manifest v1 parser (the photoshop importer).
 
-Reads the JSON document emitted by the Photoshop JSX exporter and
-returns typed records. Pure Python - no bpy, no Pillow, no jsonschema
+Reads the JSON document emitted by the Photoshop UXP plugin (and
+the retired JSX exporter before it) and returns typed records. Pure Python - no bpy, no Pillow, no jsonschema
 required at runtime (validation falls back to a minimal in-process
 shape check when ``jsonschema`` is absent - Blender's bundled Python
 typically does not ship it; the dedicated CI ``validate-schema`` job

@@ -155,9 +155,9 @@ def _layer_placement(
     it. Without an anchor the importer falls back to canvas-centered
     placement (legacy behaviour for fixtures authored before the photoshop tag system).
 
-    Known drift (the photoshop-tag work.7 investigation, tests/BUGS_FOUND.md): on the
-    Blender -> JSX export -> Blender round-trip, the JSX exporter
-    captures the alpha-aware bbox of each Workbench-rendered PNG which
+    Known drift (photoshop-tag-system investigation, tests/BUGS_FOUND.md):
+    on the Blender -> legacy JSX export -> Blender round-trip, the JSX
+    exporter captures the alpha-aware bbox of each Workbench-rendered PNG which
     bleeds 1 px on every edge from anti-aliasing. The manifest's
     ``size`` ends up +2 px on both axes while ``position`` stays put,
     which shifts the computed bbox centre by +1 px (~0.17 % on a

@@ -490,13 +490,13 @@ HELP_TOPICS: dict[str, HelpTopic] = {
         sections=(
             _section(
                 _SECTION_WHAT,
-                "Reads a manifest emitted by apps/photoshop/proscenio_export.jsx,",
+                "Reads a manifest emitted by the Proscenio Photoshop UXP plugin,",
                 "stamps one polygon mesh per layer + composes spritesheet textures",
                 "for sprite_frame groups, parents everything to a stub root armature.",
             ),
             _section(
                 _SECTION_HOW,
-                "1. Run proscenio_export.jsx in Photoshop on a layered PSD.",
+                "1. Run the Proscenio Exporter panel in Photoshop on a layered PSD.",
                 "2. Click Import Photoshop Manifest, pick the resulting .json.",
                 "3. Choose placement: landed (feet on Z=0) or centered (manifest center).",
                 "4. Refine the stub armature + paint weights in Blender.",

@@ -9,8 +9,7 @@ writer share. The contract is:
 - ``core/bpy_helpers/`` hosts every module that imports ``bpy`` at the
   module top. Tests that touch these patch ``bpy`` first, or skip
   when running outside Blender.
-- ``core/validation/`` is a subpackage of bpy-free validators (SPEC
-  009).
+- ``core/validation/`` is a subpackage of bpy-free validators.
 
 Top-level modules (bpy-free):
 

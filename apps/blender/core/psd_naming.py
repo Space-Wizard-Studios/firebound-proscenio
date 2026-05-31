@@ -1,12 +1,13 @@
 """PSD layer naming convention helpers (the photoshop importer).
 
-Pure Python - no bpy, no Pillow. The JSX exporter (the photoshop importer1) uses the
-same rules in JavaScript when classifying layer groups; this module
-provides the Python mirror so the importer can sanity-check that a
-sprite_frame manifest entry's children actually look like indexed
-frames before composing the spritesheet.
+Pure Python - no bpy, no Pillow. The Photoshop UXP plugin (and the
+retired JSX exporter before it) uses the same rules in JavaScript /
+TypeScript when classifying layer groups; this module provides the
+Python mirror so the importer can sanity-check that a sprite_frame
+manifest entry's children look like indexed frames before composing
+the spritesheet.
 
-Locked conventions (the photoshop importer D9):
+Locked conventions (photoshop importer D9):
 
 - Indexed frame layer names match one of:
     - ``\\d+``           (e.g. ``0``, ``1``, ``12``)
