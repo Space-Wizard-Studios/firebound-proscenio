@@ -11,7 +11,7 @@ class_name ProscenioSprite extends Resource
 # the parsed JSON document.
 
 
-static func from_dict(data: Dictionary) -> Resource:
+static func from_dict(data: Dictionary) -> ProscenioSprite:
 	var tag: String = String(data.get("type", "polygon"))
 	if tag == "polygon":
 		return PolygonSprite.from_dict(data)

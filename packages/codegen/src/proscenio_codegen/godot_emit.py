@@ -265,14 +265,33 @@ def _python_default(field: FieldInfo) -> Any:
     return None
 
 
+def _variant_dispatcher(model: type[BaseModel]) -> str | None:
+    """The dispatcher class a variant should extend, or None if none.
+
+    Lets ``Array[ProscenioSprite]`` actually hold ``PolygonSprite`` and
+    ``SpriteFrameSprite`` instances via runtime polymorphism. Without
+    the inheritance, GDScript's typed-array runtime check refuses any
+    instance whose class is not the exact element type.
+    """
+    from proscenio_models.proscenio import PolygonSprite, SpriteFrameSprite
+    from proscenio_models.psd_manifest import PolygonLayer, SpriteFrameLayer
+
+    if model in (PolygonSprite, SpriteFrameSprite):
+        return "ProscenioSprite"
+    if model in (PolygonLayer, SpriteFrameLayer):
+        return "ProscenioLayer"
+    return None
+
+
 def _emit_model(model: type[BaseModel]) -> str:
     """Build the GDScript text for a single pydantic model."""
     class_name = _resource_class_name(model)
+    parent = _variant_dispatcher(model) or "Resource"
     fields = model.model_fields
     lines: list[str] = [
         _AUTO_HEADER,
         "@tool",
-        f"class_name {class_name} extends Resource",
+        f"class_name {class_name} extends {parent}",
         "",
     ]
 
@@ -333,7 +352,7 @@ def _emit_union_dispatcher(
             f'\tif tag == "{tag}":\n\t\treturn {variant_class}.from_dict(data)'
         )
 
-    lines.append("static func from_dict(data: Dictionary) -> Resource:")
+    lines.append(f"static func from_dict(data: Dictionary) -> {base_name}:")
     if discriminator_field == "type":
         # Sprite discriminator: the polygon variant allows the field to be
         # absent (v1 backwards compatibility). Default to the polygon tag.

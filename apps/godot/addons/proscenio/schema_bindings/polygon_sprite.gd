@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name PolygonSprite extends Resource
+class_name PolygonSprite extends ProscenioSprite
 
 @export var type: String = "polygon"
 @export var name: String = ""

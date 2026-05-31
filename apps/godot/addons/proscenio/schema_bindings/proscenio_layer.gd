@@ -11,7 +11,7 @@ class_name ProscenioLayer extends Resource
 # the parsed JSON document.
 
 
-static func from_dict(data: Dictionary) -> Resource:
+static func from_dict(data: Dictionary) -> ProscenioLayer:
 	var tag: String = String(data.get("kind", ""))
 	if tag == "polygon":
 		return PolygonLayer.from_dict(data)

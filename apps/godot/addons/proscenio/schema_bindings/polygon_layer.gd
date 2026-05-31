@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name PolygonLayer extends Resource
+class_name PolygonLayer extends ProscenioLayer
 
 @export var kind: String = "polygon"
 @export var name: String = ""

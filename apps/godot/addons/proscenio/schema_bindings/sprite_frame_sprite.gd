@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name SpriteFrameSprite extends Resource
+class_name SpriteFrameSprite extends ProscenioSprite
 
 @export var type: String = "sprite_frame"
 @export var name: String = ""
