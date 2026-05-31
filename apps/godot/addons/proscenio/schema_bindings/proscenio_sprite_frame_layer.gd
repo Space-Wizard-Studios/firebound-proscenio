@@ -3,21 +3,21 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name SpriteFrameLayer extends ProscenioLayer
+class_name ProscenioSpriteFrameLayer extends ProscenioLayer
 
 @export var kind: String = "sprite_frame"
 @export var name: String = ""
 @export var position: PackedInt32Array = PackedInt32Array()
 @export var size: PackedInt32Array = PackedInt32Array()
 @export var z_order: int = 0
-@export var frames: Array[FrameEntry] = [] as Array[FrameEntry]
+@export var frames: Array[ProscenioFrameEntry] = [] as Array[ProscenioFrameEntry]
 @export var origin: PackedInt32Array = PackedInt32Array()
 @export var blend_mode: String = "normal"
 @export var subfolder: String = ""
 
 
-static func from_dict(data: Dictionary) -> SpriteFrameLayer:
-	var res := SpriteFrameLayer.new()
+static func from_dict(data: Dictionary) -> ProscenioSpriteFrameLayer:
+	var res := ProscenioSpriteFrameLayer.new()
 	if data.has("kind") and data["kind"] != null:
 		res.kind = String(data["kind"])
 	if data.has("name") and data["name"] != null:
@@ -29,7 +29,7 @@ static func from_dict(data: Dictionary) -> SpriteFrameLayer:
 	if data.has("z_order") and data["z_order"] != null:
 		res.z_order = int(data["z_order"])
 	if data.has("frames") and data["frames"] != null:
-		res.frames = ProscenioParseHelpers._parse_array(FrameEntry, data["frames"])
+		res.frames = ProscenioParseHelpers._parse_array(ProscenioFrameEntry, data["frames"])
 	if data.has("origin") and data["origin"] != null:
 		res.origin = PackedInt32Array(data["origin"])
 	if data.has("blend_mode") and data["blend_mode"] != null:

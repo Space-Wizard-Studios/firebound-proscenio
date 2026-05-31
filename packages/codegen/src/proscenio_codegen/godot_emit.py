@@ -234,13 +234,28 @@ def _resolve_type(annotation: Any) -> _ResolvedType:
 
 
 def _resource_class_name(model: type[BaseModel]) -> str:
-    """The GDScript ``class_name`` derived from a pydantic class."""
-    return model.__name__
+    """The GDScript ``class_name`` derived from a pydantic class.
+
+    Every generated class gets a ``Proscenio`` prefix so it cannot
+    collide with Godot's built-in classes (``Animation``, ``Skeleton``,
+    ``Bone`` and friends would all shadow native types otherwise).
+    Models whose pydantic name already starts with ``Proscenio`` keep
+    it - applies to ``ProscenioDocument`` today and to whichever future
+    model the author already prefixed.
+    """
+    name = model.__name__
+    if name.startswith("Proscenio"):
+        return name
+    return f"Proscenio{name}"
 
 
 def _filename(model: type[BaseModel]) -> str:
-    """The on-disk filename for a model's emitted .gd file (snake_case)."""
-    name = model.__name__
+    """The on-disk filename for a model's emitted .gd file (snake_case).
+
+    Derived from the prefixed class_name so files and globals stay in
+    one-to-one correspondence (``ProscenioBone`` -> ``proscenio_bone.gd``).
+    """
+    name = _resource_class_name(model)
     out: list[str] = []
     for i, ch in enumerate(name):
         if ch.isupper() and i > 0:

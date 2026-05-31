@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name Slot extends Resource
+class_name ProscenioSlot extends Resource
 
 @export var name: String = ""
 @export var attachments: PackedStringArray = PackedStringArray()
@@ -11,8 +11,8 @@ class_name Slot extends Resource
 @export var default: String = ""
 
 
-static func from_dict(data: Dictionary) -> Slot:
-	var res := Slot.new()
+static func from_dict(data: Dictionary) -> ProscenioSlot:
+	var res := ProscenioSlot.new()
 	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
 	if data.has("attachments") and data["attachments"] != null:

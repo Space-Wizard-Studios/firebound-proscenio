@@ -39,13 +39,15 @@ static func attach_sprites(
 	if sprites == null:
 		return
 	for sprite_res: ProscenioSprite in sprites:
-		if not (sprite_res is SpriteFrameSprite):
+		if not (sprite_res is ProscenioSpriteFrameSprite):
 			continue
-		_build_sprite_frame(sprite_res as SpriteFrameSprite, skeleton, atlas, slot_map, source_dir)
+		_build_sprite_frame(
+			sprite_res as ProscenioSpriteFrameSprite, skeleton, atlas, slot_map, source_dir
+		)
 
 
 static func _build_sprite_frame(
-	sprite_res: SpriteFrameSprite,
+	sprite_res: ProscenioSpriteFrameSprite,
 	skeleton: Skeleton2D,
 	atlas: Texture2D,
 	slot_map: Dictionary,

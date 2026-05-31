@@ -27,21 +27,24 @@ def test_godot_emitter_writes_one_file_per_model(tmp_path: Path) -> None:
     written = emit_godot_resources(tmp_path)
     names = {p.name for p in written}
 
+    # Every emitted class_name carries the `Proscenio` prefix so it
+    # cannot collide with Godot built-ins (`Animation`, `Skeleton`,
+    # `Bone`, ...). Filenames follow the prefixed class.
     expected_models = {
-        "bone.gd",
-        "skeleton.gd",
-        "weight.gd",
-        "polygon_sprite.gd",
-        "sprite_frame_sprite.gd",
-        "slot.gd",
-        "key.gd",
-        "track.gd",
-        "animation.gd",
+        "proscenio_bone.gd",
+        "proscenio_skeleton.gd",
+        "proscenio_weight.gd",
+        "proscenio_polygon_sprite.gd",
+        "proscenio_sprite_frame_sprite.gd",
+        "proscenio_slot.gd",
+        "proscenio_key.gd",
+        "proscenio_track.gd",
+        "proscenio_animation.gd",
         "proscenio_document.gd",
-        "polygon_layer.gd",
-        "sprite_frame_layer.gd",
-        "frame_entry.gd",
-        "psd_manifest.gd",
+        "proscenio_polygon_layer.gd",
+        "proscenio_sprite_frame_layer.gd",
+        "proscenio_frame_entry.gd",
+        "proscenio_psd_manifest.gd",
     }
     expected_dispatchers = {"proscenio_sprite.gd", "proscenio_layer.gd"}
     expected_helpers = {"proscenio_parse_helpers.gd"}

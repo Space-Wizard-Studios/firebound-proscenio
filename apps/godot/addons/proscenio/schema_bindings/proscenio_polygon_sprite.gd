@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name PolygonSprite extends ProscenioSprite
+class_name ProscenioPolygonSprite extends ProscenioSprite
 
 @export var type: String = "polygon"
 @export var name: String = ""
@@ -12,11 +12,11 @@ class_name PolygonSprite extends ProscenioSprite
 @export var polygon: Array[PackedFloat32Array] = [] as Array[PackedFloat32Array]
 @export var uv: Array[PackedFloat32Array] = [] as Array[PackedFloat32Array]
 @export var texture: String = ""
-@export var weights: Array[Weight] = [] as Array[Weight]
+@export var weights: Array[ProscenioWeight] = [] as Array[ProscenioWeight]
 
 
-static func from_dict(data: Dictionary) -> PolygonSprite:
-	var res := PolygonSprite.new()
+static func from_dict(data: Dictionary) -> ProscenioPolygonSprite:
+	var res := ProscenioPolygonSprite.new()
 	if data.has("type") and data["type"] != null:
 		res.type = String(data["type"])
 	if data.has("name") and data["name"] != null:
@@ -32,5 +32,5 @@ static func from_dict(data: Dictionary) -> PolygonSprite:
 	if data.has("texture") and data["texture"] != null:
 		res.texture = String(data["texture"])
 	if data.has("weights") and data["weights"] != null:
-		res.weights = ProscenioParseHelpers._parse_array(Weight, data["weights"])
+		res.weights = ProscenioParseHelpers._parse_array(ProscenioWeight, data["weights"])
 	return res

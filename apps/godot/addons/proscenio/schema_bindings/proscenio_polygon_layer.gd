@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name PolygonLayer extends ProscenioLayer
+class_name ProscenioPolygonLayer extends ProscenioLayer
 
 @export var kind: String = "polygon"
 @export var name: String = ""
@@ -16,8 +16,8 @@ class_name PolygonLayer extends ProscenioLayer
 @export var subfolder: String = ""
 
 
-static func from_dict(data: Dictionary) -> PolygonLayer:
-	var res := PolygonLayer.new()
+static func from_dict(data: Dictionary) -> ProscenioPolygonLayer:
+	var res := ProscenioPolygonLayer.new()
 	if data.has("kind") and data["kind"] != null:
 		res.kind = String(data["kind"])
 	if data.has("name") and data["name"] != null:

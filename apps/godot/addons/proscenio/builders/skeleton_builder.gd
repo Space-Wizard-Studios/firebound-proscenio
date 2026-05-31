@@ -2,7 +2,7 @@
 extends RefCounted
 
 
-static func build(skeleton_resource: Skeleton) -> Skeleton2D:
+static func build(skeleton_resource: ProscenioSkeleton) -> Skeleton2D:
 	var skeleton := Skeleton2D.new()
 	skeleton.name = "Skeleton2D"
 
@@ -11,7 +11,7 @@ static func build(skeleton_resource: Skeleton) -> Skeleton2D:
 
 	var bones: Dictionary = {}
 
-	for bone_res: Bone in skeleton_resource.bones:
+	for bone_res: ProscenioBone in skeleton_resource.bones:
 		var json_name := bone_res.name
 		var bone := Bone2D.new()
 		# Setting Node.name normalizes special chars (dots become underscores)
@@ -30,7 +30,7 @@ static func build(skeleton_resource: Skeleton) -> Skeleton2D:
 		bone.set_rest(bone.transform)
 		bones[json_name] = bone
 
-	for bone_res: Bone in skeleton_resource.bones:
+	for bone_res: ProscenioBone in skeleton_resource.bones:
 		var bone_name := bone_res.name
 		var bone: Bone2D = bones[bone_name]
 		if bone_res.parent == "":

@@ -3,14 +3,14 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name FrameEntry extends Resource
+class_name ProscenioFrameEntry extends Resource
 
 @export var index: int = 0
 @export var path: String = ""
 
 
-static func from_dict(data: Dictionary) -> FrameEntry:
-	var res := FrameEntry.new()
+static func from_dict(data: Dictionary) -> ProscenioFrameEntry:
+	var res := ProscenioFrameEntry.new()
 	if data.has("index") and data["index"] != null:
 		res.index = int(data["index"])
 	if data.has("path") and data["path"] != null:

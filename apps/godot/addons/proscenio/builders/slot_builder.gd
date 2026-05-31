@@ -33,7 +33,7 @@ static func sanitize(name: String) -> String:
 	return NodeNameUtil.sanitize(name)
 
 
-static func build(skeleton: Skeleton2D, slot_resources: Array[Slot]) -> Dictionary:
+static func build(skeleton: Skeleton2D, slot_resources: Array[ProscenioSlot]) -> Dictionary:
 	# Returns `{sanitized_attachment_name: SlotInfo}`. Sprite builders look up
 	# by their sprite's sanitized name (matching what Godot stored in
 	# ``Node.name``); absence means the sprite is not in any slot and falls
@@ -41,7 +41,7 @@ static func build(skeleton: Skeleton2D, slot_resources: Array[Slot]) -> Dictiona
 	var slot_map: Dictionary = {}
 	if slot_resources == null:
 		return slot_map
-	for slot_res: Slot in slot_resources:
+	for slot_res: ProscenioSlot in slot_resources:
 		var info := _build_one_slot(skeleton, slot_res)
 		if info == null:
 			continue
@@ -50,7 +50,7 @@ static func build(skeleton: Skeleton2D, slot_resources: Array[Slot]) -> Dictiona
 	return slot_map
 
 
-static func _build_one_slot(skeleton: Skeleton2D, slot_res: Slot) -> SlotInfo:
+static func _build_one_slot(skeleton: Skeleton2D, slot_res: ProscenioSlot) -> SlotInfo:
 	if slot_res.name == "":
 		push_warning("Proscenio: slot entry missing name - skipping")
 		return null

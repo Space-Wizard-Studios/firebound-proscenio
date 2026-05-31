@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name Key extends Resource
+class_name ProscenioKey extends Resource
 
 @export var time: float = 0.0
 @export var interp: String = "linear"
@@ -15,8 +15,8 @@ class_name Key extends Resource
 @export var visible: bool = false
 
 
-static func from_dict(data: Dictionary) -> Key:
-	var res := Key.new()
+static func from_dict(data: Dictionary) -> ProscenioKey:
+	var res := ProscenioKey.new()
 	if data.has("time") and data["time"] != null:
 		res.time = float(data["time"])
 	if data.has("interp") and data["interp"] != null:

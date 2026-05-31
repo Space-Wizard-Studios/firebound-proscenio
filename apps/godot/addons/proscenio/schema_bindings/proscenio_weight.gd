@@ -3,14 +3,14 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name Weight extends Resource
+class_name ProscenioWeight extends Resource
 
 @export var bone: String = ""
 @export var values: PackedFloat32Array = PackedFloat32Array()
 
 
-static func from_dict(data: Dictionary) -> Weight:
-	var res := Weight.new()
+static func from_dict(data: Dictionary) -> ProscenioWeight:
+	var res := ProscenioWeight.new()
 	if data.has("bone") and data["bone"] != null:
 		res.bone = String(data["bone"])
 	if data.has("values") and data["values"] != null:

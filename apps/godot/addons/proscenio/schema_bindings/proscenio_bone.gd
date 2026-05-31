@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name Bone extends Resource
+class_name ProscenioBone extends Resource
 
 @export var name: String = ""
 @export var parent: String = ""
@@ -13,8 +13,8 @@ class_name Bone extends Resource
 @export var length: float = 0.0
 
 
-static func from_dict(data: Dictionary) -> Bone:
-	var res := Bone.new()
+static func from_dict(data: Dictionary) -> ProscenioBone:
+	var res := ProscenioBone.new()
 	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
 	if data.has("parent") and data["parent"] != null:

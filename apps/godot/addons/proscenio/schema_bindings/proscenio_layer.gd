@@ -14,10 +14,10 @@ class_name ProscenioLayer extends Resource
 static func from_dict(data: Dictionary) -> ProscenioLayer:
 	var tag: String = String(data.get("kind", ""))
 	if tag == "polygon":
-		return PolygonLayer.from_dict(data)
+		return ProscenioPolygonLayer.from_dict(data)
 	if tag == "mesh":
-		return PolygonLayer.from_dict(data)
+		return ProscenioPolygonLayer.from_dict(data)
 	if tag == "sprite_frame":
-		return SpriteFrameLayer.from_dict(data)
+		return ProscenioSpriteFrameLayer.from_dict(data)
 	push_error("unknown ProscenioLayer tag: " + tag)
 	return null

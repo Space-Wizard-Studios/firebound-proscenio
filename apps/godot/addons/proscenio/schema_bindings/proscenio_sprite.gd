@@ -14,8 +14,8 @@ class_name ProscenioSprite extends Resource
 static func from_dict(data: Dictionary) -> ProscenioSprite:
 	var tag: String = String(data.get("type", "polygon"))
 	if tag == "polygon":
-		return PolygonSprite.from_dict(data)
+		return ProscenioPolygonSprite.from_dict(data)
 	if tag == "sprite_frame":
-		return SpriteFrameSprite.from_dict(data)
+		return ProscenioSpriteFrameSprite.from_dict(data)
 	push_error("unknown ProscenioSprite tag: " + tag)
 	return null

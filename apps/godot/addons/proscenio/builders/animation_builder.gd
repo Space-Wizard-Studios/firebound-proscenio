@@ -7,7 +7,7 @@ const SlotBuilder := preload("res://addons/proscenio/builders/slot_builder.gd")
 static func populate(
 	player: AnimationPlayer,
 	skeleton: Skeleton2D,
-	animations: Array[Animation],
+	animations: Array[ProscenioAnimation],
 ) -> void:
 	var library := AnimationLibrary.new()
 
@@ -15,31 +15,33 @@ static func populate(
 		player.add_animation_library("", library)
 		return
 
-	for anim_res: Animation in animations:
+	for anim_res: ProscenioAnimation in animations:
 		var anim := _populate_godot_animation(anim_res, skeleton)
 		library.add_animation(anim_res.name, anim)
 
 	player.add_animation_library("", library)
 
 
-static func _populate_godot_animation(anim_res: Animation, skeleton: Skeleton2D) -> Animation:
+static func _populate_godot_animation(
+	anim_res: ProscenioAnimation, skeleton: Skeleton2D
+) -> Animation:
 	# Local alias for Godot's Animation class (the function arg) to avoid
 	# shadowing the type name from the model.
 	var anim := Animation.new()
 	anim.length = anim_res.length
 	anim.loop_mode = (Animation.LOOP_LINEAR if anim_res.loop else Animation.LOOP_NONE)
-	for track_res: Track in anim_res.tracks:
+	for track_res: ProscenioTrack in anim_res.tracks:
 		_add_track(anim, skeleton, track_res)
 	return anim
 
 
-static func _add_track(anim: Animation, skeleton: Skeleton2D, track_res: Track) -> void:
+static func _add_track(anim: Animation, skeleton: Skeleton2D, track_res: ProscenioTrack) -> void:
 	var track_type := track_res.type
 	# Sanitize so ``find_child`` matches the Godot-shaped node name (Node.name
 	# replaces ``.`` etc with ``_`` on assignment); the .proscenio document
 	# carries Blender-shaped names with dots intact.
 	var target := SlotBuilder.sanitize(track_res.target)
-	var keys: Array[Key] = track_res.keys
+	var keys: Array[ProscenioKey] = track_res.keys
 
 	if keys.is_empty():
 		return
@@ -89,7 +91,7 @@ static func _add_track(anim: Animation, skeleton: Skeleton2D, track_res: Track) 
 			push_warning("Proscenio: unknown track type '%s'" % track_type)
 
 
-static func _key_has_property(key: Key, property: String) -> bool:
+static func _key_has_property(key: ProscenioKey, property: String) -> bool:
 	match property:
 		"position":
 			return key.position.size() >= 2
@@ -105,7 +107,7 @@ static func _key_has_property(key: Key, property: String) -> bool:
 
 
 static func _add_value_track_if_present(
-	anim: Animation, base_path: String, property: String, keys: Array[Key]
+	anim: Animation, base_path: String, property: String, keys: Array[ProscenioKey]
 ) -> void:
 	# bone_transform tracks emit one Godot value track per animated property
 	# (position, rotation, scale). The .proscenio writer only places a key in
@@ -140,7 +142,7 @@ static func _add_value_track_if_present(
 
 
 static func _add_slot_attachment_tracks(
-	anim: Animation, character_root: Node, slot_node: Node, keys: Array[Key]
+	anim: Animation, character_root: Node, slot_node: Node, keys: Array[ProscenioKey]
 ) -> void:
 	# Slot attachment animation = N visibility tracks, one per attachment
 	# child of the slot Node2D. At each key time, exactly one attachment is
@@ -160,7 +162,7 @@ static func _add_slot_attachment_tracks(
 			anim.track_insert_key(idx, key.time, child.name == key.attachment)
 
 
-static func _add_frame_track(anim: Animation, base_path: String, keys: Array[Key]) -> void:
+static func _add_frame_track(anim: Animation, base_path: String, keys: Array[ProscenioKey]) -> void:
 	# Frame indexes are discrete integers; smooth blending between them has no
 	# semantic meaning, so the track uses NEAREST interpolation.
 	var idx := anim.add_track(Animation.TYPE_VALUE)
@@ -173,7 +175,7 @@ static func _add_frame_track(anim: Animation, base_path: String, keys: Array[Key
 		anim.track_insert_key(idx, key.time, key.frame)
 
 
-static func _key_value_for(property: String, key: Key) -> Variant:
+static func _key_value_for(property: String, key: ProscenioKey) -> Variant:
 	match property:
 		"position":
 			return Vector2(key.position[0], key.position[1])

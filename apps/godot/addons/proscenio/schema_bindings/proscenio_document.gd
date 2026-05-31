@@ -8,11 +8,11 @@ class_name ProscenioDocument extends Resource
 @export var format_version: int = 1
 @export var name: String = ""
 @export var pixels_per_unit: float = 0.0
-@export var skeleton: Skeleton = null
+@export var skeleton: ProscenioSkeleton = null
 @export var sprites: Array[ProscenioSprite] = [] as Array[ProscenioSprite]
-@export var slots: Array[Slot] = [] as Array[Slot]
+@export var slots: Array[ProscenioSlot] = [] as Array[ProscenioSlot]
 @export var atlas: String = ""
-@export var animations: Array[Animation] = [] as Array[Animation]
+@export var animations: Array[ProscenioAnimation] = [] as Array[ProscenioAnimation]
 
 
 static func from_dict(data: Dictionary) -> ProscenioDocument:
@@ -24,13 +24,13 @@ static func from_dict(data: Dictionary) -> ProscenioDocument:
 	if data.has("pixels_per_unit") and data["pixels_per_unit"] != null:
 		res.pixels_per_unit = float(data["pixels_per_unit"])
 	if data.has("skeleton") and data["skeleton"] != null:
-		res.skeleton = Skeleton.from_dict(data["skeleton"])
+		res.skeleton = ProscenioSkeleton.from_dict(data["skeleton"])
 	if data.has("sprites") and data["sprites"] != null:
 		res.sprites = ProscenioParseHelpers._parse_dispatched(ProscenioSprite, data["sprites"])
 	if data.has("slots") and data["slots"] != null:
-		res.slots = ProscenioParseHelpers._parse_array(Slot, data["slots"])
+		res.slots = ProscenioParseHelpers._parse_array(ProscenioSlot, data["slots"])
 	if data.has("atlas") and data["atlas"] != null:
 		res.atlas = String(data["atlas"])
 	if data.has("animations") and data["animations"] != null:
-		res.animations = ProscenioParseHelpers._parse_array(Animation, data["animations"])
+		res.animations = ProscenioParseHelpers._parse_array(ProscenioAnimation, data["animations"])
 	return res

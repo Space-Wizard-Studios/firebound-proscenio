@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name PsdManifest extends Resource
+class_name ProscenioPsdManifest extends Resource
 
 @export var format_version: int = 2
 @export var doc: String = ""
@@ -13,8 +13,8 @@ class_name PsdManifest extends Resource
 @export var layers: Array[ProscenioLayer] = [] as Array[ProscenioLayer]
 
 
-static func from_dict(data: Dictionary) -> PsdManifest:
-	var res := PsdManifest.new()
+static func from_dict(data: Dictionary) -> ProscenioPsdManifest:
+	var res := ProscenioPsdManifest.new()
 	if data.has("format_version") and data["format_version"] != null:
 		res.format_version = int(data["format_version"])
 	if data.has("doc") and data["doc"] != null:

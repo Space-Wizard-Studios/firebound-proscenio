@@ -3,19 +3,19 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name Track extends Resource
+class_name ProscenioTrack extends Resource
 
 @export var type: String = "bone_transform"
 @export var target: String = ""
-@export var keys: Array[Key] = [] as Array[Key]
+@export var keys: Array[ProscenioKey] = [] as Array[ProscenioKey]
 
 
-static func from_dict(data: Dictionary) -> Track:
-	var res := Track.new()
+static func from_dict(data: Dictionary) -> ProscenioTrack:
+	var res := ProscenioTrack.new()
 	if data.has("type") and data["type"] != null:
 		res.type = String(data["type"])
 	if data.has("target") and data["target"] != null:
 		res.target = String(data["target"])
 	if data.has("keys") and data["keys"] != null:
-		res.keys = ProscenioParseHelpers._parse_array(Key, data["keys"])
+		res.keys = ProscenioParseHelpers._parse_array(ProscenioKey, data["keys"])
 	return res

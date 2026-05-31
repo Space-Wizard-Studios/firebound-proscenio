@@ -3,16 +3,16 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name Animation extends Resource
+class_name ProscenioAnimation extends Resource
 
 @export var name: String = ""
 @export var length: float = 0.0
 @export var loop: bool = false
-@export var tracks: Array[Track] = [] as Array[Track]
+@export var tracks: Array[ProscenioTrack] = [] as Array[ProscenioTrack]
 
 
-static func from_dict(data: Dictionary) -> Animation:
-	var res := Animation.new()
+static func from_dict(data: Dictionary) -> ProscenioAnimation:
+	var res := ProscenioAnimation.new()
 	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
 	if data.has("length") and data["length"] != null:
@@ -20,5 +20,5 @@ static func from_dict(data: Dictionary) -> Animation:
 	if data.has("loop") and data["loop"] != null:
 		res.loop = bool(data["loop"])
 	if data.has("tracks") and data["tracks"] != null:
-		res.tracks = ProscenioParseHelpers._parse_array(Track, data["tracks"])
+		res.tracks = ProscenioParseHelpers._parse_array(ProscenioTrack, data["tracks"])
 	return res

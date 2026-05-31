@@ -3,7 +3,7 @@
 # `python -m proscenio_codegen godot`.
 
 @tool
-class_name SpriteFrameSprite extends ProscenioSprite
+class_name ProscenioSpriteFrameSprite extends ProscenioSprite
 
 @export var type: String = "sprite_frame"
 @export var name: String = ""
@@ -17,8 +17,8 @@ class_name SpriteFrameSprite extends ProscenioSprite
 @export var offset: PackedFloat32Array = PackedFloat32Array([0.0, 0.0])
 
 
-static func from_dict(data: Dictionary) -> SpriteFrameSprite:
-	var res := SpriteFrameSprite.new()
+static func from_dict(data: Dictionary) -> ProscenioSpriteFrameSprite:
+	var res := ProscenioSpriteFrameSprite.new()
 	if data.has("type") and data["type"] != null:
 		res.type = String(data["type"])
 	if data.has("name") and data["name"] != null:

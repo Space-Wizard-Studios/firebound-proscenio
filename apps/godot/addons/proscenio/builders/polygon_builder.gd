@@ -32,7 +32,7 @@ static func _resolve_sprite_texture(
 static func _apply_skinning(
 	poly: Polygon2D,
 	skeleton: Skeleton2D,
-	weights: Array[Weight],
+	weights: Array[ProscenioWeight],
 ) -> void:
 	# Wire Polygon2D.skeleton + per-bone weight arrays. Each Weight entry
 	# from the .proscenio document carries `{bone, values[]}`. Bones whose
@@ -66,14 +66,14 @@ static func attach_sprites(
 		return
 	for sprite_res: ProscenioSprite in sprites:
 		# Discriminator dispatch: this builder only handles polygon sprites.
-		# Default to PolygonSprite when `type` is absent (v1 backwards-compat).
-		if not (sprite_res is PolygonSprite):
+		# Default to ProscenioPolygonSprite when `type` is absent (v1 backwards-compat).
+		if not (sprite_res is ProscenioPolygonSprite):
 			continue
-		_build_polygon(sprite_res as PolygonSprite, skeleton, atlas, slot_map, source_dir)
+		_build_polygon(sprite_res as ProscenioPolygonSprite, skeleton, atlas, slot_map, source_dir)
 
 
 static func _build_polygon(
-	sprite: PolygonSprite,
+	sprite: ProscenioPolygonSprite,
 	skeleton: Skeleton2D,
 	atlas: Texture2D,
 	slot_map: Dictionary,
@@ -104,7 +104,7 @@ static func _build_polygon(
 	if sprite_tex != null:
 		poly.texture = sprite_tex
 
-	var weights: Array[Weight] = sprite.weights
+	var weights: Array[ProscenioWeight] = sprite.weights
 	var is_skinned: bool = weights != null and not weights.is_empty()
 
 	var bone_name := NodeNameUtil.sanitize(sprite.bone)
