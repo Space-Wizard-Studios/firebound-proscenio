@@ -436,6 +436,10 @@
           "type": "string"
         },
         "offset": {
+          "default": [
+            0.0,
+            0.0
+          ],
           "items": {
             "type": "number"
           },

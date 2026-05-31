@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag
+from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag, model_validator
 
 Vec2 = Annotated[list[float], Field(min_length=2, max_length=2)]
 Rect = Annotated[
@@ -96,6 +96,20 @@ class PolygonSprite(_Strict):
     uv: list[Vec2]
     weights: list[Weight] | None = None
 
+    @model_validator(mode="after")
+    def _polygon_uv_lengths_match(self) -> PolygonSprite:
+        """Every polygon vertex needs its own UV coordinate.
+
+        The schema-level constraint does not exist (JSON Schema cannot
+        express ``len(a) == len(b)``); pydantic carries it instead.
+        """
+        if len(self.polygon) != len(self.uv):
+            raise ValueError(
+                f"polygon has {len(self.polygon)} vertices but uv has "
+                f"{len(self.uv)}; counts must match"
+            )
+        return self
+
 
 class SpriteFrameSprite(_Strict):
     """Spritesheet sprite rendered as a Godot Sprite2D.
@@ -134,8 +148,25 @@ class SpriteFrameSprite(_Strict):
             "Initial frame index (row-major). Animation tracks override at runtime."
         ),
     )
-    offset: Vec2 = Field(default_factory=lambda: [0.0, 0.0])
+    offset: Vec2 = Field(default=[0.0, 0.0])
     centered: bool = True
+
+    @model_validator(mode="after")
+    def _frame_within_grid(self) -> SpriteFrameSprite:
+        """``frame`` indexes a row-major ``hframes`` x ``vframes`` grid.
+
+        The schema-level ``minimum: 0`` only catches negatives; the
+        upper bound depends on the sibling ``hframes`` / ``vframes``
+        and cannot be expressed in JSON Schema. Pydantic carries it.
+        """
+        cells = self.hframes * self.vframes
+        if self.frame >= cells:
+            raise ValueError(
+                f"frame={self.frame} is out of range for a "
+                f"{self.hframes}x{self.vframes} grid (max valid index: "
+                f"{cells - 1})"
+            )
+        return self
 
 
 def _sprite_discriminator(payload: Any) -> str:
