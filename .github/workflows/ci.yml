@@ -15,11 +15,11 @@ jobs:
         run: uvx ruff check apps/blender/
       - name: Ruff format check
         run: uvx ruff format --check apps/blender/
-      - name: Mypy strict
-        working-directory: apps/blender
-        run: uvx --with mypy mypy --config-file pyproject.toml
       - name: Sync uv workspace
         run: uv sync --all-packages
+      - name: Mypy strict
+        working-directory: apps/blender
+        run: uv run --with mypy mypy --config-file pyproject.toml
       - name: Pytest (validation unit tests, no Blender)
         run: uv run pytest tests/
 
@@ -73,7 +73,7 @@ jobs:
             echo "No .proscenio files yet - skipping."
             exit 0
           fi
-          check-jsonschema --schemafile schemas/proscenio.schema.json "${files[@]}"
+          check-jsonschema --schemafile packages/models/schemas/proscenio.schema.json "${files[@]}"
       - name: Validate PSD manifest fixtures
         shell: bash
         run: |
