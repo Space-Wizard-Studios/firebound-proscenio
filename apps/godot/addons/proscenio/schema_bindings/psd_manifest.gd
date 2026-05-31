@@ -15,16 +15,16 @@ class_name PsdManifest extends Resource
 
 static func from_dict(data: Dictionary) -> PsdManifest:
 	var res := PsdManifest.new()
-	if data.has("format_version"):
+	if data.has("format_version") and data["format_version"] != null:
 		res.format_version = int(data["format_version"])
-	if data.has("doc"):
+	if data.has("doc") and data["doc"] != null:
 		res.doc = String(data["doc"])
-	if data.has("size"):
+	if data.has("size") and data["size"] != null:
 		res.size = PackedInt32Array(data["size"])
-	if data.has("pixels_per_unit"):
+	if data.has("pixels_per_unit") and data["pixels_per_unit"] != null:
 		res.pixels_per_unit = float(data["pixels_per_unit"])
-	if data.has("anchor"):
+	if data.has("anchor") and data["anchor"] != null:
 		res.anchor = PackedInt32Array(data["anchor"])
-	if data.has("layers"):
+	if data.has("layers") and data["layers"] != null:
 		res.layers = ProscenioParseHelpers._parse_dispatched(ProscenioLayer, data["layers"])
 	return res

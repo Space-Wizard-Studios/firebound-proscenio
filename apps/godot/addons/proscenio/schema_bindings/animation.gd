@@ -13,12 +13,12 @@ class_name Animation extends Resource
 
 static func from_dict(data: Dictionary) -> Animation:
 	var res := Animation.new()
-	if data.has("name"):
+	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
-	if data.has("length"):
+	if data.has("length") and data["length"] != null:
 		res.length = float(data["length"])
-	if data.has("loop"):
+	if data.has("loop") and data["loop"] != null:
 		res.loop = bool(data["loop"])
-	if data.has("tracks"):
+	if data.has("tracks") and data["tracks"] != null:
 		res.tracks = ProscenioParseHelpers._parse_array(Track, data["tracks"])
 	return res

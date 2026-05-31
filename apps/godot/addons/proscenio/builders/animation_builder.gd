@@ -4,29 +4,42 @@ extends RefCounted
 const SlotBuilder := preload("res://addons/proscenio/builders/slot_builder.gd")
 
 
-static func populate(player: AnimationPlayer, skeleton: Skeleton2D, animations_data: Array) -> void:
+static func populate(
+	player: AnimationPlayer,
+	skeleton: Skeleton2D,
+	animations: Array[Animation],
+) -> void:
 	var library := AnimationLibrary.new()
 
-	for anim_data in animations_data:
-		var anim := Animation.new()
-		anim.length = float(anim_data.get("length", 1.0))
-		anim.loop_mode = (
-			Animation.LOOP_LINEAR if bool(anim_data.get("loop", false)) else Animation.LOOP_NONE
-		)
-		for track_data in anim_data.get("tracks", []):
-			_add_track(anim, skeleton, track_data)
-		library.add_animation(anim_data.get("name", "anim"), anim)
+	if animations == null:
+		player.add_animation_library("", library)
+		return
+
+	for anim_res: Animation in animations:
+		var anim := _populate_godot_animation(anim_res, skeleton)
+		library.add_animation(anim_res.name, anim)
 
 	player.add_animation_library("", library)
 
 
-static func _add_track(anim: Animation, skeleton: Skeleton2D, track_data: Dictionary) -> void:
-	var track_type: String = track_data.get("type", "")
+static func _populate_godot_animation(anim_res: Animation, skeleton: Skeleton2D) -> Animation:
+	# Local alias for Godot's Animation class (the function arg) to avoid
+	# shadowing the type name from the model.
+	var anim := Animation.new()
+	anim.length = anim_res.length
+	anim.loop_mode = (Animation.LOOP_LINEAR if anim_res.loop else Animation.LOOP_NONE)
+	for track_res: Track in anim_res.tracks:
+		_add_track(anim, skeleton, track_res)
+	return anim
+
+
+static func _add_track(anim: Animation, skeleton: Skeleton2D, track_res: Track) -> void:
+	var track_type := track_res.type
 	# Sanitize so ``find_child`` matches the Godot-shaped node name (Node.name
 	# replaces ``.`` etc with ``_`` on assignment); the .proscenio document
 	# carries Blender-shaped names with dots intact.
-	var target: String = SlotBuilder.sanitize(String(track_data.get("target", "")))
-	var keys: Array = track_data.get("keys", [])
+	var target := SlotBuilder.sanitize(track_res.target)
+	var keys: Array[Key] = track_res.keys
 
 	if keys.is_empty():
 		return
@@ -76,12 +89,32 @@ static func _add_track(anim: Animation, skeleton: Skeleton2D, track_data: Dictio
 			push_warning("Proscenio: unknown track type '%s'" % track_type)
 
 
+static func _key_has_property(key: Key, property: String) -> bool:
+	match property:
+		"position":
+			return key.position.size() >= 2
+		"rotation":
+			# The model declares rotation as float with default 0.0; assume
+			# any key that sets position/scale also sets rotation if the bone
+			# is animated. The writer only emits keys for properties it has
+			# data for, so absence here is the polygon-only path.
+			return true
+		"scale":
+			return key.scale.size() >= 2
+	return false
+
+
 static func _add_value_track_if_present(
-	anim: Animation, base_path: String, property: String, keys: Array
+	anim: Animation, base_path: String, property: String, keys: Array[Key]
 ) -> void:
+	# bone_transform tracks emit one Godot value track per animated property
+	# (position, rotation, scale). The .proscenio writer only places a key in
+	# `keys[]` when the matching property has data; the per-property emit
+	# below checks each key with `_key_has_property` so a position-only
+	# track does not register a phantom rotation channel.
 	var has_any := false
 	for key in keys:
-		if key.has(property):
+		if _key_has_property(key, property):
 			has_any = true
 			break
 	if not has_any:
@@ -91,7 +124,7 @@ static func _add_value_track_if_present(
 	anim.track_set_path(idx, NodePath("%s:%s" % [base_path, property]))
 	# Cubic spline interpolation gives smooth motion between keys without
 	# needing per-key Bezier handles in the .proscenio format. Rotation uses
-	# the *_ANGLE variant so wrap-around at ±π is handled correctly.
+	# the *_ANGLE variant so wrap-around at +/-pi is handled correctly.
 	var interp := Animation.INTERPOLATION_LINEAR
 	match property:
 		"rotation":
@@ -101,14 +134,13 @@ static func _add_value_track_if_present(
 	anim.track_set_interpolation_type(idx, interp)
 
 	for key in keys:
-		if not key.has(property):
+		if not _key_has_property(key, property):
 			continue
-		var t := float(key.get("time", 0.0))
-		anim.track_insert_key(idx, t, _key_value_for(property, key[property]))
+		anim.track_insert_key(idx, key.time, _key_value_for(property, key))
 
 
 static func _add_slot_attachment_tracks(
-	anim: Animation, character_root: Node, slot_node: Node, keys: Array
+	anim: Animation, character_root: Node, slot_node: Node, keys: Array[Key]
 ) -> void:
 	# Slot attachment animation = N visibility tracks, one per attachment
 	# child of the slot Node2D. At each key time, exactly one attachment is
@@ -123,32 +155,30 @@ static func _add_slot_attachment_tracks(
 		anim.track_set_path(idx, NodePath("%s/%s:visible" % [slot_path, child.name]))
 		anim.track_set_interpolation_type(idx, Animation.INTERPOLATION_NEAREST)
 		for key in keys:
-			if not key.has("attachment"):
+			if key.attachment == "":
 				continue
-			var t := float(key.get("time", 0.0))
-			var keyed_name: String = String(key.get("attachment", ""))
-			anim.track_insert_key(idx, t, child.name == keyed_name)
+			anim.track_insert_key(idx, key.time, child.name == key.attachment)
 
 
-static func _add_frame_track(anim: Animation, base_path: String, keys: Array) -> void:
+static func _add_frame_track(anim: Animation, base_path: String, keys: Array[Key]) -> void:
 	# Frame indexes are discrete integers; smooth blending between them has no
 	# semantic meaning, so the track uses NEAREST interpolation.
 	var idx := anim.add_track(Animation.TYPE_VALUE)
 	anim.track_set_path(idx, NodePath("%s:frame" % base_path))
 	anim.track_set_interpolation_type(idx, Animation.INTERPOLATION_NEAREST)
 	for key in keys:
-		if not key.has("frame"):
-			continue
-		var t := float(key.get("time", 0.0))
-		anim.track_insert_key(idx, t, int(key["frame"]))
+		# `frame` defaults to 0; treat key as a frame key whenever the writer
+		# emitted it on a sprite_frame track. The dispatcher above ensures we
+		# only land here for sprite_frame target types.
+		anim.track_insert_key(idx, key.time, key.frame)
 
 
-static func _key_value_for(property: String, raw: Variant) -> Variant:
+static func _key_value_for(property: String, key: Key) -> Variant:
 	match property:
-		"position", "scale":
-			var arr: Array = raw
-			return Vector2(arr[0], arr[1])
+		"position":
+			return Vector2(key.position[0], key.position[1])
+		"scale":
+			return Vector2(key.scale[0], key.scale[1])
 		"rotation":
-			return float(raw)
-		_:
-			return raw
+			return key.rotation
+	return null

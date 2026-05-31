@@ -15,16 +15,16 @@ class_name Bone extends Resource
 
 static func from_dict(data: Dictionary) -> Bone:
 	var res := Bone.new()
-	if data.has("name"):
+	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
-	if data.has("parent"):
+	if data.has("parent") and data["parent"] != null:
 		res.parent = String(data["parent"])
-	if data.has("position"):
+	if data.has("position") and data["position"] != null:
 		res.position = PackedFloat32Array(data["position"])
-	if data.has("rotation"):
+	if data.has("rotation") and data["rotation"] != null:
 		res.rotation = float(data["rotation"])
-	if data.has("scale"):
+	if data.has("scale") and data["scale"] != null:
 		res.scale = PackedFloat32Array(data["scale"])
-	if data.has("length"):
+	if data.has("length") and data["length"] != null:
 		res.length = float(data["length"])
 	return res

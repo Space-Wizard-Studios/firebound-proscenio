@@ -11,8 +11,8 @@ class_name FrameEntry extends Resource
 
 static func from_dict(data: Dictionary) -> FrameEntry:
 	var res := FrameEntry.new()
-	if data.has("index"):
+	if data.has("index") and data["index"] != null:
 		res.index = int(data["index"])
-	if data.has("path"):
+	if data.has("path") and data["path"] != null:
 		res.path = String(data["path"])
 	return res

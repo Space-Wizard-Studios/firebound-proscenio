@@ -19,24 +19,24 @@ class_name SpriteFrameSprite extends ProscenioSprite
 
 static func from_dict(data: Dictionary) -> SpriteFrameSprite:
 	var res := SpriteFrameSprite.new()
-	if data.has("type"):
+	if data.has("type") and data["type"] != null:
 		res.type = String(data["type"])
-	if data.has("name"):
+	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
-	if data.has("bone"):
+	if data.has("bone") and data["bone"] != null:
 		res.bone = String(data["bone"])
-	if data.has("hframes"):
+	if data.has("hframes") and data["hframes"] != null:
 		res.hframes = int(data["hframes"])
-	if data.has("vframes"):
+	if data.has("vframes") and data["vframes"] != null:
 		res.vframes = int(data["vframes"])
-	if data.has("frame"):
+	if data.has("frame") and data["frame"] != null:
 		res.frame = int(data["frame"])
-	if data.has("centered"):
+	if data.has("centered") and data["centered"] != null:
 		res.centered = bool(data["centered"])
-	if data.has("texture_region"):
+	if data.has("texture_region") and data["texture_region"] != null:
 		res.texture_region = PackedFloat32Array(data["texture_region"])
-	if data.has("texture"):
+	if data.has("texture") and data["texture"] != null:
 		res.texture = String(data["texture"])
-	if data.has("offset"):
+	if data.has("offset") and data["offset"] != null:
 		res.offset = PackedFloat32Array(data["offset"])
 	return res

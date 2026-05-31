@@ -17,20 +17,20 @@ class_name Key extends Resource
 
 static func from_dict(data: Dictionary) -> Key:
 	var res := Key.new()
-	if data.has("time"):
+	if data.has("time") and data["time"] != null:
 		res.time = float(data["time"])
-	if data.has("interp"):
+	if data.has("interp") and data["interp"] != null:
 		res.interp = String(data["interp"])
-	if data.has("position"):
+	if data.has("position") and data["position"] != null:
 		res.position = PackedFloat32Array(data["position"])
-	if data.has("rotation"):
+	if data.has("rotation") and data["rotation"] != null:
 		res.rotation = float(data["rotation"])
-	if data.has("scale"):
+	if data.has("scale") and data["scale"] != null:
 		res.scale = PackedFloat32Array(data["scale"])
-	if data.has("frame"):
+	if data.has("frame") and data["frame"] != null:
 		res.frame = int(data["frame"])
-	if data.has("attachment"):
+	if data.has("attachment") and data["attachment"] != null:
 		res.attachment = String(data["attachment"])
-	if data.has("visible"):
+	if data.has("visible") and data["visible"] != null:
 		res.visible = bool(data["visible"])
 	return res

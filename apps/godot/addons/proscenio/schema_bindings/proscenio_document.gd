@@ -17,20 +17,20 @@ class_name ProscenioDocument extends Resource
 
 static func from_dict(data: Dictionary) -> ProscenioDocument:
 	var res := ProscenioDocument.new()
-	if data.has("format_version"):
+	if data.has("format_version") and data["format_version"] != null:
 		res.format_version = int(data["format_version"])
-	if data.has("name"):
+	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
-	if data.has("pixels_per_unit"):
+	if data.has("pixels_per_unit") and data["pixels_per_unit"] != null:
 		res.pixels_per_unit = float(data["pixels_per_unit"])
-	if data.has("skeleton"):
+	if data.has("skeleton") and data["skeleton"] != null:
 		res.skeleton = Skeleton.from_dict(data["skeleton"])
-	if data.has("sprites"):
+	if data.has("sprites") and data["sprites"] != null:
 		res.sprites = ProscenioParseHelpers._parse_dispatched(ProscenioSprite, data["sprites"])
-	if data.has("slots"):
+	if data.has("slots") and data["slots"] != null:
 		res.slots = ProscenioParseHelpers._parse_array(Slot, data["slots"])
-	if data.has("atlas"):
+	if data.has("atlas") and data["atlas"] != null:
 		res.atlas = String(data["atlas"])
-	if data.has("animations"):
+	if data.has("animations") and data["animations"] != null:
 		res.animations = ProscenioParseHelpers._parse_array(Animation, data["animations"])
 	return res

@@ -76,39 +76,44 @@ func _import(
 		)
 		return ERR_PARSE_ERROR
 
-	var data: Dictionary = json.data
-	var version: int = int(data.get("format_version", 0))
-	if version != SUPPORTED_FORMAT_VERSION:
+	var raw: Dictionary = json.data
+	# Parse through the schema-derived Resource. Future schema additions land
+	# in the pydantic source (packages/models/) + a codegen re-run; the
+	# importer reads typed fields off the resulting Resource graph.
+	var document := ProscenioDocument.from_dict(raw)
+	if document == null:
+		push_error("Proscenio: ProscenioDocument.from_dict returned null")
+		return ERR_INVALID_DATA
+	if document.format_version != SUPPORTED_FORMAT_VERSION:
 		push_error(
 			(
 				"Proscenio: unsupported format_version %d (need %d)"
-				% [version, SUPPORTED_FORMAT_VERSION]
+				% [document.format_version, SUPPORTED_FORMAT_VERSION]
 			)
 		)
 		return ERR_INVALID_DATA
 
 	var root := Node2D.new()
-	root.name = data.get("name", "Character")
+	root.name = document.name if document.name != "" else "Character"
 
-	var skeleton := SkeletonBuilder.build(data.get("skeleton", {}))
+	var skeleton := SkeletonBuilder.build(document.skeleton)
 	root.add_child(skeleton)
 
-	var atlas := _load_atlas(source_file, data.get("atlas", ""))
+	var atlas := _load_atlas(source_file, document.atlas)
 	var source_dir := source_file.get_base_dir()
 	# Slots build BEFORE sprites so the sprite builders can route attachment
-	# children under the slot Node2D parent (the slot system). Empty slots[]
+	# children under the slot Node2D parent (the slot system). Empty slots
 	# leaves the map empty and sprite routing falls back to bone-parented.
-	var slot_map: Dictionary = SlotBuilder.build(skeleton, data.get("slots", []))
+	var slot_map := SlotBuilder.build(skeleton, document.slots)
 	# Each builder discriminator-filters its own sprite kind; calling both is
 	# cheap and keeps the dispatch table flat. Order does not matter.
-	var sprites_data: Array = data.get("sprites", [])
-	PolygonBuilder.attach_sprites(skeleton, sprites_data, atlas, slot_map, source_dir)
-	SpriteFrameBuilder.attach_sprites(skeleton, sprites_data, atlas, slot_map, source_dir)
+	PolygonBuilder.attach_sprites(skeleton, document.sprites, atlas, slot_map, source_dir)
+	SpriteFrameBuilder.attach_sprites(skeleton, document.sprites, atlas, slot_map, source_dir)
 
 	var animation_player := AnimationPlayer.new()
 	animation_player.name = "AnimationPlayer"
 	root.add_child(animation_player)
-	AnimationBuilder.populate(animation_player, skeleton, data.get("animations", []))
+	AnimationBuilder.populate(animation_player, skeleton, document.animations)
 
 	_set_owner_recursive(root, root)
 

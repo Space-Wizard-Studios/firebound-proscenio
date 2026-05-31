@@ -313,7 +313,13 @@ def _emit_model(model: type[BaseModel]) -> str:
         field_decls.append(f"@export var {name}: {resolved.gd_type} = {default}")
 
         wrapped = resolved.parse_expr_template.format(value=f'data["{name}"]')
-        parsers.append(f'\tif data.has("{name}"):\n\t\tres.{name} = {wrapped}\n')
+        # Guard against JSON nulls: pydantic Optional fields decode as None
+        # in dicts, which would break String(null) / Vector2(null) parsers.
+        # The default declared on the property covers the missing case.
+        parsers.append(
+            f'\tif data.has("{name}") and data["{name}"] != null:\n'
+            f"\t\tres.{name} = {wrapped}\n"
+        )
 
     lines.extend(field_decls)
     lines.append("")

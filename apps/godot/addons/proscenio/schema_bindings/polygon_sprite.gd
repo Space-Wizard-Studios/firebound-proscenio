@@ -17,20 +17,20 @@ class_name PolygonSprite extends ProscenioSprite
 
 static func from_dict(data: Dictionary) -> PolygonSprite:
 	var res := PolygonSprite.new()
-	if data.has("type"):
+	if data.has("type") and data["type"] != null:
 		res.type = String(data["type"])
-	if data.has("name"):
+	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
-	if data.has("bone"):
+	if data.has("bone") and data["bone"] != null:
 		res.bone = String(data["bone"])
-	if data.has("texture_region"):
+	if data.has("texture_region") and data["texture_region"] != null:
 		res.texture_region = PackedFloat32Array(data["texture_region"])
-	if data.has("polygon"):
+	if data.has("polygon") and data["polygon"] != null:
 		res.polygon = ProscenioParseHelpers._parse_vec2_array(data["polygon"])
-	if data.has("uv"):
+	if data.has("uv") and data["uv"] != null:
 		res.uv = ProscenioParseHelpers._parse_vec2_array(data["uv"])
-	if data.has("texture"):
+	if data.has("texture") and data["texture"] != null:
 		res.texture = String(data["texture"])
-	if data.has("weights"):
+	if data.has("weights") and data["weights"] != null:
 		res.weights = ProscenioParseHelpers._parse_array(Weight, data["weights"])
 	return res

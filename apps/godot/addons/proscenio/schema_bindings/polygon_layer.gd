@@ -18,22 +18,22 @@ class_name PolygonLayer extends ProscenioLayer
 
 static func from_dict(data: Dictionary) -> PolygonLayer:
 	var res := PolygonLayer.new()
-	if data.has("kind"):
+	if data.has("kind") and data["kind"] != null:
 		res.kind = String(data["kind"])
-	if data.has("name"):
+	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
-	if data.has("path"):
+	if data.has("path") and data["path"] != null:
 		res.path = String(data["path"])
-	if data.has("position"):
+	if data.has("position") and data["position"] != null:
 		res.position = PackedInt32Array(data["position"])
-	if data.has("size"):
+	if data.has("size") and data["size"] != null:
 		res.size = PackedInt32Array(data["size"])
-	if data.has("z_order"):
+	if data.has("z_order") and data["z_order"] != null:
 		res.z_order = int(data["z_order"])
-	if data.has("origin"):
+	if data.has("origin") and data["origin"] != null:
 		res.origin = PackedInt32Array(data["origin"])
-	if data.has("blend_mode"):
+	if data.has("blend_mode") and data["blend_mode"] != null:
 		res.blend_mode = String(data["blend_mode"])
-	if data.has("subfolder"):
+	if data.has("subfolder") and data["subfolder"] != null:
 		res.subfolder = String(data["subfolder"])
 	return res

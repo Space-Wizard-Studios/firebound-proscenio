@@ -13,12 +13,12 @@ class_name Slot extends Resource
 
 static func from_dict(data: Dictionary) -> Slot:
 	var res := Slot.new()
-	if data.has("name"):
+	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
-	if data.has("attachments"):
+	if data.has("attachments") and data["attachments"] != null:
 		res.attachments = PackedStringArray(data["attachments"])
-	if data.has("bone"):
+	if data.has("bone") and data["bone"] != null:
 		res.bone = String(data["bone"])
-	if data.has("default"):
+	if data.has("default") and data["default"] != null:
 		res.default = String(data["default"])
 	return res

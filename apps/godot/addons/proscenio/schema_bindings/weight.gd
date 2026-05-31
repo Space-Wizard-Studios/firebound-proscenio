@@ -11,8 +11,8 @@ class_name Weight extends Resource
 
 static func from_dict(data: Dictionary) -> Weight:
 	var res := Weight.new()
-	if data.has("bone"):
+	if data.has("bone") and data["bone"] != null:
 		res.bone = String(data["bone"])
-	if data.has("values"):
+	if data.has("values") and data["values"] != null:
 		res.values = PackedFloat32Array(data["values"])
 	return res

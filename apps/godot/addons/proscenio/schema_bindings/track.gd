@@ -12,10 +12,10 @@ class_name Track extends Resource
 
 static func from_dict(data: Dictionary) -> Track:
 	var res := Track.new()
-	if data.has("type"):
+	if data.has("type") and data["type"] != null:
 		res.type = String(data["type"])
-	if data.has("target"):
+	if data.has("target") and data["target"] != null:
 		res.target = String(data["target"])
-	if data.has("keys"):
+	if data.has("keys") and data["keys"] != null:
 		res.keys = ProscenioParseHelpers._parse_array(Key, data["keys"])
 	return res
