@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioFrameEntry extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var index: int = 0
 @export var path: String = ""
 
@@ -13,6 +17,8 @@ static func from_dict(data: Dictionary) -> ProscenioFrameEntry:
 	var res := ProscenioFrameEntry.new()
 	if data.has("index") and data["index"] != null:
 		res.index = int(data["index"])
+		res._set_fields.append("index")
 	if data.has("path") and data["path"] != null:
 		res.path = String(data["path"])
+		res._set_fields.append("path")
 	return res

@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioTrack extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var type: String = "bone_transform"
 @export var target: String = ""
 @export var keys: Array[ProscenioKey] = [] as Array[ProscenioKey]
@@ -14,8 +18,11 @@ static func from_dict(data: Dictionary) -> ProscenioTrack:
 	var res := ProscenioTrack.new()
 	if data.has("type") and data["type"] != null:
 		res.type = String(data["type"])
+		res._set_fields.append("type")
 	if data.has("target") and data["target"] != null:
 		res.target = String(data["target"])
+		res._set_fields.append("target")
 	if data.has("keys") and data["keys"] != null:
 		res.keys = ProscenioParseHelpers._parse_array(ProscenioKey, data["keys"])
+		res._set_fields.append("keys")
 	return res

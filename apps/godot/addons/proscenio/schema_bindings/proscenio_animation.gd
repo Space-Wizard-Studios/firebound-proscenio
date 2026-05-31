@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioAnimation extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var name: String = ""
 @export var length: float = 0.0
 @export var loop: bool = false
@@ -15,10 +19,14 @@ static func from_dict(data: Dictionary) -> ProscenioAnimation:
 	var res := ProscenioAnimation.new()
 	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
+		res._set_fields.append("name")
 	if data.has("length") and data["length"] != null:
 		res.length = float(data["length"])
+		res._set_fields.append("length")
 	if data.has("loop") and data["loop"] != null:
 		res.loop = bool(data["loop"])
+		res._set_fields.append("loop")
 	if data.has("tracks") and data["tracks"] != null:
 		res.tracks = ProscenioParseHelpers._parse_array(ProscenioTrack, data["tracks"])
+		res._set_fields.append("tracks")
 	return res

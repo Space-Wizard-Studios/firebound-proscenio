@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioSkeleton extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var bones: Array[ProscenioBone] = [] as Array[ProscenioBone]
 
 
@@ -12,4 +16,5 @@ static func from_dict(data: Dictionary) -> ProscenioSkeleton:
 	var res := ProscenioSkeleton.new()
 	if data.has("bones") and data["bones"] != null:
 		res.bones = ProscenioParseHelpers._parse_array(ProscenioBone, data["bones"])
+		res._set_fields.append("bones")
 	return res

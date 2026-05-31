@@ -298,6 +298,8 @@ func _load_fixture(path: String) -> Dictionary:
 	var json := JSON.new()
 	if json.parse(file.get_as_text()) != OK:
 		return {}
+	if typeof(json.data) != TYPE_DICTIONARY:
+		return {}
 	var data: Dictionary = json.data
 	return data
 

@@ -165,7 +165,7 @@ jobs:
         # "Could not resolve external class member". Run a quick headless
         # editor pass to trigger the scan, then quit.
         run: |
-          ~/godot/godot --headless --path apps/godot --editor --quit 2>&1 || true
+          ~/godot/godot --headless --path apps/godot --editor --quit 2>&1
       - name: Run importer smoke test
         run: |
           ~/godot/godot --headless --path apps/godot \

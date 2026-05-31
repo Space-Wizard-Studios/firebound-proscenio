@@ -92,18 +92,11 @@ static func _add_track(anim: Animation, skeleton: Skeleton2D, track_res: Proscen
 
 
 static func _key_has_property(key: ProscenioKey, property: String) -> bool:
-	match property:
-		"position":
-			return key.position.size() >= 2
-		"rotation":
-			# The model declares rotation as float with default 0.0; assume
-			# any key that sets position/scale also sets rotation if the bone
-			# is animated. The writer only emits keys for properties it has
-			# data for, so absence here is the polygon-only path.
-			return true
-		"scale":
-			return key.scale.size() >= 2
-	return false
+	# `_set_fields` records which keys actually appeared in the parsed JSON
+	# dictionary; checking it here keeps phantom channels out of the
+	# generated animation (a key that lands without `rotation` no longer
+	# pulls in a rotation track that resets the authored pose to zero).
+	return key._set_fields.has(property)
 
 
 static func _add_value_track_if_present(
@@ -159,7 +152,11 @@ static func _add_slot_attachment_tracks(
 		for key in keys:
 			if key.attachment == "":
 				continue
-			anim.track_insert_key(idx, key.time, child.name == key.attachment)
+			# Normalise the keyed attachment name through the same sanitiser
+			# slot_builder uses so dotted Blender names (`face.angry`) match
+			# the Godot-shaped child name (`face_angry`).
+			var attachment_name := SlotBuilder.sanitize(key.attachment)
+			anim.track_insert_key(idx, key.time, child.name == attachment_name)
 
 
 static func _add_frame_track(anim: Animation, base_path: String, keys: Array[ProscenioKey]) -> void:

@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioSpriteFrameSprite extends ProscenioSprite
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var type: String = "sprite_frame"
 @export var name: String = ""
 @export var bone: String = ""
@@ -21,22 +25,32 @@ static func from_dict(data: Dictionary) -> ProscenioSpriteFrameSprite:
 	var res := ProscenioSpriteFrameSprite.new()
 	if data.has("type") and data["type"] != null:
 		res.type = String(data["type"])
+		res._set_fields.append("type")
 	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
+		res._set_fields.append("name")
 	if data.has("bone") and data["bone"] != null:
 		res.bone = String(data["bone"])
+		res._set_fields.append("bone")
 	if data.has("hframes") and data["hframes"] != null:
 		res.hframes = int(data["hframes"])
+		res._set_fields.append("hframes")
 	if data.has("vframes") and data["vframes"] != null:
 		res.vframes = int(data["vframes"])
+		res._set_fields.append("vframes")
 	if data.has("frame") and data["frame"] != null:
 		res.frame = int(data["frame"])
+		res._set_fields.append("frame")
 	if data.has("centered") and data["centered"] != null:
 		res.centered = bool(data["centered"])
+		res._set_fields.append("centered")
 	if data.has("texture_region") and data["texture_region"] != null:
 		res.texture_region = PackedFloat32Array(data["texture_region"])
+		res._set_fields.append("texture_region")
 	if data.has("texture") and data["texture"] != null:
 		res.texture = String(data["texture"])
+		res._set_fields.append("texture")
 	if data.has("offset") and data["offset"] != null:
 		res.offset = PackedFloat32Array(data["offset"])
+		res._set_fields.append("offset")
 	return res

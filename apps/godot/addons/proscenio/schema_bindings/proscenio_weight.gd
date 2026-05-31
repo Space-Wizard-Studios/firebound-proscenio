@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioWeight extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var bone: String = ""
 @export var values: PackedFloat32Array = PackedFloat32Array()
 
@@ -13,6 +17,8 @@ static func from_dict(data: Dictionary) -> ProscenioWeight:
 	var res := ProscenioWeight.new()
 	if data.has("bone") and data["bone"] != null:
 		res.bone = String(data["bone"])
+		res._set_fields.append("bone")
 	if data.has("values") and data["values"] != null:
 		res.values = PackedFloat32Array(data["values"])
+		res._set_fields.append("values")
 	return res

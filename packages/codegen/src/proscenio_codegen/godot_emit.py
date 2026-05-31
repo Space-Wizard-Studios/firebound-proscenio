@@ -310,7 +310,12 @@ def _emit_model(model: type[BaseModel]) -> str:
         "",
     ]
 
-    field_decls: list[str] = []
+    field_decls: list[str] = [
+        "# Names of fields actually set during `from_dict`. Lets consumers",
+        "# distinguish 'field set to default' from 'field absent in source'",
+        "# without re-parsing the JSON dictionary.",
+        "@export var _set_fields: PackedStringArray = PackedStringArray()",
+    ]
     parsers: list[str] = []
 
     for name, field in fields.items():
@@ -331,9 +336,13 @@ def _emit_model(model: type[BaseModel]) -> str:
         # Guard against JSON nulls: pydantic Optional fields decode as None
         # in dicts, which would break String(null) / Vector2(null) parsers.
         # The default declared on the property covers the missing case.
+        # `_set_fields` records which keys actually appeared in `data` so
+        # downstream consumers (animation_builder, etc.) can tell "set to
+        # default" apart from "absent from the source document".
         parsers.append(
             f'\tif data.has("{name}") and data["{name}"] != null:\n'
             f"\t\tres.{name} = {wrapped}\n"
+            f'\t\tres._set_fields.append("{name}")\n'
         )
 
     lines.extend(field_decls)

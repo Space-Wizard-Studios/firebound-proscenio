@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioSlot extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var name: String = ""
 @export var attachments: PackedStringArray = PackedStringArray()
 @export var bone: String = ""
@@ -15,10 +19,14 @@ static func from_dict(data: Dictionary) -> ProscenioSlot:
 	var res := ProscenioSlot.new()
 	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
+		res._set_fields.append("name")
 	if data.has("attachments") and data["attachments"] != null:
 		res.attachments = PackedStringArray(data["attachments"])
+		res._set_fields.append("attachments")
 	if data.has("bone") and data["bone"] != null:
 		res.bone = String(data["bone"])
+		res._set_fields.append("bone")
 	if data.has("default") and data["default"] != null:
 		res.default = String(data["default"])
+		res._set_fields.append("default")
 	return res

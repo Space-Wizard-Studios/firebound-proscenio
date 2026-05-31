@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioPsdManifest extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var format_version: int = 2
 @export var doc: String = ""
 @export var size: PackedInt32Array = PackedInt32Array()
@@ -17,14 +21,20 @@ static func from_dict(data: Dictionary) -> ProscenioPsdManifest:
 	var res := ProscenioPsdManifest.new()
 	if data.has("format_version") and data["format_version"] != null:
 		res.format_version = int(data["format_version"])
+		res._set_fields.append("format_version")
 	if data.has("doc") and data["doc"] != null:
 		res.doc = String(data["doc"])
+		res._set_fields.append("doc")
 	if data.has("size") and data["size"] != null:
 		res.size = PackedInt32Array(data["size"])
+		res._set_fields.append("size")
 	if data.has("pixels_per_unit") and data["pixels_per_unit"] != null:
 		res.pixels_per_unit = float(data["pixels_per_unit"])
+		res._set_fields.append("pixels_per_unit")
 	if data.has("anchor") and data["anchor"] != null:
 		res.anchor = PackedInt32Array(data["anchor"])
+		res._set_fields.append("anchor")
 	if data.has("layers") and data["layers"] != null:
 		res.layers = ProscenioParseHelpers._parse_dispatched(ProscenioLayer, data["layers"])
+		res._set_fields.append("layers")
 	return res

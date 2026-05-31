@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioBone extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var name: String = ""
 @export var parent: String = ""
 @export var position: PackedFloat32Array = PackedFloat32Array()
@@ -17,14 +21,20 @@ static func from_dict(data: Dictionary) -> ProscenioBone:
 	var res := ProscenioBone.new()
 	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
+		res._set_fields.append("name")
 	if data.has("parent") and data["parent"] != null:
 		res.parent = String(data["parent"])
+		res._set_fields.append("parent")
 	if data.has("position") and data["position"] != null:
 		res.position = PackedFloat32Array(data["position"])
+		res._set_fields.append("position")
 	if data.has("rotation") and data["rotation"] != null:
 		res.rotation = float(data["rotation"])
+		res._set_fields.append("rotation")
 	if data.has("scale") and data["scale"] != null:
 		res.scale = PackedFloat32Array(data["scale"])
+		res._set_fields.append("scale")
 	if data.has("length") and data["length"] != null:
 		res.length = float(data["length"])
+		res._set_fields.append("length")
 	return res

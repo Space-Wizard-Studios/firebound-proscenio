@@ -5,6 +5,10 @@
 @tool
 class_name ProscenioDocument extends Resource
 
+# Names of fields actually set during `from_dict`. Lets consumers
+# distinguish 'field set to default' from 'field absent in source'
+# without re-parsing the JSON dictionary.
+@export var _set_fields: PackedStringArray = PackedStringArray()
 @export var format_version: int = 1
 @export var name: String = ""
 @export var pixels_per_unit: float = 0.0
@@ -19,18 +23,26 @@ static func from_dict(data: Dictionary) -> ProscenioDocument:
 	var res := ProscenioDocument.new()
 	if data.has("format_version") and data["format_version"] != null:
 		res.format_version = int(data["format_version"])
+		res._set_fields.append("format_version")
 	if data.has("name") and data["name"] != null:
 		res.name = String(data["name"])
+		res._set_fields.append("name")
 	if data.has("pixels_per_unit") and data["pixels_per_unit"] != null:
 		res.pixels_per_unit = float(data["pixels_per_unit"])
+		res._set_fields.append("pixels_per_unit")
 	if data.has("skeleton") and data["skeleton"] != null:
 		res.skeleton = ProscenioSkeleton.from_dict(data["skeleton"])
+		res._set_fields.append("skeleton")
 	if data.has("sprites") and data["sprites"] != null:
 		res.sprites = ProscenioParseHelpers._parse_dispatched(ProscenioSprite, data["sprites"])
+		res._set_fields.append("sprites")
 	if data.has("slots") and data["slots"] != null:
 		res.slots = ProscenioParseHelpers._parse_array(ProscenioSlot, data["slots"])
+		res._set_fields.append("slots")
 	if data.has("atlas") and data["atlas"] != null:
 		res.atlas = String(data["atlas"])
+		res._set_fields.append("atlas")
 	if data.has("animations") and data["animations"] != null:
 		res.animations = ProscenioParseHelpers._parse_array(ProscenioAnimation, data["animations"])
+		res._set_fields.append("animations")
 	return res
