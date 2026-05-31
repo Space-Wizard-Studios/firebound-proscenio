@@ -35,11 +35,13 @@ foreach ($pkg in $pure) {
         --python-version 3.11
 }
 
-# pydantic-core - one wheel per platform Blender supports
+# pydantic-core - one wheel per platform Blender supports.
+# macOS x86_64 ships under the broader macosx_10_12_x86_64 tag on PyPI
+# (forward-compatible with 11.0+); arm64 ships under macosx_11_0_arm64.
 $platforms = @(
     "manylinux2014_x86_64",
     "manylinux2014_aarch64",
-    "macosx_11_0_x86_64",
+    "macosx_10_12_x86_64",
     "macosx_11_0_arm64",
     "win_amd64"
 )
