@@ -117,3 +117,15 @@ venv
 verts
 vframes
 wibble
+hasattr
+isinstance
+pathlib
+setdefault
+callsite
+synthesised
+ndarray
+subscriptable
+Specialised
+noqa
+pygrep
+mirrors-mypy

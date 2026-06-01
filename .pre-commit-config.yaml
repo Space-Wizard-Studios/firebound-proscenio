@@ -28,13 +28,17 @@ repos:
           - id: ruff-format
             files: ^apps/blender/
 
-    - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v1.13.0
+    # mypy runs via uv (not mirrors-mypy) so the strict-strict gate sees
+    # the workspace deps it needs: pydantic, proscenio_models, the
+    # fake-bpy stubs, numpy. mirrors-mypy installs mypy in isolation and
+    # cannot resolve the workspace, which makes it useless for this repo.
+    - repo: local
       hooks:
           - id: mypy
-            files: ^apps/blender/
-            args: [--config-file, apps/blender/pyproject.toml]
-            additional_dependencies: []
+            name: mypy (apps/blender)
+            language: system
+            entry: bash -c "cd apps/blender && uv run --project ../.. --quiet mypy --config-file pyproject.toml"
+            files: ^apps/blender/.*\.py$
             pass_filenames: false
 
     - repo: https://github.com/Scony/godot-gdscript-toolkit

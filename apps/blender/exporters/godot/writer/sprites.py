@@ -5,24 +5,33 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
 
 import bpy
 from mathutils import Vector
+from proscenio_models import PolygonSprite, SpriteFrameSprite, Weight
 
-from ....core import region as region_core  # type: ignore[import-not-found]
-from ....core.pg_cp_fallback import read_field  # type: ignore[import-not-found]
-from ._schema import SpriteFrameDict, WeightDict
-from .skeleton import world_to_godot_xy
+from core import region as region_core
+from core.pg_cp_fallback import read_field
+
+from ._bpy_compat import (
+    expect_mesh,
+    iter_poly_loop_indices,
+    iter_poly_vertices,
+    iter_vertex_groups,
+    polygon_at,
+    vertex_at,
+    vertex_group_at,
+)
+from .skeleton import BoneWorld, world_to_godot_xy
 
 _WEIGHT_EPS = 1e-9
 
 
 def build_sprite(
     obj: bpy.types.Object,
-    world_godot: dict[str, dict[str, float]],
+    world_godot: dict[str, BoneWorld],
     ppu: float,
-) -> dict[str, Any]:
+) -> PolygonSprite | SpriteFrameSprite:
     """Build a sprite entry. The sprite kind is read from
     ``Object.proscenio.sprite_type`` (PropertyGroup), falling back to the
     legacy ``proscenio_type`` Custom Property when the PropertyGroup is
@@ -32,14 +41,14 @@ def build_sprite(
         read_field(obj, pg_field="sprite_type", cp_key="proscenio_type", default="polygon")
     )
     if sprite_type == "sprite_frame":
-        return dict(build_sprite_frame(obj))
+        return build_sprite_frame(obj)
     if sprite_type != "polygon":
         raise RuntimeError(
             f"Proscenio: object {obj.name!r} has unknown proscenio_type "
             f"{sprite_type!r}; expected 'polygon' or 'sprite_frame'."
         )
 
-    mesh: bpy.types.Mesh = obj.data
+    mesh = expect_mesh(obj)
     mesh_world = obj.matrix_world
 
     bone_name = resolve_sprite_bone(obj)
@@ -51,19 +60,21 @@ def build_sprite(
     vertex_indices: list[int] = []
 
     if mesh.polygons:
-        first_poly = mesh.polygons[0]
-        for vi, li in zip(first_poly.vertices, first_poly.loop_indices, strict=False):
-            v = mesh.vertices[vi]
+        first_poly = polygon_at(mesh, 0)
+        verts = iter_poly_vertices(first_poly)
+        loops = iter_poly_loop_indices(first_poly)
+        for vi, li in zip(verts, loops, strict=False):
+            v = vertex_at(mesh, vi)
             vertex_indices.append(vi)
             world_blender = mesh_world @ v.co
             world_godot_pos = world_to_godot_xy(world_blender, ppu)
             if bone_world is None:
                 local = world_godot_pos
             else:
-                dx = world_godot_pos.x - bone_world["x"]
-                dy = world_godot_pos.y - bone_world["y"]
-                cos_b = math.cos(-bone_world["rot"])
-                sin_b = math.sin(-bone_world["rot"])
+                dx = world_godot_pos.x - bone_world.x
+                dy = world_godot_pos.y - bone_world.y
+                cos_b = math.cos(-bone_world.rot)
+                sin_b = math.sin(-bone_world.rot)
                 local = Vector((dx * cos_b - dy * sin_b, dx * sin_b + dy * cos_b))
             polygon.append([round(local.x, 6), round(local.y, 6)])
 
@@ -82,19 +93,15 @@ def build_sprite(
         available_bones=set(world_godot.keys()),
     )
 
-    sprite: dict[str, Any] = {
-        "name": obj.name,
-        "bone": bone_name,
-        "texture_region": region,
-        "polygon": polygon,
-        "uv": uvs,
-    }
-    texture = _per_sprite_texture(obj)
-    if texture is not None:
-        sprite["texture"] = texture
-    if weights:
-        sprite["weights"] = weights
-    return sprite
+    return PolygonSprite(
+        name=obj.name,
+        bone=bone_name,
+        texture_region=region,
+        polygon=polygon,
+        uv=uvs,
+        texture=_per_sprite_texture(obj),
+        weights=weights or None,
+    )
 
 
 def _iter_tex_images(obj: bpy.types.Object) -> Iterator[bpy.types.Image]:
@@ -141,7 +148,7 @@ def _per_sprite_texture(obj: bpy.types.Object) -> str | None:
     return None
 
 
-def build_sprite_frame(obj: bpy.types.Object) -> SpriteFrameDict:
+def build_sprite_frame(obj: bpy.types.Object) -> SpriteFrameSprite:
     """Emit a ``sprite_frame`` sprite entry."""
     hframes = int(read_field(obj, pg_field="hframes", cp_key="proscenio_hframes", default=1))
     vframes = int(read_field(obj, pg_field="vframes", cp_key="proscenio_vframes", default=1))
@@ -151,28 +158,25 @@ def build_sprite_frame(obj: bpy.types.Object) -> SpriteFrameDict:
             f"and vframes >= 1 (got hframes={hframes}, vframes={vframes})."
         )
 
-    out: SpriteFrameDict = {
-        "type": "sprite_frame",
-        "name": obj.name,
-        "bone": resolve_sprite_bone(obj),
-        "hframes": hframes,
-        "vframes": vframes,
-        "frame": int(read_field(obj, pg_field="frame", cp_key="proscenio_frame", default=0)),
-        "centered": bool(
+    return SpriteFrameSprite(
+        type="sprite_frame",
+        name=obj.name,
+        bone=resolve_sprite_bone(obj),
+        hframes=hframes,
+        vframes=vframes,
+        frame=int(read_field(obj, pg_field="frame", cp_key="proscenio_frame", default=0)),
+        centered=bool(
             read_field(obj, pg_field="centered", cp_key="proscenio_centered", default=True)
         ),
-    }
-    manual = region_core.manual_region_or_none(obj)
-    if manual is not None:
-        out["texture_region"] = manual
-    return out
+        texture_region=region_core.manual_region_or_none(obj),
+    )
 
 
 def resolve_sprite_bone(obj: bpy.types.Object) -> str:
     if obj.parent_type == "BONE" and obj.parent_bone:
         return str(obj.parent_bone)
     if obj.vertex_groups:
-        return str(obj.vertex_groups[0].name)
+        return str(vertex_group_at(obj, 0).name)
     return ""
 
 
@@ -181,7 +185,7 @@ def _resolve_known_groups(
     available_bones: set[str],
 ) -> dict[int, str]:
     """Return only the vertex groups whose names match real bones; warn for the rest."""
-    vg_index_to_name = {int(vg.index): str(vg.name) for vg in obj.vertex_groups}
+    vg_index_to_name = {int(vg.index): str(vg.name) for vg in iter_vertex_groups(obj)}
     known = {idx: name for idx, name in vg_index_to_name.items() if name in available_bones}
     skipped = sorted({n for n in vg_index_to_name.values() if n not in available_bones})
     for name in skipped:
@@ -212,7 +216,7 @@ def build_sprite_weights(
     *,
     fallback_bone: str,
     available_bones: set[str],
-) -> list[WeightDict]:
+) -> list[Weight]:
     """Collect skinning weights from ``obj``'s vertex groups (the skinning-weights wire format)."""
     if not obj.vertex_groups or not vertex_indices:
         return []
@@ -231,7 +235,7 @@ def build_sprite_weights(
         bone_to_values.setdefault(fallback_bone, [0.0] * n)
 
     for slot, mesh_vi in enumerate(vertex_indices):
-        weights_here = _vertex_bone_weights(mesh.vertices[mesh_vi], known_groups)
+        weights_here = _vertex_bone_weights(vertex_at(mesh, mesh_vi), known_groups)
         total = sum(weights_here.values())
         if total > _WEIGHT_EPS:
             for bone, w in weights_here.items():
@@ -240,7 +244,7 @@ def build_sprite_weights(
             bone_to_values[fallback_bone][slot] = 1.0
 
     return [
-        {"bone": bone, "values": [round(v, 6) for v in values]}
+        Weight(bone=bone, values=[round(v, 6) for v in values])
         for bone, values in bone_to_values.items()
         if any(abs(v) > _WEIGHT_EPS for v in values)
     ]
