@@ -19,7 +19,10 @@
         "**/.venv",
         "apps/blender/tests/fixtures",
         "apps/blender/tests/operators",
-        "apps/blender/tests/run_operator_tests.py"
+        "apps/blender/tests/run_operator_tests.py",
+        "tests/skinning",
+        "tests/automesh",
+        "tests/codegen"
     ],
     "extraPaths": [
         "apps/blender",
@@ -51,7 +54,9 @@
             "reportIncompatibleMethodOverride": "none",
             "reportIndexIssue": "none",
             "reportOptionalSubscript": "none",
-            "reportOptionalIterable": "none"
+            "reportOptionalIterable": "none",
+            "reportAssignmentType": "none",
+            "reportReturnType": "none"
         },
         {
             "root": "apps/blender/operators",
@@ -64,7 +69,9 @@
             "reportIncompatibleMethodOverride": "none",
             "reportIndexIssue": "none",
             "reportOptionalSubscript": "none",
-            "reportOptionalIterable": "none"
+            "reportOptionalIterable": "none",
+            "reportAssignmentType": "none",
+            "reportReturnType": "none"
         },
         {
             "root": "apps/blender/panels",
@@ -77,7 +84,9 @@
             "reportIncompatibleMethodOverride": "none",
             "reportIndexIssue": "none",
             "reportOptionalSubscript": "none",
-            "reportOptionalIterable": "none"
+            "reportOptionalIterable": "none",
+            "reportAssignmentType": "none",
+            "reportReturnType": "none"
         },
         {
             "root": "apps/blender/properties",
@@ -90,7 +99,32 @@
             "reportIncompatibleMethodOverride": "none",
             "reportIndexIssue": "none",
             "reportOptionalSubscript": "none",
-            "reportOptionalIterable": "none"
+            "reportOptionalIterable": "none",
+            "reportAssignmentType": "none",
+            "reportReturnType": "none"
+        },
+        {
+            "//": "packages/validator tier-2: addon_loader + coverage + measurement live at bpy.data / bpy.ops boundary; mypy ignore_errors override covers them so Pylance follows suit.",
+            "root": "packages/validator/src/proscenio_validator",
+            "reportIndexIssue": "none",
+            "reportAttributeAccessIssue": "none",
+            "reportOptionalMemberAccess": "none",
+            "reportOptionalSubscript": "none",
+            "reportOptionalIterable": "none",
+            "reportArgumentType": "none",
+            "reportAssignmentType": "none",
+            "reportReturnType": "none",
+            "reportGeneralTypeIssues": "none"
+        },
+        {
+            "//": "scripts/ holds one-off Blender helpers; mypy doesn't gate them, so Pylance shouldn't either.",
+            "root": "scripts",
+            "reportGeneralTypeIssues": "none",
+            "reportAttributeAccessIssue": "none",
+            "reportOptionalMemberAccess": "none",
+            "reportArgumentType": "none",
+            "reportIndexIssue": "none",
+            "reportPossiblyUnboundVariable": "none"
         }
     ]
 }
