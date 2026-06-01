@@ -147,3 +147,6 @@ normalised
 pyrightconfig
 sonarlint
 pythoncore
+serialisable
+asdict
+argparse

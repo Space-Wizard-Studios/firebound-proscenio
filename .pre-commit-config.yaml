@@ -40,6 +40,12 @@ repos:
             entry: uv run --project apps/blender --quiet mypy --config-file apps/blender/pyproject.toml
             files: ^apps/blender/.*\.py$
             pass_filenames: false
+          - id: mypy-validator
+            name: mypy (packages/validator)
+            language: system
+            entry: uv run --project apps/blender --quiet mypy --config-file packages/validator/pyproject.toml
+            files: ^packages/validator/.*\.py$
+            pass_filenames: false
 
     - repo: https://github.com/Scony/godot-gdscript-toolkit
       rev: 4.3.3
