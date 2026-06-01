@@ -128,6 +128,7 @@ pyver
 manylinux
 kwargs
 Kwargs
+ensurepip
 ndarray
 subscriptable
 Specialised
