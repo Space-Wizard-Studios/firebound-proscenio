@@ -50,7 +50,10 @@ export default tseslint.config(
         },
         rules: {
             ...reactPlugin.configs.recommended.rules,
-            ...reactHooksPlugin.configs.recommended.rules,
+            // v7 ships the flat-config preset under configs.flat; the
+            // legacy configs.recommended path is retained but the flat
+            // entry is the idiomatic source for flat config.
+            ...reactHooksPlugin.configs.flat.recommended.rules,
             ...jsxA11yPlugin.flatConfigs.recommended.rules,
             "react/react-in-jsx-scope": "off",
             "react/jsx-uses-react": "off",

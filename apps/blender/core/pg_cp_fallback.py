@@ -31,7 +31,7 @@ class _CPCarrier(Protocol):
     this Protocol. Objects without ``.get`` skip the CP fallback.
     """
 
-    def get(self, key: str, default: object | None = ...) -> object: ...
+    def get(self, key: str, default: object | None = None) -> object: ...
 
 
 def read_field(obj: object, *, pg_field: str, cp_key: str, default: T) -> T:

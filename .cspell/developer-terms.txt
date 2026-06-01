@@ -123,6 +123,11 @@ pathlib
 setdefault
 callsite
 synthesised
+synthesise
+pyver
+manylinux
+kwargs
+Kwargs
 ndarray
 subscriptable
 Specialised

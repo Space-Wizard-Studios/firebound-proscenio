@@ -38,10 +38,18 @@ function consumers should call.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NotRequired, TypedDict
 
 import bpy
-from proscenio_models import ProscenioDocument
+from proscenio_models import (
+    Animation,
+    ProscenioDocument,
+    Skeleton,
+    Slot,
+)
+from proscenio_models import (
+    Sprite as SpriteModel,
+)
 
 from .animations import build_animations
 from .scene_discovery import doc_name, find_armature, find_atlas_image, find_sprite_meshes
@@ -49,6 +57,27 @@ from .skeleton import build_skeleton, compute_bone_world_godot
 from .slot_animations import build_slot_animations, merge_slot_animations_into
 from .slots import build_slots_for_scene
 from .sprites import build_sprite
+
+
+class _DocumentKwargs(TypedDict):
+    """Constructor kwargs for ``ProscenioDocument``.
+
+    The optional fields (``slots`` / ``atlas`` / ``animations``) are
+    ``NotRequired`` so the writer can omit them entirely when empty.
+    Passing them explicitly as ``None`` would mark them "set" and make
+    ``model_dump_json(exclude_unset=True)`` emit ``"field": null`` -
+    drifting the wire shape away from the goldens, which omit the key.
+    """
+
+    format_version: Literal[1]
+    name: str
+    pixels_per_unit: float
+    skeleton: Skeleton
+    sprites: list[SpriteModel]
+    slots: NotRequired[list[Slot]]
+    atlas: NotRequired[str]
+    animations: NotRequired[list[Animation]]
+
 
 SCHEMA_VERSION: Literal[1] = 1
 DEFAULT_PIXELS_PER_UNIT = 100.0
@@ -102,16 +131,25 @@ def export(filepath: str | Path, *, pixels_per_unit: float = DEFAULT_PIXELS_PER_
     if slot_anims:
         animations = merge_slot_animations_into(animations, slot_anims)
 
-    document = ProscenioDocument(
-        format_version=SCHEMA_VERSION,
-        name=doc_name(),
-        pixels_per_unit=pixels_per_unit,
-        skeleton=skeleton,
-        sprites=sprites_out,
-        slots=slots or None,
-        atlas=atlas,
-        animations=animations or None,
-    )
+    # Assemble kwargs so empty optionals are omitted entirely (not passed
+    # as None). With exclude_unset=True, an explicit None still serialises
+    # as `"field": null`; omitting the key leaves the field unset so the
+    # dump drops it - matching the goldens.
+    kwargs: _DocumentKwargs = {
+        "format_version": SCHEMA_VERSION,
+        "name": doc_name(),
+        "pixels_per_unit": pixels_per_unit,
+        "skeleton": skeleton,
+        "sprites": sprites_out,
+    }
+    if slots:
+        kwargs["slots"] = slots
+    if atlas is not None:
+        kwargs["atlas"] = atlas
+    if animations:
+        kwargs["animations"] = animations
+
+    document = ProscenioDocument(**kwargs)
     payload = document.model_dump_json(indent=2, exclude_unset=True)
 
     path.parent.mkdir(parents=True, exist_ok=True)

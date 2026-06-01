@@ -133,12 +133,6 @@ def material_by_name(name: str) -> bpy.types.Material | None:
     return table.get(name)
 
 
-def collection_by_name(name: str) -> bpy.types.Collection | None:
-    """Look up a collection by name (stub omits ``.get`` on BlendDataCollections)."""
-    table = cast(dict[str, bpy.types.Collection], bpy.data.collections)
-    return table.get(name)
-
-
 def uv_loop_at(layer: bpy.types.MeshUVLoopLayer, index: int) -> bpy.types.MeshUVLoop:
     """Subscript ``layer.data[index]`` (kept as a helper to mirror the other
     `*_at` shims and so the call sites read uniformly)."""

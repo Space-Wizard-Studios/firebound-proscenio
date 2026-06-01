@@ -90,12 +90,38 @@ export function readLayerTagsFromXmp(
         const prop = meta.getProperty(PROSCENIO_XMP_NAMESPACE_URI, key);
         if (prop?.value === undefined) return null;
         const parsed: unknown = JSON.parse(prop.value);
-        if (typeof parsed !== "object" || parsed === null) return null;
+        // XMP is external, user-editable metadata. Validate the shape
+        // before letting it into the domain; a malformed record degrades
+        // to null (the bracket-tag canonical store is authoritative).
+        if (!isTagBag(parsed)) return null;
         return parsed;
     } catch (err) {
         log.debug("xmp", "readLayerTagsFromXmp failed (non-fatal)", err);
         return null;
     }
+}
+
+function isTagBag(value: unknown): value is TagBag {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Record<string, unknown>;
+    const optBool = (x: unknown): boolean => x === undefined || x === true;
+    const optStr = (x: unknown): boolean => x === undefined || typeof x === "string";
+    const optNum = (x: unknown): boolean => x === undefined || typeof x === "number";
+    const optOrigin = (x: unknown): boolean =>
+        x === undefined
+        || (Array.isArray(x) && x.length === 2 && x.every((n) => typeof n === "number"));
+    return (
+        optBool(v["ignore"])
+        && optBool(v["merge"])
+        && optBool(v["originMarker"])
+        && optStr(v["folder"])
+        && optStr(v["kind"])
+        && optStr(v["path"])
+        && optStr(v["blend"])
+        && optStr(v["namePattern"])
+        && optNum(v["scale"])
+        && optOrigin(v["origin"])
+    );
 }
 
 function serializableTagBag(tags: TagBag): Record<string, unknown> {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Protocol, runtime_checkable
 
 
@@ -15,7 +16,7 @@ class _CPLookup(Protocol):
 
     def __contains__(self, key: object) -> bool: ...
     def __getitem__(self, key: str) -> object: ...
-    def get(self, key: str, default: object | None = ...) -> object: ...
+    def get(self, key: str, default: object | None = None) -> object: ...
 
 
 def read_sprite_type(obj: object) -> str:
@@ -29,14 +30,22 @@ def read_sprite_type(obj: object) -> str:
 
 
 def read_int(obj: object, prop_name: str, custom_key: str, default: int) -> int:
-    """PG-first / CP fallback read of an integer field."""
+    """PG-first / CP fallback read of an integer field.
+
+    The Custom Property fallback tolerates float-form strings (``"3.0"``)
+    and falls back to ``default`` for non-numeric values instead of
+    propagating a ``ValueError`` - a CP can hold arbitrary user data.
+    """
     props = getattr(obj, "proscenio", None)
     if props is not None and hasattr(props, prop_name):
         return int(getattr(props, prop_name))
     if isinstance(obj, _CPLookup) and custom_key in obj:
         value = obj[custom_key]
-        if isinstance(value, int | float | str):
+        if isinstance(value, int | float) and not isinstance(value, bool):
             return int(value)
+        if isinstance(value, str):
+            with contextlib.suppress(TypeError, ValueError):
+                return int(float(value))
     return default
 
 

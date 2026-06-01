@@ -44,7 +44,13 @@ def _iter_linked_images() -> Iterator[bpy.types.Image]:
 
 def _image_filename(image: bpy.types.Image) -> str:
     fp = image.filepath
-    return Path(bpy.path.abspath(fp)).name if fp else f"{image.name}.png"
+    if fp:
+        return Path(bpy.path.abspath(fp)).name
+    # Datablock-only image (never saved to disk): synthesise a filename
+    # from the name. Append ".png" only when the name has no extension,
+    # so an image already called "atlas.png" does not become "atlas.png.png".
+    name = image.name
+    return name if Path(name).suffix else f"{name}.png"
 
 
 def doc_name() -> str:

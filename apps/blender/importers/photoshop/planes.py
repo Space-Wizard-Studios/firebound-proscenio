@@ -27,7 +27,6 @@ import bpy
 
 from core import psd_manifest
 from core._bpy_compat import (
-    collection_by_name,
     expect_mesh,
     expect_scene,
     first_uv_layer,
@@ -368,8 +367,17 @@ def _link_to_subfolder(obj: bpy.types.Object, subfolder: str | None) -> None:
         clean = part.strip()
         if not clean:
             continue
-        child = collection_by_name(clean) or bpy.data.collections.new(clean)
-        if child.name not in {c.name for c in iter_collection_children(parent)}:
+        # Scope the lookup to the current parent's children, not the global
+        # collection table. Two hierarchies sharing a leaf name (e.g.
+        # `body/torso` and `props/torso`) must not collapse onto the same
+        # Collection - a global lookup would re-link the existing one under
+        # a different parent and flatten the import tree.
+        child = next(
+            (c for c in iter_collection_children(parent) if c.name == clean),
+            None,
+        )
+        if child is None:
+            child = bpy.data.collections.new(clean)
             parent.children.link(child)
         parent = child
     for existing in obj.users_collection:
