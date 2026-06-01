@@ -38,7 +38,7 @@ export function readSelectionCenter(): SelectionCenter | null {
 
 function numericValue(v: number | PsUnitNumber | undefined): number | null {
     if (typeof v === "number" && Number.isFinite(v)) return v;
-    if (typeof v === "object" && v !== null) {
+    if (typeof v === "object") {
         const inner = v.value ?? v._value;
         if (typeof inner === "number" && Number.isFinite(inner)) return inner;
     }

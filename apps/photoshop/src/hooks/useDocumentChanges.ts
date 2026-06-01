@@ -31,7 +31,7 @@ const WATCHED_EVENTS = [
 
 const DEBOUNCE_MS = 150;
 
-type ListenerHandle = { remove(): void };
+interface ListenerHandle { remove(): void }
 
 function isHandle(value: unknown): value is ListenerHandle {
     return (
@@ -88,7 +88,7 @@ export function useDocumentChanges(): number {
             // legitimately be undefined at type-narrow time.
             const result = action.addNotificationListener(WATCHED_EVENTS, bump);
             if (isPromiseLike<unknown>(result)) {
-                result.then(adopt).catch((err) => {
+                result.then(adopt).catch((err: unknown) => {
                     log.warn("useDocumentChanges", "subscription rejected", err);
                 });
             } else if (isHandle(result)) {

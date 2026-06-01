@@ -102,7 +102,7 @@ declare module "photoshop" {
          *  return a sync handle, recent builds return
          *  `Promise<handle>`. Consumers must probe at runtime. */
         addNotificationListener(
-            events: ReadonlyArray<{ event: string }>,
+            events: readonly { event: string }[],
             callback: (event: { event: string }, descriptor: unknown) => void,
         ): Promise<PsNotificationListener> | PsNotificationListener | void;
     };
