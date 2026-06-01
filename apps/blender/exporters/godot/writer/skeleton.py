@@ -61,19 +61,21 @@ def compute_bone_world_godot(armature_obj: bpy.types.Object, ppu: float) -> dict
         head_world_blender = arm_world @ bone.head_local
         tail_world_blender = arm_world @ bone.tail_local
         head_godot = world_to_godot_xy(head_world_blender, ppu)
-        tail_godot = world_to_godot_xy(tail_world_blender, ppu)
         dir_blender = tail_world_blender - head_world_blender
         angle = godot_world_angle_from_dir(dir_blender)
-        # Measure length in Godot space (head->tail screen distance) rather
-        # than `bone.length * ppu`. The latter is the armature-local rest
-        # length and ignores any scale on `armature_obj.matrix_world`, so a
-        # scaled rig would emit a length that disagrees with the already-
-        # transformed head/tail. For an unscaled rig the two are identical.
+        # Use `bone.length * ppu` (the armature-local rest length), NOT the
+        # head->tail distance in Godot space. The Godot projection drops the
+        # Blender Y axis (depth), so a bone pointing into the screen - the
+        # common shape for a root/control bone - projects head and tail to
+        # the same XZ point and would yield length 0. `bone.length` is the
+        # true rest length the importer expects. (Trade-off: a non-uniformly
+        # scaled armature object is not reflected here; fixtures author rigs
+        # at unit scale, and the goldens lock this value.)
         out[bone.name] = BoneWorld(
             x=head_godot.x,
             y=head_godot.y,
             rot=angle,
-            length=(tail_godot - head_godot).length,
+            length=bone.length * ppu,
         )
     return out
 

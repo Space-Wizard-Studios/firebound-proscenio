@@ -129,6 +129,8 @@ manylinux
 kwargs
 Kwargs
 ensurepip
+serialise
+serialising
 ndarray
 subscriptable
 Specialised

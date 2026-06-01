@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import NotRequired, TypedDict
 
 import bpy
 from proscenio_models import Animation, Key, Track
@@ -16,6 +17,21 @@ from ....core._bpy_compat import (
     iter_keyframe_points,
 )
 from .skeleton import BoneRestLocal, wrap_pi
+
+
+class _KeyKwargs(TypedDict):
+    """Constructor kwargs for a ``bone_transform`` ``Key``.
+
+    Channel fields are ``NotRequired`` so a track only emits the
+    channels it actually animates; an explicit ``None`` would serialise
+    as ``"position": null`` under exclude_unset and drift from the
+    goldens (the legacy dict writer set each channel conditionally).
+    """
+
+    time: float
+    position: NotRequired[list[float]]
+    rotation: NotRequired[float]
+    scale: NotRequired[list[float]]
 
 
 def action_fcurves(action: bpy.types.Action) -> Iterator[bpy.types.FCurve]:
@@ -102,14 +118,19 @@ def build_bone_track(
     keys: list[Key] = []
     for t in sorted(resolved.keys()):
         r = resolved[t]
-        keys.append(
-            Key(
-                time=round(t, 6),
-                position=_absolute_position(rest.position, r.position) if has_position else None,
-                rotation=_absolute_rotation(rest.rotation, r.rotation) if has_rotation else None,
-                scale=_absolute_scale(rest.scale, r.scale) if has_scale else None,
-            )
-        )
+        # Pass only the channels this track carries. Omitting a channel
+        # leaves the Key field unset so model_dump_json(exclude_unset=True)
+        # drops the key entirely - matching the legacy dict writer that
+        # only set `position`/`rotation`/`scale` when the channel had a
+        # delta. Passing None explicitly would emit `"position": null`.
+        key_kwargs: _KeyKwargs = {"time": round(t, 6)}
+        if has_position:
+            key_kwargs["position"] = _absolute_position(rest.position, r.position)
+        if has_rotation:
+            key_kwargs["rotation"] = _absolute_rotation(rest.rotation, r.rotation)
+        if has_scale:
+            key_kwargs["scale"] = _absolute_scale(rest.scale, r.scale)
+        keys.append(Key(**key_kwargs))
 
     return Track(type="bone_transform", target=bone_name, keys=keys)
 

@@ -24,8 +24,24 @@ Conventions:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import NotRequired, TypedDict
 
 from proscenio_models import Slot
+
+
+class _SlotKwargs(TypedDict):
+    """Constructor kwargs for ``Slot``.
+
+    ``bone`` / ``default`` are ``NotRequired`` so an empty value omits
+    the key under ``model_dump_json(exclude_unset=True)`` rather than
+    serialising ``"bone": null`` - matching the legacy dict writer that
+    only set them when non-empty.
+    """
+
+    name: str
+    attachments: list[str]
+    bone: NotRequired[str]
+    default: NotRequired[str]
 
 
 @dataclass(frozen=True)
@@ -47,12 +63,16 @@ def build_slot(slot: SlotInput) -> Slot:
     byte-for-byte. ``bone`` and ``default`` map empty strings to
     ``None`` so the model emits the field as unset.
     """
-    return Slot(
-        name=slot.name,
-        attachments=list(slot.attachments),
-        bone=slot.bone or None,
-        default=_resolve_default(slot.slot_default, slot.attachments) or None,
-    )
+    kwargs: _SlotKwargs = {
+        "name": slot.name,
+        "attachments": list(slot.attachments),
+    }
+    if slot.bone:
+        kwargs["bone"] = slot.bone
+    default = _resolve_default(slot.slot_default, slot.attachments)
+    if default:
+        kwargs["default"] = default
+    return Slot(**kwargs)
 
 
 def _resolve_default(slot_default: str, attachments: tuple[str, ...]) -> str:

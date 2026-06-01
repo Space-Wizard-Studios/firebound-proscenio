@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Literal, NotRequired, TypedDict
 
 import bpy
 from mathutils import Vector
@@ -24,6 +25,39 @@ from ....core.pg_cp_fallback import read_field
 from .skeleton import BoneWorld, world_to_godot_xy
 
 _WEIGHT_EPS = 1e-9
+
+
+class _PolygonKwargs(TypedDict):
+    """Constructor kwargs for ``PolygonSprite``.
+
+    ``texture`` / ``weights`` are ``NotRequired`` so they are passed
+    only when present; with ``model_dump_json(exclude_unset=True)`` an
+    explicit ``None`` would serialise as ``"field": null`` and drift
+    from the goldens (which omit the key, matching the legacy
+    dict-based writer that only set it conditionally).
+    """
+
+    name: str
+    bone: str
+    texture_region: list[float]
+    polygon: list[list[float]]
+    uv: list[list[float]]
+    texture: NotRequired[str]
+    weights: NotRequired[list[Weight]]
+
+
+class _SpriteFrameKwargs(TypedDict):
+    """Constructor kwargs for ``SpriteFrameSprite``; ``texture_region`` is
+    omitted in auto mode (the legacy writer only set it for manual regions)."""
+
+    type: Literal["sprite_frame"]
+    name: str
+    bone: str
+    hframes: int
+    vframes: int
+    frame: int
+    centered: bool
+    texture_region: NotRequired[list[float]]
 
 
 def build_sprite(
@@ -92,15 +126,19 @@ def build_sprite(
         available_bones=set(world_godot.keys()),
     )
 
-    return PolygonSprite(
-        name=obj.name,
-        bone=bone_name,
-        texture_region=region,
-        polygon=polygon,
-        uv=uvs,
-        texture=_per_sprite_texture(obj),
-        weights=weights or None,
-    )
+    poly_kwargs: _PolygonKwargs = {
+        "name": obj.name,
+        "bone": bone_name,
+        "texture_region": region,
+        "polygon": polygon,
+        "uv": uvs,
+    }
+    texture = _per_sprite_texture(obj)
+    if texture is not None:
+        poly_kwargs["texture"] = texture
+    if weights:
+        poly_kwargs["weights"] = weights
+    return PolygonSprite(**poly_kwargs)
 
 
 def _iter_tex_images(obj: bpy.types.Object) -> Iterator[bpy.types.Image]:
@@ -157,18 +195,21 @@ def build_sprite_frame(obj: bpy.types.Object) -> SpriteFrameSprite:
             f"and vframes >= 1 (got hframes={hframes}, vframes={vframes})."
         )
 
-    return SpriteFrameSprite(
-        type="sprite_frame",
-        name=obj.name,
-        bone=resolve_sprite_bone(obj),
-        hframes=hframes,
-        vframes=vframes,
-        frame=int(read_field(obj, pg_field="frame", cp_key="proscenio_frame", default=0)),
-        centered=bool(
+    sf_kwargs: _SpriteFrameKwargs = {
+        "type": "sprite_frame",
+        "name": obj.name,
+        "bone": resolve_sprite_bone(obj),
+        "hframes": hframes,
+        "vframes": vframes,
+        "frame": int(read_field(obj, pg_field="frame", cp_key="proscenio_frame", default=0)),
+        "centered": bool(
             read_field(obj, pg_field="centered", cp_key="proscenio_centered", default=True)
         ),
-        texture_region=region_core.manual_region_or_none(obj),
-    )
+    }
+    manual_region = region_core.manual_region_or_none(obj)
+    if manual_region is not None:
+        sf_kwargs["texture_region"] = manual_region
+    return SpriteFrameSprite(**sf_kwargs)
 
 
 def resolve_sprite_bone(obj: bpy.types.Object) -> str:
