@@ -5,11 +5,10 @@ from __future__ import annotations
 import bpy
 from proscenio_models import Slot
 
+from core._bpy_compat import iter_objects
 from core.cp_keys import PROSCENIO_IS_SLOT, PROSCENIO_SLOT_DEFAULT
 from core.pg_cp_fallback import read_bool_flag
 from core.slot_emit import SlotInput, build_slots
-
-from ._bpy_compat import iter_objects
 
 
 def build_slots_for_scene(scene: bpy.types.Scene) -> list[Slot]:

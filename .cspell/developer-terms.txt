@@ -129,3 +129,6 @@ Specialised
 noqa
 pygrep
 mirrors-mypy
+EEVEE
+removeprefix
+Camada

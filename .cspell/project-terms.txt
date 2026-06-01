@@ -82,3 +82,6 @@ Vite
 getitem
 objs
 dataclasses
+mult
+scrn
+teste

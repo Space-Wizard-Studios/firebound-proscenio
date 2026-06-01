@@ -103,14 +103,12 @@ ignore_errors = true
 #   - tests.run_tests -> swept with the tier-1 cleanup
 [[tool.mypy.overrides]]
 module = [
-    "core.psd_manifest",
     "core.report",
     "core.mirror",
     "core.hydrate",
     "core.props_access",
     "core.skeleton_target",
     "core.validation.*",
-    "importers.photoshop.*",
     "tests.run_tests",
 ]
 ignore_errors = true

@@ -1,4 +1,4 @@
-"""Stub-bug shims for the writer.
+"""Shared stub-bug shims for the addon's writer + importer.
 
 fake-bpy-module-latest ships PEP 561 stubs but omits ``__iter__`` and
 ``__getitem__`` declarations on the bpy_prop_collection wrappers
@@ -9,9 +9,10 @@ the magic methods because they live on the C-level base class
 
 The shims here are the single place we acknowledge the gap. Each
 helper takes the collection by Iterable / Sequence Protocol so the
-writer's iteration sites stay readable, and casts internally so the
-stub-blind region is one well-named function instead of a `cast`
-sprinkled at every loop.
+call site stays readable, and casts internally so the stub-blind
+region is one well-named function instead of a ``cast`` sprinkled at
+every loop. Both the Godot writer (``exporters/godot/writer``) and the
+Photoshop importer (``importers/photoshop``) consume these shims.
 
 When fake-bpy fixes the upstream stubs, delete this module and inline
 the iteration.
@@ -119,3 +120,70 @@ def expect_armature(obj: bpy.types.Object) -> bpy.types.Armature:
     if not isinstance(data, bpy.types.Armature):
         raise TypeError(f"expected Armature on object {obj.name!r}, got {type(data).__name__}")
     return data
+
+
+def iter_blend_objects() -> Iterator[bpy.types.Object]:
+    """Iterate ``bpy.data.objects`` (stub omits __iter__ on BlendDataObjects)."""
+    return iter(cast(Iterator[bpy.types.Object], bpy.data.objects))
+
+
+def material_by_name(name: str) -> bpy.types.Material | None:
+    """Look up a material by name (stub omits ``.get`` on BlendDataMaterials)."""
+    table = cast(dict[str, bpy.types.Material], bpy.data.materials)
+    return table.get(name)
+
+
+def collection_by_name(name: str) -> bpy.types.Collection | None:
+    """Look up a collection by name (stub omits ``.get`` on BlendDataCollections)."""
+    table = cast(dict[str, bpy.types.Collection], bpy.data.collections)
+    return table.get(name)
+
+
+def uv_loop_at(layer: bpy.types.MeshUVLoopLayer, index: int) -> bpy.types.MeshUVLoop:
+    """Subscript ``layer.data[index]`` (kept as a helper to mirror the other
+    `*_at` shims and so the call sites read uniformly)."""
+    return layer.data[index]
+
+
+def first_uv_layer(mesh: bpy.types.Mesh) -> bpy.types.MeshUVLoopLayer | None:
+    """First entry of ``mesh.uv_layers`` (stub omits __getitem__ on UVLoopLayers)."""
+    if not mesh.uv_layers:
+        return None
+    layers = cast(list[bpy.types.MeshUVLoopLayer], mesh.uv_layers)
+    return layers[0]
+
+
+def iter_collection_children(
+    collection: bpy.types.Collection,
+) -> Iterator[bpy.types.Collection]:
+    """Iterate ``collection.children`` (stub omits __iter__ on CollectionChildren)."""
+    return iter(cast(Iterator[bpy.types.Collection], collection.children))
+
+
+def node_output_by_name(node: bpy.types.Node, name: str) -> bpy.types.NodeSocket:
+    """Subscript ``node.outputs[name]`` (stub omits __getitem__ on NodeOutputs)."""
+    table = cast(dict[str, bpy.types.NodeSocket], node.outputs)
+    return table[name]
+
+
+def node_input_by_name(node: bpy.types.Node, name: str) -> bpy.types.NodeSocket:
+    """Subscript ``node.inputs[name]`` (stub omits __getitem__ on NodeInputs)."""
+    table = cast(dict[str, bpy.types.NodeSocket], node.inputs)
+    return table[name]
+
+
+def set_material_at(mesh: bpy.types.Mesh, index: int, material: bpy.types.Material) -> None:
+    """Assign ``mesh.materials[index] = material`` (stub rejects indexed assign)."""
+    cast(list[bpy.types.Material], mesh.materials)[index] = material
+
+
+def expect_scene(scene: bpy.types.Scene | None) -> bpy.types.Scene:
+    """Narrow ``bpy.context.scene`` from ``Scene | None`` to ``Scene``.
+
+    Blender always has at least one scene at addon-run time. The stub
+    types ``bpy.context.scene`` as optional because the C-side getter
+    can theoretically return None during headless edge cases.
+    """
+    if scene is None:
+        raise RuntimeError("Proscenio: bpy.context.scene is None - no active scene")
+    return scene

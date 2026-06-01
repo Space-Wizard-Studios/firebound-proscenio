@@ -11,9 +11,7 @@ from mathutils import Vector
 from proscenio_models import PolygonSprite, SpriteFrameSprite, Weight
 
 from core import region as region_core
-from core.pg_cp_fallback import read_field
-
-from ._bpy_compat import (
+from core._bpy_compat import (
     expect_mesh,
     iter_poly_loop_indices,
     iter_poly_vertices,
@@ -22,6 +20,8 @@ from ._bpy_compat import (
     vertex_at,
     vertex_group_at,
 )
+from core.pg_cp_fallback import read_field
+
 from .skeleton import BoneWorld, world_to_godot_xy
 
 _WEIGHT_EPS = 1e-9

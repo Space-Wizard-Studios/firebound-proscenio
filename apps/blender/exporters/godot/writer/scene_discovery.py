@@ -7,7 +7,7 @@ from pathlib import Path
 
 import bpy
 
-from ._bpy_compat import iter_materials, iter_objects, iter_shader_nodes
+from core._bpy_compat import iter_materials, iter_objects, iter_shader_nodes
 
 
 def find_armature(scene: bpy.types.Scene) -> bpy.types.Object | None:
