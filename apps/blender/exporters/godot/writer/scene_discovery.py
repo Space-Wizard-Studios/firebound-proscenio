@@ -49,8 +49,12 @@ def _image_filename(image: bpy.types.Image) -> str:
     # Datablock-only image (never saved to disk): synthesise a filename
     # from the name. Append ".png" only when the name has no extension,
     # so an image already called "atlas.png" does not become "atlas.png.png".
+    # Append ".png" unless the name already ends in it. Checking only the
+    # ".png" suffix (not Path.suffix) avoids mistaking Blender's numeric
+    # duplicate suffixes (Image.001) for a file extension - the writer
+    # only emits PNG atlases. Mirrors sprites._image_filename.
     name = image.name
-    return name if Path(name).suffix else f"{name}.png"
+    return name if name.lower().endswith(".png") else f"{name}.png"
 
 
 def doc_name() -> str:
