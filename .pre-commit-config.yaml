@@ -37,7 +37,7 @@ repos:
           - id: mypy
             name: mypy (apps/blender)
             language: system
-            entry: bash -c "cd apps/blender && uv run --project ../.. --quiet mypy --config-file pyproject.toml"
+            entry: uv run --project apps/blender --quiet mypy --config-file apps/blender/pyproject.toml
             files: ^apps/blender/.*\.py$
             pass_filenames: false
 

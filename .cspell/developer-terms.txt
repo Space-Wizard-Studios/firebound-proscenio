@@ -144,3 +144,6 @@ Centralised
 Buildchain
 dockable
 normalised
+pyrightconfig
+sonarlint
+pythoncore

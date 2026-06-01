@@ -1,7 +1,96 @@
 {
-    "include": ["apps/blender", "scripts"],
-    "extraPaths": ["apps/blender"],
+    "include": [
+        "apps/blender/exporters",
+        "apps/blender/importers",
+        "apps/blender/core",
+        "apps/blender/operators",
+        "apps/blender/panels",
+        "apps/blender/properties",
+        "apps/blender/tests",
+        "packages/codegen/src",
+        "packages/models/src",
+        "packages/validator/src",
+        "scripts",
+        "tests"
+    ],
+    "exclude": [
+        "**/__pycache__",
+        "**/node_modules",
+        "**/.venv",
+        "apps/blender/tests/fixtures",
+        "apps/blender/tests/operators",
+        "apps/blender/tests/run_operator_tests.py"
+    ],
+    "extraPaths": [
+        "apps/blender",
+        "packages/models/src",
+        "packages/codegen/src",
+        "packages/validator/src"
+    ],
+    "venvPath": ".",
+    "venv": ".venv",
+    "pythonVersion": "3.13",
+    "typeCheckingMode": "standard",
+    "useLibraryCodeForTypes": true,
     "reportMissingImports": "none",
     "reportMissingModuleSource": "none",
-    "reportAttributeAccessIssue": "none"
+    "reportAttributeAccessIssue": "warning",
+    "reportOptionalMemberAccess": "warning",
+    "reportPossiblyUnboundVariable": "warning",
+    "reportArgumentType": "warning",
+    "executionEnvironments": [
+        {
+            "//": "Tier-2 bpy-bound paths mirror mypy's ignore_errors override - Pylance keeps syntax + import checks but drops type errors so the editor problem count tracks mypy's gate.",
+            "root": "apps/blender/core/bpy_helpers",
+            "reportGeneralTypeIssues": "none",
+            "reportOptionalMemberAccess": "none",
+            "reportAttributeAccessIssue": "none",
+            "reportArgumentType": "none",
+            "reportPossiblyUnboundVariable": "none",
+            "reportIncompatibleVariableOverride": "none",
+            "reportIncompatibleMethodOverride": "none",
+            "reportIndexIssue": "none",
+            "reportOptionalSubscript": "none",
+            "reportOptionalIterable": "none"
+        },
+        {
+            "root": "apps/blender/operators",
+            "reportGeneralTypeIssues": "none",
+            "reportOptionalMemberAccess": "none",
+            "reportAttributeAccessIssue": "none",
+            "reportArgumentType": "none",
+            "reportPossiblyUnboundVariable": "none",
+            "reportIncompatibleVariableOverride": "none",
+            "reportIncompatibleMethodOverride": "none",
+            "reportIndexIssue": "none",
+            "reportOptionalSubscript": "none",
+            "reportOptionalIterable": "none"
+        },
+        {
+            "root": "apps/blender/panels",
+            "reportGeneralTypeIssues": "none",
+            "reportOptionalMemberAccess": "none",
+            "reportAttributeAccessIssue": "none",
+            "reportArgumentType": "none",
+            "reportPossiblyUnboundVariable": "none",
+            "reportIncompatibleVariableOverride": "none",
+            "reportIncompatibleMethodOverride": "none",
+            "reportIndexIssue": "none",
+            "reportOptionalSubscript": "none",
+            "reportOptionalIterable": "none"
+        },
+        {
+            "root": "apps/blender/properties",
+            "reportGeneralTypeIssues": "none",
+            "reportOptionalMemberAccess": "none",
+            "reportAttributeAccessIssue": "none",
+            "reportArgumentType": "none",
+            "reportPossiblyUnboundVariable": "none",
+            "reportIncompatibleVariableOverride": "none",
+            "reportIncompatibleMethodOverride": "none",
+            "reportIndexIssue": "none",
+            "reportOptionalSubscript": "none",
+            "reportOptionalIterable": "none"
+        }
+    ]
 }

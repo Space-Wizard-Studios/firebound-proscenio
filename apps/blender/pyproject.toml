@@ -66,8 +66,22 @@ disallow_any_unimported = true
 disallow_subclassing_any = true
 explicit_package_bases = true
 namespace_packages = true
-mypy_path = "."
-files = ["exporters", "operators", "panels", "properties", "core", "importers", "tests"]
+# `${MYPY_CONFIG_FILE_DIR}` resolves to the directory of this
+# pyproject.toml, so the same gate behaves identically whether mypy
+# runs from the repo root, from `apps/blender/`, or under pre-commit.
+# Pre-fix the path was `.`, which mypy resolved against the CWD - CI
+# silently masked 1499 errors when it invoked mypy from a different
+# directory than the developer machine.
+mypy_path = "${MYPY_CONFIG_FILE_DIR}"
+files = [
+    "${MYPY_CONFIG_FILE_DIR}/exporters",
+    "${MYPY_CONFIG_FILE_DIR}/operators",
+    "${MYPY_CONFIG_FILE_DIR}/panels",
+    "${MYPY_CONFIG_FILE_DIR}/properties",
+    "${MYPY_CONFIG_FILE_DIR}/core",
+    "${MYPY_CONFIG_FILE_DIR}/importers",
+    "${MYPY_CONFIG_FILE_DIR}/tests",
+]
 # `tests/fixtures/` holds frozen JSON, not Python.
 # `tests/operators/` is the weight-paint productivity follow-up headless operator pytest layer:
 # runs INSIDE Blender's bundled Python (which has pytest installed),
@@ -75,7 +89,11 @@ files = ["exporters", "operators", "panels", "properties", "core", "importers", 
 # state. mypy strict on the host environment trips on the missing
 # pytest stub + the deliberately-untyped test signatures. Excluded
 # here; correctness comes from running the tests against Blender.
-exclude = ["tests/fixtures", "tests/operators", "tests/run_operator_tests.py"]
+exclude = [
+    "tests/fixtures",
+    "tests/operators",
+    "tests/run_operator_tests.py",
+]
 
 # Tier-2 paths: deep bpy-bound surface that still carries `dict[str, Any]`
 # payload bags + bare `import bpy` inside function bodies + fake-bpy stub
