@@ -9,13 +9,12 @@ from dataclasses import dataclass
 import bpy
 from proscenio_models import Animation, Key, Track
 
-from core._bpy_compat import (
+from ....core._bpy_compat import (
     iter_action_layers,
     iter_action_strips,
     iter_actions,
     iter_keyframe_points,
 )
-
 from .skeleton import BoneRestLocal, wrap_pi
 
 

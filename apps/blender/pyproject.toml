@@ -66,13 +66,19 @@ disallow_any_unimported = true
 disallow_subclassing_any = true
 explicit_package_bases = true
 namespace_packages = true
-# `${MYPY_CONFIG_FILE_DIR}` resolves to the directory of this
-# pyproject.toml, so the same gate behaves identically whether mypy
-# runs from the repo root, from `apps/blender/`, or under pre-commit.
-# Pre-fix the path was `.`, which mypy resolved against the CWD - CI
-# silently masked 1499 errors when it invoked mypy from a different
-# directory than the developer machine.
-mypy_path = "${MYPY_CONFIG_FILE_DIR}"
+# Root one level ABOVE this addon (the `apps/` dir) so the addon is
+# the package `blender`. Blender mounts the addon as the package named
+# in blender_manifest.toml (`proscenio`), and every submodule imports
+# `core` via a relative import counted from the addon root
+# (`operators` -> `from ..core`, `importers/photoshop` -> `from ...core`,
+# `exporters/godot/writer` -> `from ....core`). Rooting mypy at `apps/`
+# gives the module tree the same depth (`blender.exporters.godot.writer`
+# == runtime `proscenio.exporters.godot.writer`), so those relative
+# imports resolve identically in the type checker and at runtime - no
+# `type: ignore[import-not-found]` needed for the typed surface.
+# ${MYPY_CONFIG_FILE_DIR} keeps the gate CWD-independent (was `.`, which
+# silently masked 1499 errors when CI ran mypy from the repo root).
+mypy_path = "${MYPY_CONFIG_FILE_DIR}/.."
 files = [
     "${MYPY_CONFIG_FILE_DIR}/exporters",
     "${MYPY_CONFIG_FILE_DIR}/operators",
@@ -104,10 +110,10 @@ exclude = [
 # (writer, importers, non-bpy_helpers core, tests) gate at full strict.
 [[tool.mypy.overrides]]
 module = [
-    "core.bpy_helpers.*",
-    "operators.*",
-    "panels.*",
-    "properties.*",
+    "blender.core.bpy_helpers.*",
+    "blender.operators.*",
+    "blender.panels.*",
+    "blender.properties.*",
 ]
 ignore_errors = true
 

@@ -25,8 +25,8 @@ from typing import Literal, cast
 
 import bpy
 
-from core import psd_manifest
-from core._bpy_compat import (
+from ...core import psd_manifest
+from ...core._bpy_compat import (
     expect_mesh,
     expect_scene,
     first_uv_layer,
@@ -39,7 +39,7 @@ from core._bpy_compat import (
     set_material_at,
     uv_loop_at,
 )
-from core.bpy_helpers.psd_spritesheet import compose_spritesheet
+from ...core.bpy_helpers.psd_spritesheet import compose_spritesheet
 
 Z_EPSILON = 0.001
 SPRITESHEET_DIR_NAME = "_spritesheets"

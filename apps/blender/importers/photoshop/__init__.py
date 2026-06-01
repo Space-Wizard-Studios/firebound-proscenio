@@ -23,8 +23,7 @@ from typing import Literal
 
 import bpy
 
-from core import psd_manifest
-
+from ...core import psd_manifest
 from .armature import DEFAULT_ROOT_BONE_NAME, build_root_armature
 from .planes import stamp_polygon, stamp_sprite_frame
 
