@@ -150,3 +150,10 @@ pythoncore
 serialisable
 asdict
 argparse
+setattr
+setitem
+difflib
+rglob
+splitlines
+fromfile
+centralise

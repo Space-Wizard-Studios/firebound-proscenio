@@ -119,14 +119,3 @@ ignore_errors = true
 #   - core.validation.*, core.report, core.mirror, core.hydrate,
 #     core.props_access, core.skeleton_target -> "tier-1 sweep" item
 #   - tests.run_tests -> swept with the tier-1 cleanup
-[[tool.mypy.overrides]]
-module = [
-    "core.report",
-    "core.mirror",
-    "core.hydrate",
-    "core.props_access",
-    "core.skeleton_target",
-    "core.validation.*",
-    "tests.run_tests",
-]
-ignore_errors = true
