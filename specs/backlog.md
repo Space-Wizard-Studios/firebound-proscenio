@@ -367,69 +367,19 @@ The dev junction setup for the Blender addon is a manual `New-Item -ItemType Jun
 
 ## Typed-models migration follow-ups
 
-Residual items from the typed-models codegen rollout. The typed-models codegen acceptance criteria are met (pydantic is the source of truth; codegen produces all four artifact families; warnings tightened per language), but the consumer-side adoption is partial in a couple of places.
-
-### Writer builders construct pydantic models directly
-
-**What:** `apps/blender/exporters/godot/writer/__init__.py` validates + serialises through `ProscenioDocument.model_dump_json()`, but the per-feature builders (`sprites.py`, `skeleton.py`, `slots.py`, `animations.py`, `slot_animations.py`) still construct `dict[str, Any]` payloads + the `TypedDict` aliases in `_schema.py`. The pydantic model re-parses those dicts at the doc-root level; a builder that drifts only surfaces at the final validation step.
-
-**Why deferred:** the dict-based builders work and the goldens lock the shape. Migrating each builder to construct `Bone()` / `PolygonSprite()` / `Animation()` instances directly is a refactor with limited functional payoff (the validation gate already catches drift) and would touch every writer module.
-
-**Trigger to revisit:** the first schema field that surfaces a drift the gate cannot localise to a specific builder, or any future PR that touches multiple writer modules at once (piggyback the migration on the same change).
-
-### PSD manifest reader adopts the pydantic model
-
-**What:** `apps/blender/core/psd_manifest.py` (the Photoshop importer's read path) still parses the manifest into the legacy hand-written types instead of `PsdManifest.model_validate(data)`. The pydantic model exists in `packages/models/`; nothing on the importer side consumes it yet.
-
-**Why deferred:** the importer works and the v2 manifest is locked. Adoption is mechanical (replace `dict.get()` calls with field access) but the importer module is large and the typed PSD bindings already cover the validation side at the schema layer.
-
-**Trigger to revisit:** the next PSD manifest schema bump, or whenever the importer needs new field-level behaviour that benefits from the typed Resource (validators, discriminated unions).
-
-### Photoshop manifest reader: cast -> validated parse
-
-**What:** `apps/photoshop/src/io/manifest-reader.ts` runs `validateManifest(parsed as Manifest)` against ajv (runtime gate) but the static type comes from a bare `as Manifest` cast on the JSON.parse output. If a future change mutates `parsed` between ajv validation and consumption, TypeScript will not catch the divergence.
-
-**Why deferred:** ajv already gates the runtime shape and the cast pattern matches the rest of the UXP / Photoshop IO surface. Moving to a typed-parse helper (`Manifest.parse(json): Manifest | ValidationError`) is purely a type-discipline upgrade; the runtime behaviour does not change.
-
-**Trigger to revisit:** the typescript layer surfaces a real bug that the cast pattern hid, or the Photoshop plugin grows a second manifest format and the cast pattern starts duplicating.
-
-### Photoshop UXP API typing gaps
-
-**What:** `apps/photoshop/src/io/xmp.ts`, `manifest-reader.ts`, `ps-selection-bounds.ts`, and `hooks/useDocumentChanges.ts` carry six `as unknown as` escape hatches at the UXP API boundary (the UXP module shape, layer carriers, file parents, the action notifier). These are not model-first violations - they live at the engine-API edge where typings ship from Adobe, not from the schema codegen - but they are the only remaining `as unknown` in the typed surface.
-
-**Why deferred:** UXP's published types underspecify the surfaces involved; chasing each one upstream takes per-call investigation. The casts compile and the runtime contract has not surfaced a bug.
-
-**Trigger to revisit:** Adobe ships richer UXP types, or one of the casts catches drift the runtime did not.
-
-### ESLint `@typescript-eslint/strict-type-checked`
-
-The typed-models codegen Axis C2 mentions adding ESLint with `@typescript-eslint/strict-type-checked` on top of the tsconfig strict family. Not landed because the tsconfig flags already produce a meaningful gate; the ESLint layer would surface additional style + runtime hazards but is additive rather than load-bearing.
-
-**Trigger to revisit:** if a new contributor lands a hazard the tsconfig didn't catch and ESLint would have, or before the v0.2.0 ship gate.
-
-### `exactOptionalPropertyTypes` revisit
-
-Flag deliberately off in `apps/photoshop/tsconfig.json` because it fights React idioms (`{field: maybeUndefined}` spread) and Spectrum component prop types use plain `field?:` declarations. First pass produced 14 errors concentrated in panel components.
-
-**Trigger to revisit:** Spectrum types adopt `exactOptional`, or the panel components rewrite their prop spreaders.
-
-### mypy `disallow_any_*` trio
-
-`disallow_any_explicit`, `disallow_any_decorated`, `disallow_any_unimported` stay off in `apps/blender/pyproject.toml`. With them on, the bpy / mathutils / bmesh boundary (no stubs) produced 778 errors on the first pass.
-
-**Trigger to revisit:** a stable per-release bpy stubgen snapshot lands and the import boundary can be typed.
+The typed-models codegen migration is complete: pydantic is the source of truth, the writer builders construct model instances (`PolygonSprite()` / `Skeleton()` / `Animation()`), both manifest readers parse through the typed models (Blender `psd_manifest.py` -> `PsdManifest`, Photoshop `manifest-reader.ts` -> `parseManifest`), no `as unknown` casts remain in the typed surface, and the strictness flags all landed (`exactOptionalPropertyTypes`, ESLint `strictTypeChecked`, the mypy `disallow_any_*` trio). Committed-match tests reproduce the JSON Schema, TypeScript, and GDScript artifacts from the models and fail on drift (`tests/codegen/test_schema_roundtrip.py`, `test_ts_emit.py`, `test_godot_emit.py`); the docs emitter is the one artifact left ungated (see below). Only optional tooling / docs follow-ups remain.
 
 ### bpy stubs via fake-bpy-module / bpy-stubgen
 
-Investigated as a precondition for the `disallow_any_*` trio. Both options exist; both are fragile across Blender releases. Pinning to a frozen snapshot per release matrix is the realistic path.
+The mypy `disallow_any_*` trio landed with per-module overrides that relax the `bpy` / `mathutils` / `bmesh` boundary (no stubs ship for those modules). A frozen per-release stub snapshot would let those overrides drop so the boundary is fully typed. Both `fake-bpy-module` and `bpy-stubgen` exist; both are fragile across Blender releases, so pinning a snapshot per release matrix is the realistic path.
 
-**Trigger to revisit:** the next Blender LTS jump that breaks an existing typed surface, OR adoption of the `disallow_any_*` trio is gated on this work.
+**Trigger to revisit:** the next Blender LTS jump that breaks an existing typed surface, or a push to remove the remaining bpy-boundary mypy overrides.
 
 ### Docusaurus wiring of generated docs
 
-`docs/content/api/schemas/*.md` is regenerable via `python -m proscenio_codegen docs` but no docs site reads it. The typed-models codegen D7 deferred the site itself as a separate chore.
+`docs/content/api/schemas/*.md` is regenerable via `python -m proscenio_codegen docs` but no docs site reads it, and the committed markdown has drifted from a fresh emit - it is the one codegen artifact without a committed-match staleness test, because it depends on the npx `jsonschema2md` output rather than pure-Python emit. The typed-models codegen D7 deferred the site itself as a separate chore; regenerating (or deleting) the stale markdown rides along with wiring or dropping the site.
 
-**Trigger to revisit:** the first time someone wants to ship public schema documentation.
+**Trigger to revisit:** the first time someone wants to ship public schema documentation, or a code-health pass decides to drop the unconsumed markdown.
 
 ## Quick Armature follow-ups (deferred polish)
 
