@@ -312,3 +312,4 @@ usedforsecurity
 hashlib
 hexdigest
 stdlib
+rstrip
