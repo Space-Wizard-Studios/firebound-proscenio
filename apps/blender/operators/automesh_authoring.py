@@ -377,8 +377,12 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         return pick_dist * pick_dist
 
     def _remove_outer_stroke(self, context: bpy.types.Context, idx: int) -> None:
-        """Pop the outer stroke at ``idx``, persist, and refresh the preview."""
+        """Pop the outer stroke at ``idx``, clear its stale delete-hover
+        highlight, persist, and refresh the preview."""
         self._user_outer_strokes.pop(idx)
+        # The hovered stroke just went away; drop its highlight now instead of
+        # leaving it on screen until the next MOUSEMOVE recomputes the hover.
+        self._delete_hover_points.clear()
         obj = context.active_object
         if obj is not None:
             write_user_outer_strokes(obj, self._user_outer_strokes)
