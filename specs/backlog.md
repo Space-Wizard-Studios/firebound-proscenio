@@ -100,10 +100,6 @@ Writer assumes the 2D plane is Blender XZ (Z up, Y into screen). Some users auth
 - emit one Proscenio sprite per polygon (cleanest), or
 - use `Polygon2D.polygons` array for multi-island Polygon2D nodes (preserves original mesh structure).
 
-### Skinning weights export
-
-**Resolved** - writer normalizes per-vertex weight sums and emits the bone-major `weights` array; Godot importer (`polygon_builder.gd`) branches into `Polygon2D.skeleton` + `add_bone()` when weights are present. **Authoring side resolved by weight-paint-automesh spec** first cut - pure-Python automesh, planar-proximity bind, weight paint modal wrapper with 2D-safe preset, weight sidecar that survives mesh regen.
-
 ### Atlas region authoring helper
 
 User UV-maps each plane in Blender to a region of the atlas; the writer reads whatever UVs are there. There is no Blender operator to "snap UV to atlas region by name". Could ship as a Phase 2 quality-of-life operator.
@@ -147,10 +143,6 @@ The pose-library operator (`PROSCENIO_OT_save_pose_asset`) shipped as a thin shi
 - Pose-asset thumbnails rendered through the Proscenio preview camera so the swatches are pipeline-flat instead of viewport-shaded.
 
 **Trigger:** the second character ships and the artist hits the asset-browser mixing problem.
-
-### Quick Armature: Front-Ortho UX guard
-
-**Resolved by the quick-armature spec** first cut - `lock_to_front_ortho` operator option (default `True`) auto-snaps to Front Orthographic on `invoke` and restores the original view on exit. Opt-out via F3 redo for legitimate persp-view authoring. Status hint + in-viewport cheatsheet ship in the same tier.
 
 ### Quick Armature follow-up candidates
 
@@ -216,18 +208,6 @@ Heavier lifts than productivity follow-up; each is a candidate for a follow-up s
 - Schema `format_version` bump - the contract on disk does not change; only the in-`.blend` storage shape does. May still want a `format_version` bump on the *scene PG* to gate the migrator.
 
 ## Godot plugin
-
-### Reimport non-destructive merge
-
-**Resolved** - full overwrite plus the wrapper-scene pattern. Marker-based merge deferred unless demand emerges. See the wrapper-scene pattern entry in [`decisions.md`](decisions.md#core-architecture).
-
-### Spritesheet support and `Sprite2D` path
-
-**Resolved** - explicit `type` discriminator field per sprite; default `"polygon"` keeps v1 fixtures backwards-compatible. `Sprite2D` ships as the `"sprite_frame"` variant with `hframes`/`vframes`/`frame` and the matching animation track. See the spritesheet entry in [`decisions.md`](decisions.md#spritesheet-sprite2d-discriminator).
-
-### Slot system
-
-Resolved. Sprite-swap groups via `slots` field; importer wires `slot_attachment` tracks. See the slot-system entry in [`decisions.md`](decisions.md#slot-system).
 
 ### Node name collision polish
 
@@ -344,14 +324,6 @@ The current `test-godot` job pins Godot 4.6.2-stable. Add Godot 4.3 and 4.5 to t
 ### LICENSE full GPL-3.0 body
 
 `LICENSE` ships the header only with a clear placeholder pointing to gnu.org. Replace with the full text before the first public release.
-
-### Maintainer contact
-
-Resolved - `apps/blender/blender_manifest.toml` now points to `contato@spacewiz.dev`.
-
-### Final repo URL
-
-Resolved - canonical URL is `https://github.com/Space-Wizard-Studios/firebound-proscenio`.
 
 ### Issue and PR templates
 
