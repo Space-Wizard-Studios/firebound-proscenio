@@ -32,11 +32,10 @@
             "level": "off"
         },
         // S3776 (cognitive complexity) + S107 (parameter count) are ACTIVE:
-        // the reducible sites were refactored (options-bag dataclasses for
-        // the automesh/polygon builders, helper extraction across the
-        // pipeline). The two functions whose branching is inherent
-        // (build_automesh debug-stage taps, register_overlay per-stage
-        // handler registration) carry an inline `# NOSONAR` with the reason.
+        // every flagged site was refactored - options-bag dataclasses for the
+        // automesh/polygon builders, plus helper extraction across the
+        // pipeline (build_automesh's interior compute, register_overlay's
+        // per-stage handler phases). No inline suppressions remain.
         // `list(context.selected_objects)` is an intentional snapshot taken
         // before the loop mutates selection via select_set(); the rule
         // misreads Blender's selection semantics.
