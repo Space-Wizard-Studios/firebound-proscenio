@@ -29,6 +29,7 @@ calls). Operator + panel live in their own modules and call
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 import bmesh
@@ -122,6 +123,45 @@ through stages to pinpoint which step produced bad output.
 ``final`` matches ``off`` behavior except it clears any prior
 debug companions for the sprite so reruns leave the scene clean.
 """
+
+
+@dataclass(frozen=True, slots=True)
+class AutomeshBuildParams:
+    """Scalar tuning knobs :func:`build_automesh` resolves up front.
+
+    Both call sites (the operator and the stroke-authoring pipeline)
+    derive these from their own property bags, so grouping them keeps
+    the build call readable while the algorithm body reads each knob by
+    name after a single destructure.
+    """
+
+    downscale_factor: float
+    alpha_threshold: int
+    margin_pixels: int
+    target_contour_vertices: int
+    interior_spacing: float
+    world_scale: float
+    bone_density_radius: float = 0.0
+    bone_density_factor: int = 1
+    debug_stage: DebugStage = "off"
+    preserve_base_quad: bool = False
+    interior_mode: Literal["SIMPLE", "DENSE"] = "DENSE"
+
+
+@dataclass(frozen=True, slots=True)
+class AutomeshOverrides:
+    """Optional geometry the stroke-authoring pipeline injects.
+
+    The plain operator path leaves every field at its default so the
+    alpha walker drives the contour; apply_mesh fills them in to splice
+    user strokes, extra Steiner points, cut corridors, and bone density.
+    """
+
+    bone_segments: list[BoneSegment2D] | None = None
+    outer_override: list[tuple[float, float]] | None = None
+    extra_steiners: list[tuple[float, float]] | None = None
+    extra_edges: list[tuple[int, int]] | None = None
+    cut_hole_loops: list[list[tuple[float, float]]] | None = None
 
 
 def _max_alpha_in_block(
@@ -665,26 +705,11 @@ def _finalize_mesh(
     print(f"[automesh] === END mesh now has {len(mesh.vertices)} verts, {len(mesh.polygons)} faces")
 
 
-def build_automesh(
+def build_automesh(  # NOSONAR: debug-stage pipeline taps are inherent sequential checkpoints
     obj: Object,
     image: Image,
-    *,
-    downscale_factor: float,
-    alpha_threshold: int,
-    margin_pixels: int,
-    target_contour_vertices: int,
-    interior_spacing: float,
-    world_scale: float,
-    bone_segments: list[BoneSegment2D] | None = None,
-    bone_density_radius: float = 0.0,
-    bone_density_factor: int = 1,
-    debug_stage: DebugStage = "off",
-    preserve_base_quad: bool = False,
-    outer_override: list[tuple[float, float]] | None = None,
-    extra_steiners: list[tuple[float, float]] | None = None,
-    extra_edges: list[tuple[int, int]] | None = None,
-    cut_hole_loops: list[list[tuple[float, float]]] | None = None,
-    interior_mode: Literal["SIMPLE", "DENSE"] = "DENSE",
+    params: AutomeshBuildParams,
+    overrides: AutomeshOverrides | None = None,
 ) -> dict[str, int]:
     """Generate the annulus mesh on ``obj`` from ``image`` alpha.
 
@@ -706,6 +731,28 @@ def build_automesh(
     these before getting here so the user sees an actionable
     message rather than a stack trace.
     """
+    # Destructure the param bundles into working locals; several
+    # (outer_world, extra_edges, holes_world) are reassigned downstream
+    # as the pipeline splices overrides, so locals - not frozen fields -
+    # carry the mutation.
+    overrides = overrides or AutomeshOverrides()
+    downscale_factor = params.downscale_factor
+    alpha_threshold = params.alpha_threshold
+    margin_pixels = params.margin_pixels
+    target_contour_vertices = params.target_contour_vertices
+    interior_spacing = params.interior_spacing
+    world_scale = params.world_scale
+    bone_density_radius = params.bone_density_radius
+    bone_density_factor = params.bone_density_factor
+    debug_stage = params.debug_stage
+    preserve_base_quad = params.preserve_base_quad
+    interior_mode = params.interior_mode
+    bone_segments = overrides.bone_segments
+    outer_override = overrides.outer_override
+    extra_steiners = overrides.extra_steiners
+    extra_edges = overrides.extra_edges
+    cut_hole_loops = overrides.cut_hole_loops
+
     if debug_stage in ("off", "final"):
         clear_debug_objects(obj)
     _log_begin(

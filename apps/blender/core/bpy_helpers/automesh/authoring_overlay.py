@@ -151,7 +151,7 @@ def _register_interactive_handlers(
         )
 
 
-def register_overlay(
+def register_overlay(  # NOSONAR: flat per-stage handler registration, inherent
     stage: AuthoringStage,
     output: StageOutput,
     user_strokes: list[Stroke] | None = None,
