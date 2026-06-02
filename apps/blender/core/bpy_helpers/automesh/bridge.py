@@ -705,7 +705,56 @@ def _finalize_mesh(
     print(f"[automesh] === END mesh now has {len(mesh.vertices)} verts, {len(mesh.polygons)} faces")
 
 
-def build_automesh(  # NOSONAR: debug-stage pipeline taps are inherent sequential checkpoints
+def _compute_interior_and_remap_edges(
+    outer_world: list[tuple[float, float]],
+    inner_world: list[tuple[float, float]],
+    holes_world: list[list[tuple[float, float]]],
+    params: AutomeshBuildParams,
+    overrides: AutomeshOverrides,
+) -> tuple[list[tuple[float, float]], list[tuple[int, int]] | None]:
+    """Interior Steiner points + remapped stroke extra-edge indices.
+
+    SIMPLE mode seeds only the silhouette, holes, and user verts (no grid);
+    DENSE fills the uniform grid plus bone density. User extras merge in
+    after, and sentinel-namespaced ``extra_edges`` shift to their true coord
+    base (outer + inner + auto-interior count).
+    """
+    if params.interior_mode == "SIMPLE":
+        # Sparse Spine-like mesh: drop the uniform grid + bone-density fill
+        # (the expensive step) so only the silhouette, holes, and user-placed
+        # verts seed the Constrained Delaunay.
+        interior_points: list[tuple[float, float]] = []
+    else:
+        exclude_zones: list[tuple[float, float, float]] | None = None
+        if overrides.extra_steiners:
+            exclude_zones = [
+                (p[0], p[1], params.interior_spacing * 0.5) for p in overrides.extra_steiners
+            ]
+        interior_points = _compute_steiner_points(
+            outer_world,
+            inner_world,
+            holes_world,
+            params.interior_spacing,
+            overrides.bone_segments,
+            params.bone_density_radius,
+            params.bone_density_factor,
+            exclude_zones=exclude_zones,
+        )
+    # Capture the auto-fill count BEFORE merging extras so extra_edges indices
+    # remap to their true position in the final coord array.
+    auto_interior_count = len(interior_points)
+    if overrides.extra_steiners:
+        interior_points = _merge_extra_steiners(
+            interior_points, overrides.extra_steiners, outer_world, inner_world, holes_world
+        )
+    extra_edges = overrides.extra_edges
+    if extra_edges:
+        extra_base = len(outer_world) + len(inner_world) + auto_interior_count
+        extra_edges = _remap_extra_edge_indices(extra_edges, extra_base)
+    return interior_points, extra_edges
+
+
+def build_automesh(
     obj: Object,
     image: Image,
     params: AutomeshBuildParams,
@@ -731,10 +780,9 @@ def build_automesh(  # NOSONAR: debug-stage pipeline taps are inherent sequentia
     these before getting here so the user sees an actionable
     message rather than a stack trace.
     """
-    # Destructure the param bundles into working locals; several
-    # (outer_world, extra_edges, holes_world) are reassigned downstream
-    # as the pipeline splices overrides, so locals - not frozen fields -
-    # carry the mutation.
+    # Destructure the param bundles into working locals; some
+    # (outer_world, holes_world) are reassigned downstream as the pipeline
+    # splices overrides, so locals - not frozen fields - carry the mutation.
     overrides = overrides or AutomeshOverrides()
     downscale_factor = params.downscale_factor
     alpha_threshold = params.alpha_threshold
@@ -742,15 +790,10 @@ def build_automesh(  # NOSONAR: debug-stage pipeline taps are inherent sequentia
     target_contour_vertices = params.target_contour_vertices
     interior_spacing = params.interior_spacing
     world_scale = params.world_scale
-    bone_density_radius = params.bone_density_radius
-    bone_density_factor = params.bone_density_factor
     debug_stage = params.debug_stage
     preserve_base_quad = params.preserve_base_quad
-    interior_mode = params.interior_mode
     bone_segments = overrides.bone_segments
     outer_override = overrides.outer_override
-    extra_steiners = overrides.extra_steiners
-    extra_edges = overrides.extra_edges
     cut_hole_loops = overrides.cut_hole_loops
 
     if debug_stage in ("off", "final"):
@@ -809,38 +852,9 @@ def build_automesh(  # NOSONAR: debug-stage pipeline taps are inherent sequentia
         emit_contour_debug(obj, "resampled", outer_world, inner_world)
         return _debug_stage_report("resampled", len(outer_world), len(inner_world))
 
-    if interior_mode == "SIMPLE":
-        # : sparse Spine-like mesh. Drop the uniform grid + bone-density
-        # fill so only the silhouette, holes, and the user-placed verts
-        # (extra_steiners) seed the Constrained Delaunay. Skipping the grid
-        # compute entirely (it is the expensive step) is the whole point.
-        interior_points: list[tuple[float, float]] = []
-    else:
-        exclude_zones: list[tuple[float, float, float]] | None = None
-        if extra_steiners:
-            exclude_zones = [(p[0], p[1], interior_spacing * 0.5) for p in extra_steiners]
-        interior_points = _compute_steiner_points(
-            outer_world,
-            inner_world,
-            holes_world,
-            interior_spacing,
-            bone_segments,
-            bone_density_radius,
-            bone_density_factor,
-            exclude_zones=exclude_zones,
-        )
-    # Capture the auto-fill count BEFORE merging extras so extra_edges
-    # indices can be remapped to their true position in the final coord
-    # array (outer + inner + auto_interior + extras). The caller indexes
-    # extra verts from _EXTRA_INDEX_SENTINEL; we shift them to the real base.
-    auto_interior_count = len(interior_points)
-    if extra_steiners:
-        interior_points = _merge_extra_steiners(
-            interior_points, extra_steiners, outer_world, inner_world, holes_world
-        )
-    if extra_edges:
-        extra_base = len(outer_world) + len(inner_world) + auto_interior_count
-        extra_edges = _remap_extra_edge_indices(extra_edges, extra_base)
+    interior_points, extra_edges = _compute_interior_and_remap_edges(
+        outer_world, inner_world, holes_world, params, overrides
+    )
     if debug_stage == "interior_points":
         emit_points_debug(obj, "interior_points", interior_points)
         return _debug_stage_report(
