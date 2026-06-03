@@ -39,9 +39,9 @@ const config: Config = {
     ],
   ],
 
-  // TODO: set the real deploy target once decided (GitHub Pages / custom domain).
+  // GitHub Pages project site: https://space-wizard-studios.github.io/firebound-proscenio/
   url: 'https://space-wizard-studios.github.io',
-  baseUrl: '/',
+  baseUrl: '/firebound-proscenio/',
 
   organizationName: 'Space-Wizard-Studios',
   projectName: 'firebound-proscenio',
