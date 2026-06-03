@@ -5,8 +5,7 @@ sidebar_position: 3
 
 import JSONSchemaViewer from "@theme/JSONSchemaViewer";
 import schema from "../../../packages/models/schemas/proscenio.schema.json";
-
-export const withDefs = (name) => ({ ...schema.$defs[name], $defs: schema.$defs });
+import {withDefs} from "@site/src/schema/withDefs";
 
 # Sprites
 
@@ -14,8 +13,8 @@ The two sprite kinds a character carries, discriminated by `type`: a deformable 
 
 ## PolygonSprite
 
-<JSONSchemaViewer schema={withDefs("PolygonSprite")} />
+<JSONSchemaViewer schema={withDefs(schema, "PolygonSprite")} />
 
 ## SpriteFrameSprite
 
-<JSONSchemaViewer schema={withDefs("SpriteFrameSprite")} />
+<JSONSchemaViewer schema={withDefs(schema, "SpriteFrameSprite")} />
