@@ -1,0 +1,21 @@
+---
+title: Sprites
+sidebar_position: 3
+---
+
+import JSONSchemaViewer from "@theme/JSONSchemaViewer";
+import schema from "../../../packages/models/schemas/proscenio.schema.json";
+
+export const withDefs = (name) => ({ ...schema.$defs[name], $defs: schema.$defs });
+
+# Sprites
+
+The two sprite kinds a character carries, discriminated by `type`: a deformable `polygon` mesh or a `sprite_frame` spritesheet cell.
+
+## PolygonSprite
+
+<JSONSchemaViewer schema={withDefs("PolygonSprite")} />
+
+## SpriteFrameSprite
+
+<JSONSchemaViewer schema={withDefs("SpriteFrameSprite")} />
