@@ -10,6 +10,7 @@
 //     (/blob/ for files, /tree/ for directories);
 //   - leaves external, absolute, and anchor-only links untouched.
 
+import fs from 'node:fs';
 import path from 'node:path';
 
 const REPO = 'https://github.com/Space-Wizard-Studios/firebound-proscenio';
@@ -25,11 +26,21 @@ function isNonRelative(url) {
   return /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('//') || url.startsWith('/') || url.startsWith('#');
 }
 
+// `/blob/` for files, `/tree/` for directories. The target is a repo path that
+// exists on disk at build time, so stat it instead of guessing from the name
+// (an extension heuristic mislabels `LICENSE` / `Makefile` and `some.dir/`).
+function githubKind(absTarget) {
+  try {
+    return fs.statSync(absTarget).isDirectory() ? 'tree' : 'blob';
+  } catch {
+    return path.extname(absTarget) ? 'blob' : 'tree';
+  }
+}
+
 function toGithubUrl(absTarget, hash) {
   const repoRel = path.relative(REPO_ROOT, absTarget).split(path.sep).join('/');
-  const kind = path.extname(absTarget) ? 'blob' : 'tree';
   const suffix = hash ? `#${hash}` : '';
-  return `${REPO}/${kind}/${BRANCH}/${repoRel}${suffix}`;
+  return `${REPO}/${githubKind(absTarget)}/${BRANCH}/${repoRel}${suffix}`;
 }
 
 function rewrite(url, fileDir) {

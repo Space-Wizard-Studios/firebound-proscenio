@@ -32,7 +32,7 @@ That emits the JSON Schema artifacts, the Godot Resource bindings, and the TypeS
 | Surface | File / package |
 | --- | --- |
 | Wire-format models (.proscenio + PSD manifest) | [`packages/models/src/proscenio_models/`](../packages/models/src/proscenio_models/) |
-| Codegen emitters (docs / schemas / Godot / TS) | [`packages/codegen/src/proscenio_codegen/`](../packages/codegen/src/proscenio_codegen/) |
+| Codegen emitters (schemas / Godot / TS) | [`packages/codegen/src/proscenio_codegen/`](../packages/codegen/src/proscenio_codegen/) |
 | Blender addon | [`apps/blender/`](../apps/blender/) |
 | Photoshop UXP plugin | [`apps/photoshop/`](../apps/photoshop/) |
 | Godot importer plugin | [`apps/godot/`](../apps/godot/) |
