@@ -16,13 +16,13 @@ Top-level modules (bpy-free, single-file features not yet grouped):
 - ``help_topics.py``       In-panel help topic registry
 - ``mirror.py``            PG -> CP mirror logic
 - ``uv_bounds.py``         UV-bounds rect computation
-- ``quick_armature_math.py`` / ``skeleton_target.py``  armature helpers
 
 Subpackages:
 
 - ``_shared/``      cross-cutting infra (cp_keys, report, props_access,
                     pg_cp_fallback, feature_status, hydrate, geometry_2d,
                     region, viewport_state, modal_overlay_geometry)
+- ``armature/``     quick-armature math + target resolver
 - ``atlas/``        pure MaxRects packer (``atlas_packer``)
 - ``psd/``          PSD manifest reader + layer-name parsing
 - ``slot/``         pure slot[] projection (``slot_emit``)
