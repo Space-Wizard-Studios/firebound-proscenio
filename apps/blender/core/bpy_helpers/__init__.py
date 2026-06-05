@@ -4,16 +4,17 @@ Submodules in this subpackage import ``bpy`` at module top. Code that
 runs in pytest contexts (no Blender) must NOT import from here. The
 rest of ``core/`` is bpy-free.
 
-Modules:
+Modules (bpy-bound, single-file):
 
-- ``atlas_collect.py``      ``SourceImage`` + walk meshes for textured materials
-- ``atlas_compose.py``      assemble packed ``bpy.types.Image`` + write manifest JSON
-- ``atlas_manifest.py``     ``Placement`` + read manifest JSON
-- ``modal_overlay.py``      gpu/blf draw helpers for modal operator overlays
 - ``psd_spritesheet.py``    Photoshop-driven spritesheet composition
 - ``sprite_frame_shader.py`` Material slicer node group setup / removal
-- ``select.py``             ``select_only(context, obj)`` helper
-- ``viewport_math.py``      mouse-event projection onto a world plane
+
+Subpackages:
+
+- ``_shared/``   cross-cutting bpy-bound infra (viewport_math, modal_overlay,
+                 select, _bpy_compat)
+- ``atlas/``     atlas collect / compose / manifest helpers
+- ``automesh/`` / ``skinning/``  per-feature bpy-bound domain packages
 
 This ``__init__.py`` deliberately does NOT eager-import the submodules.
 Tests that touch one submodule (after mocking bpy) should import

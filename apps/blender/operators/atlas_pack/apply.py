@@ -50,7 +50,7 @@ class PROSCENIO_OT_apply_packed_atlas(bpy.types.Operator):
         return manifest.exists()
 
     def execute(self, context: bpy.types.Context) -> set[str]:
-        from ...core.bpy_helpers.atlas_manifest import (  # type: ignore[import-not-found]
+        from ...core.bpy_helpers.atlas.atlas_manifest import (  # type: ignore[import-not-found]
             read_manifest,
         )
 
