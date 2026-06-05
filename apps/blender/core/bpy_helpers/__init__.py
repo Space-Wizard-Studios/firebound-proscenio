@@ -4,15 +4,12 @@ Submodules in this subpackage import ``bpy`` at module top. Code that
 runs in pytest contexts (no Blender) must NOT import from here. The
 rest of ``core/`` is bpy-free.
 
-Modules (bpy-bound, single-file):
-
-- ``psd_spritesheet.py``    Photoshop-driven spritesheet composition
-
 Subpackages:
 
 - ``_shared/``      cross-cutting bpy-bound infra (viewport_math, modal_overlay,
                     select, _bpy_compat)
 - ``atlas/``        atlas collect / compose / manifest helpers
+- ``psd/``          the spritesheet composer
 - ``sprite_frame/`` the preview shader-node-group builder
 - ``automesh/`` / ``skinning/``  per-feature bpy-bound domain packages
 

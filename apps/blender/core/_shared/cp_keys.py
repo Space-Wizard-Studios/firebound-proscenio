@@ -66,3 +66,10 @@ PROSCENIO_MIRROR_X = "proscenio_mirror_x"
 PROSCENIO_USER_STEINERS = "proscenio_user_steiners"
 PROSCENIO_USER_STROKES = "proscenio_user_strokes"
 PROSCENIO_USER_OUTER_STROKES = "proscenio_user_outer_strokes"
+
+# Photoshop import tags. Stamped onto imported meshes by the photoshop
+# importer: the source-layer origin marker (``psd:<layer>``), the manifest
+# kind hint, and the manifest-declared blend mode kept for downstream writers.
+PROSCENIO_IMPORT_ORIGIN = "proscenio_import_origin"
+PROSCENIO_PSD_KIND = "proscenio_psd_kind"
+PROSCENIO_BLEND_MODE = "proscenio_blend_mode"
