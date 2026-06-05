@@ -12,6 +12,9 @@ from typing import ClassVar
 
 import bpy
 
+from ..core._shared.cp_keys import (  # type: ignore[import-not-found]
+    PROSCENIO_WEIGHT_SIDECAR as _SIDECAR_KEY,
+)
 from ..core._shared.report import (  # type: ignore[import-not-found]
     report_error,
     report_info,
@@ -21,8 +24,6 @@ from ..core.skinning.sidecar_schema import (  # type: ignore[import-not-found]
     compute_topology_hash,
     from_json,
 )
-
-_SIDECAR_KEY = "proscenio_weight_sidecar"
 
 
 class PROSCENIO_OT_restore_weight_snapshot(bpy.types.Operator):
