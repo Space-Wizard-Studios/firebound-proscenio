@@ -17,9 +17,6 @@ Top-level modules (bpy-free, single-file features not yet grouped):
 - ``mirror.py``            PG -> CP mirror logic
 - ``psd_manifest.py``      Photoshop manifest dataclass + reader
 - ``psd_naming.py``        PSD layer-name parsing
-- ``slot_emit.py``         slot dict projection
-- ``sprite_frame_math.py`` per-cell UV slicing math (bpy-free counterpart
-                           of ``bpy_helpers/sprite_frame_shader.py``)
 - ``uv_bounds.py``         UV-bounds rect computation
 - ``quick_armature_math.py`` / ``skeleton_target.py``  armature helpers
 
@@ -29,10 +26,12 @@ Subpackages:
                     pg_cp_fallback, feature_status, hydrate, geometry_2d,
                     region, viewport_state, modal_overlay_geometry)
 - ``atlas/``        pure MaxRects packer (``atlas_packer``)
+- ``slot/``         pure slot[] projection (``slot_emit``)
+- ``sprite_frame/`` pure UV-cell math (``sprite_frame_math``)
 - ``automesh/`` / ``skinning/`` / ``validation/``  per-feature domain packages
 - ``bpy_helpers/``  bpy-bound helpers (``_shared/``, ``atlas/``,
-                    ``automesh/``, ``skinning/``, psd_spritesheet,
-                    sprite_frame_shader)
+                    ``automesh/``, ``skinning/``, ``sprite_frame/``,
+                    psd_spritesheet)
 
 Adding new code: pick the subdirectory by its bpy dependency. A pure
 Python helper goes at the top level. A helper that calls
