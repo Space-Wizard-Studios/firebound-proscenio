@@ -6,6 +6,7 @@ bboxes
 behaviour
 Behaviours
 bleh
+blockquotes
 braba
 cheatsheet
 cheatsheets
@@ -31,6 +32,7 @@ hframed
 Jukka
 Jylänki
 keycap
+keycaps
 keyframing
 landaram
 leftmouse
