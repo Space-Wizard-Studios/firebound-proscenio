@@ -29,7 +29,7 @@ from typing import Literal, cast
 import bpy
 
 from ...core import psd_manifest
-from ...core._bpy_compat import (
+from ...core.bpy_helpers._shared._bpy_compat import (
     expect_mesh,
     expect_scene,
     first_uv_layer,

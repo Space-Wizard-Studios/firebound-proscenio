@@ -6,7 +6,7 @@ from typing import ClassVar
 
 import bpy
 
-from ...core.report import report_info, report_warn  # type: ignore[import-not-found]
+from ...core._shared.report import report_info, report_warn  # type: ignore[import-not-found]
 
 
 class PROSCENIO_OT_setup_sprite_frame_preview(bpy.types.Operator):

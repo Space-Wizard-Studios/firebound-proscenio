@@ -326,6 +326,7 @@ defaultdict
 dtype
 isclose
 iterdir
+isdir
 itertools
 rebalances
 rmtree

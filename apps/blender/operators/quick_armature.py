@@ -18,13 +18,19 @@ import bpy
 from bpy.props import BoolProperty
 from mathutils import Quaternion, Vector
 
-from ..core.bpy_helpers.modal_overlay import (  # type: ignore[import-not-found]
+from ..core._shared.report import (  # type: ignore[import-not-found]
+    report_error,
+    report_info,
+    report_warn,
+)
+from ..core._shared.viewport_state import is_front_ortho  # type: ignore[import-not-found]
+from ..core.bpy_helpers._shared.modal_overlay import (  # type: ignore[import-not-found]
     draw_circle_3d,
     draw_dashed_line_3d,
     draw_line_3d,
     draw_text_panel_2d,
 )
-from ..core.bpy_helpers.viewport_math import (  # type: ignore[import-not-found]
+from ..core.bpy_helpers._shared.viewport_math import (  # type: ignore[import-not-found]
     mouse_event_to_plane_point,
 )
 from ..core.quick_armature_math import (  # type: ignore[import-not-found]
@@ -52,9 +58,7 @@ from ..core.quick_armature_math import (
 from ..core.quick_armature_math import (
     snap_world_point_xz as _snap_world_point_xz,
 )
-from ..core.report import report_error, report_info, report_warn  # type: ignore[import-not-found]
 from ..core.skeleton_target import resolve_skeleton_target  # type: ignore[import-not-found]
-from ..core.viewport_state import is_front_ortho  # type: ignore[import-not-found]
 
 _QUICK_RIG_NAME = "Proscenio.QuickRig"
 

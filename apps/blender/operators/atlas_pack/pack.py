@@ -6,8 +6,12 @@ from typing import ClassVar
 
 import bpy
 
-from ...core.props_access import scene_props  # type: ignore[import-not-found]
-from ...core.report import report_error, report_info, report_warn  # type: ignore[import-not-found]
+from ...core._shared.props_access import scene_props  # type: ignore[import-not-found]
+from ...core._shared.report import (  # type: ignore[import-not-found]
+    report_error,
+    report_info,
+    report_warn,
+)
 from ._paths import packed_atlas_paths
 
 

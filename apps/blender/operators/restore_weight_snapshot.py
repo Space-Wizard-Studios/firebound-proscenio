@@ -12,11 +12,11 @@ from typing import ClassVar
 
 import bpy
 
-from ..core.bpy_helpers.skinning import apply_sidecar  # type: ignore[import-not-found]
-from ..core.report import (  # type: ignore[import-not-found]
+from ..core._shared.report import (  # type: ignore[import-not-found]
     report_error,
     report_info,
 )
+from ..core.bpy_helpers.skinning import apply_sidecar  # type: ignore[import-not-found]
 from ..core.skinning.sidecar_schema import (  # type: ignore[import-not-found]
     compute_topology_hash,
     from_json,
