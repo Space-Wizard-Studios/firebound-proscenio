@@ -64,15 +64,13 @@ STATUS_BADGES: dict[FeatureStatus, StatusBadge] = {
     FeatureStatus.PLANNED: StatusBadge(
         icon="EXPERIMENTAL",
         short_label="planned",
-        tooltip=(
-            "Designed but not yet implemented. The UI surface " "exists today as a placeholder."
-        ),
+        tooltip=("Designed but not yet implemented. The UI surface exists today as a placeholder."),
     ),
     FeatureStatus.OUT_OF_SCOPE: StatusBadge(
         icon="CANCEL",
         short_label="out-of-scope",
         tooltip=(
-            "Intentionally not exported. Authored in Blender " "for the user's own workflow only."
+            "Intentionally not exported. Authored in Blender for the user's own workflow only."
         ),
     ),
 }
