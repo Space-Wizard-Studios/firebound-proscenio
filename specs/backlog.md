@@ -93,7 +93,7 @@ Existing tracks (`bone_transform`, `sprite_frame`, `slot_attachment`, `visibilit
 
 ### Spec 016 follow-up: god-module splits + low-risk companions
 
-Spec 016 landed the system reorganization (core/, core/bpy_helpers/, and operators/ grouped by domain; the _shared/ infra tier; Custom Property keys consolidated). Three items were deferred because they touch modal / atlas-pack code with no headless coverage, so they need a focused session with the Blender editor open for manual smoke testing.
+Spec 016 landed the system reorganization (`core/`, `core/bpy_helpers/`, and `operators/` grouped by domain; the `_shared/` infra tier; Custom Property keys consolidated). Three items were deferred because they touch modal / atlas-pack code with no headless coverage, so they need a focused session with the Blender editor open for manual smoke testing.
 
 - **Split the two operator god-modules.** `operators/automesh/automesh_authoring.py` (~1412 LOC) and `operators/armature/quick_armature.py` (~1246 LOC) still mix the modal operator with status-bar / chord drawing, GPU preview overlays, and screen-to-plane projection. Extract the draw helpers into sibling `_overlay.py` and `_status_bar.py` modules and the projection plus view-pose math into `core/_shared` or `core/bpy_helpers/_shared`. A missed name in a moved draw function surfaces only when the modal runs, so this needs manual modal verification beyond the headless gates.
 - **Route import_photoshop reports through `core.report`.** `operators/import_photoshop.py` calls raw `self.report` with an inline `"Proscenio: "` string instead of the shared report helper. Low; it shifts user-facing message text on an untested operator.
