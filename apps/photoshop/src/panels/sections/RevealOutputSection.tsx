@@ -12,9 +12,9 @@ import type { UxpFolder } from "uxp";
 
 import type { ExportPreview } from "../../api/export-flow";
 import type { ManifestEntry } from "../../lib/manifest";
-import { elementsEqual } from "../../util/arrays";
-import { Accordion } from "../common/Accordion";
-import { KeyValueRow } from "../common/KeyValueRow";
+import { elementsEqual } from "../../utils/arrays";
+import { Accordion } from "../../components/Accordion";
+import { KeyValueRow } from "../../components/KeyValueRow";
 
 interface Props {
     preview: ExportPreview | null;

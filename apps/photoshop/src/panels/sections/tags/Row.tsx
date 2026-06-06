@@ -14,7 +14,7 @@ import {
     toggleTag,
 } from "../../../lib/tag-writer";
 import { useLayerSelection } from "../../../hooks/useLayerSelection";
-import { log } from "../../../util/log";
+import { log } from "../../../utils/log";
 import { BadgeStrip, hasBadge } from "./Badges";
 import { TagDetails } from "./Details";
 import {

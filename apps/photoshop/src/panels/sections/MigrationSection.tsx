@@ -3,7 +3,7 @@ import React from "react";
 import type { UnderscoreMigrationCandidate } from "../../lib/legacy-migration";
 import type { MigrationPreview, MigrationResult } from "../../api/legacy-migration";
 import { useLayerSelection } from "../../hooks/useLayerSelection";
-import { Accordion } from "../common/Accordion";
+import { Accordion } from "../../components/Accordion";
 
 interface Props {
     preview: MigrationPreview;

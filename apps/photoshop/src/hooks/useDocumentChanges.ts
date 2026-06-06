@@ -20,7 +20,7 @@
 import React from "react";
 
 import { subscribeToEvents, type NotificationEvent } from "../api/ps-notifications";
-import { log } from "../util/log";
+import { log } from "../utils/log";
 
 const WATCHED_EVENTS: NotificationEvent[] = [
     { event: "select" },

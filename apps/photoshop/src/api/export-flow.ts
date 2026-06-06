@@ -28,7 +28,7 @@ import type { Manifest } from "../lib/manifest";
 import { validateManifest } from "./manifest-validator";
 import { writeManifest } from "./manifest-writer";
 import { runWrites, type PngWriteResult } from "./png-writer";
-import { log } from "../util/log";
+import { log } from "../utils/log";
 
 export interface ExportFlowResult {
     kind: "ok" | "validation-failed" | "no-document" | "failed";

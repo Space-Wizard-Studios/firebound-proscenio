@@ -11,7 +11,7 @@ import React from "react";
 import type { TagBag } from "../../../lib/tag-parser";
 import type { TagTreeNode } from "../../../lib/tag-tree";
 import { readSelectionCenter } from "../../../api/ps-selection-bounds";
-import { log } from "../../../util/log";
+import { log } from "../../../utils/log";
 
 interface DetailForm {
     folder: string;

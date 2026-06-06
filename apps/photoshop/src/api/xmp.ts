@@ -15,7 +15,7 @@ import { xmp as uxpXmp } from "uxp";
 import type { PsLayer } from "photoshop";
 
 import type { TagBag } from "../lib/tag-parser";
-import { log } from "../util/log";
+import { log } from "../utils/log";
 
 export const PROSCENIO_XMP_NAMESPACE_URI = "urn:proscenio:tags:v1";
 export const PROSCENIO_XMP_PREFIX = "proscenio";

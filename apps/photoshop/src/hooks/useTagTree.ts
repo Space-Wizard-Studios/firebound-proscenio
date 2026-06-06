@@ -21,7 +21,7 @@ import React from "react";
 import { readActiveLayerTree } from "../api/active-document";
 import { buildTagTreeReusing, type TagTreeNode } from "../lib/tag-tree";
 import { renameLayer, type RenameResult } from "../api/layer-rename";
-import { elementsEqual } from "../util/arrays";
+import { elementsEqual } from "../utils/arrays";
 
 const ACTIVE_POLL_MS = 1500;
 const IDLE_POLL_MS = 4000;

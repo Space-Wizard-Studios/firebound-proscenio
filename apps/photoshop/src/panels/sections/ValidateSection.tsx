@@ -10,7 +10,7 @@ import React from "react";
 import type { ExportPreview } from "../../api/export-flow";
 import type { PlanWarning, SkippedLayer } from "../../lib/planner";
 import { useLayerSelection } from "../../hooks/useLayerSelection";
-import { Accordion } from "../common/Accordion";
+import { Accordion } from "../../components/Accordion";
 
 interface Props {
     preview: ExportPreview | null;

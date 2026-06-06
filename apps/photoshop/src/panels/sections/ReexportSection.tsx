@@ -16,10 +16,10 @@ import {
     type SingleLayerExportResult,
 } from "../../api/export-flow";
 import type { ExportOptions } from "../../lib/planner";
-import { elementsEqual } from "../../util/arrays";
-import { log } from "../../util/log";
-import { Accordion } from "../common/Accordion";
-import { KeyValueRow } from "../common/KeyValueRow";
+import { elementsEqual } from "../../utils/arrays";
+import { log } from "../../utils/log";
+import { Accordion } from "../../components/Accordion";
+import { KeyValueRow } from "../../components/KeyValueRow";
 
 interface Props {
     preview: ExportPreview | null;
