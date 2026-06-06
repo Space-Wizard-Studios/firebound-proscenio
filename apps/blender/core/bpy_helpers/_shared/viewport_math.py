@@ -67,3 +67,56 @@ def _fallback_point(
     out = [float(fallback.x), float(fallback.y), float(fallback.z)]
     out[axis_index] = 0.0
     return (out[0], out[1], out[2])
+
+
+def region_event_to_xz(
+    context: bpy.types.Context, event: bpy.types.Event
+) -> tuple[float, float] | None:
+    """Project a mouse event onto the Y=0 XZ plane, returning ``(x, z)``.
+
+    Unlike :func:`mouse_event_to_plane_point`, this returns ``None`` (no
+    region_2d_to_location_3d fallback) when the view direction is parallel
+    to the plane - the automesh authoring modal treats that as "no pick".
+    """
+    from bpy_extras import view3d_utils
+
+    region = context.region
+    rv3d = context.region_data
+    if region is None or rv3d is None:
+        return None
+    coord = (event.mouse_region_x, event.mouse_region_y)
+    origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
+    direction = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
+    if abs(direction.y) < 1e-9:
+        return None
+    t = -origin.y / direction.y
+    hit = origin + direction * t
+    return (hit.x, hit.z)
+
+
+def region_event_to_xz_offset(
+    context: bpy.types.Context, event: bpy.types.Event, dx: int = 0, dy: int = 0
+) -> tuple[float, float] | None:
+    """Project an offset pixel position onto the Y=0 XZ plane.
+
+    Converts a screen-space pixel radius into a world-space distance for
+    pick hit-testing without assuming a fixed world threshold. Returns
+    ``None`` on a parallel view or when the intersection lies behind the
+    camera (``t < 0``).
+    """
+    from bpy_extras import view3d_utils
+
+    region = context.region
+    rv3d = context.region_data
+    if region is None or rv3d is None:
+        return None
+    coord = (event.mouse_region_x + dx, event.mouse_region_y + dy)
+    origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
+    direction = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
+    if abs(direction.y) < 1e-9:
+        return None
+    t = -origin.y / direction.y
+    if t < 0:
+        return None
+    hit = origin + direction * t
+    return (hit.x, hit.z)
