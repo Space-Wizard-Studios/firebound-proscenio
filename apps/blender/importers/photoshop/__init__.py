@@ -72,13 +72,13 @@ def import_manifest(
     )
     result = ImportResult(armature=armature_obj)
     for layer in manifest.layers:
-        if layer.kind == "polygon" or layer.kind == "mesh":
+        if layer.kind == "mesh":
             obj = stamp_polygon(layer, manifest, armature_obj)
             if obj is not None:
                 result.meshes.append(obj)
             else:
-                result.skipped.append(f"polygon:{layer.name}")
-        elif layer.kind == "sprite_frame":
+                result.skipped.append(f"mesh:{layer.name}")
+        elif layer.kind == "sprite":
             stamped = stamp_sprite_frame(layer, manifest, armature_obj)
             if stamped is not None:
                 result.meshes.append(stamped.mesh_obj)

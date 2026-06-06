@@ -9,7 +9,7 @@ class_name ProscenioPsdManifest extends Resource
 # distinguish 'field set to default' from 'field absent in source'
 # without re-parsing the JSON dictionary.
 @export var _set_fields: PackedStringArray = PackedStringArray()
-@export var format_version: int = 2
+@export var format_version: int = 1
 @export var doc: String = ""
 @export var size: PackedInt32Array = PackedInt32Array()
 @export var pixels_per_unit: float = 0.0

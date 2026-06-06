@@ -76,7 +76,7 @@ class StampedSpriteFrame:
 
 
 def stamp_polygon(
-    layer: psd_manifest.PolygonLayer,
+    layer: psd_manifest.MeshLayer,
     manifest: psd_manifest.LoadedManifest,
     armature_obj: bpy.types.Object,
 ) -> bpy.types.Object | None:
@@ -107,7 +107,7 @@ def stamp_polygon(
 
 
 def stamp_sprite_frame(
-    layer: psd_manifest.SpriteFrameLayer,
+    layer: psd_manifest.SpriteLayer,
     manifest: psd_manifest.LoadedManifest,
     armature_obj: bpy.types.Object,
 ) -> StampedSpriteFrame | None:
@@ -176,7 +176,7 @@ def _layer_placement(
     it. Without an anchor the importer falls back to canvas-centered
     placement (legacy behaviour for fixtures authored before the photoshop tag system).
 
-    Known drift (photoshop-tag-system investigation, tests/BUGS_FOUND.md):
+    Known drift (photoshop-tag-system investigation, specs/backlog-bugs-found.md):
     on the Blender -> legacy JSX export -> Blender round-trip, the JSX
     exporter captures the alpha-aware bbox of each Workbench-rendered PNG which
     bleeds 1 px on every edge from anti-aliasing. The manifest's
