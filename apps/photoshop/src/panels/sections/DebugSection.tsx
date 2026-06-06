@@ -3,7 +3,7 @@ import React from "react";
 import type { ExportPreview } from "../../api/export-flow";
 import type { ManifestEntry } from "../../lib/manifest";
 import type { EntryRef } from "../../lib/planner";
-import { elementsEqual } from "../../utils/arrays";
+import { entryMatchesPath } from "../../lib/entry-match";
 import { Accordion } from "../../components/Accordion";
 import { KeyValueRow } from "../../components/KeyValueRow";
 
@@ -82,9 +82,7 @@ function isEntrySelected(
     activeLayerPath: readonly string[] | null,
 ): boolean {
     if (ref === undefined || activeLayerPath === null) return false;
-    if (elementsEqual(ref.layerPath, activeLayerPath)) return true;
-    if (ref.framePaths === undefined) return false;
-    return ref.framePaths.some((p) => elementsEqual(p, activeLayerPath));
+    return entryMatchesPath(ref, activeLayerPath);
 }
 
 const EntryRow: React.FC<{ entry: ManifestEntry; selected: boolean }> = ({ entry, selected }) => {
