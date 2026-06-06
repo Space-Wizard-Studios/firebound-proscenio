@@ -13,7 +13,7 @@
 import { app, core } from "photoshop";
 
 import { findLayerByPath } from "./_layer-find";
-import { adaptDocument } from "../adapters/photoshop-layer";
+import { adaptDocument } from "../api/adapt-document";
 import {
     planUnderscoreMigration,
     type UnderscoreMigrationCandidate,

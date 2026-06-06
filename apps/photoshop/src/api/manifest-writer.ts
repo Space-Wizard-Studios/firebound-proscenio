@@ -2,7 +2,7 @@
 // indent so output is diff-friendly against the legacy JSX exporter
 // baseline, then writes it through the UXP local file system.
 //
-// Validation runs at the call site (`controllers/export-flow.ts`) so
+// Validation runs at the call site (`api/export-flow.ts`) so
 // the panel can surface ajv errors before any disk writes happen.
 
 import type { UxpFolder } from "uxp";

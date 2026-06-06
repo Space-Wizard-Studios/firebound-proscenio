@@ -13,7 +13,7 @@ import {
     setKindTag,
     toggleTag,
 } from "../../../lib/tag-writer";
-import { selectLayerByPath } from "../../../io/ps-selection";
+import { selectLayerByPath } from "../../../api/ps-selection";
 import { log } from "../../../util/log";
 import { BadgeStrip, hasBadge } from "./Badges";
 import { TagDetails } from "./Details";

@@ -10,7 +10,7 @@ import React from "react";
 
 import type { TagBag } from "../../../lib/tag-parser";
 import type { TagTreeNode } from "../../../lib/tag-tree";
-import { readSelectionCenter } from "../../../io/ps-selection-bounds";
+import { readSelectionCenter } from "../../../api/ps-selection-bounds";
 import { log } from "../../../util/log";
 
 interface DetailForm {

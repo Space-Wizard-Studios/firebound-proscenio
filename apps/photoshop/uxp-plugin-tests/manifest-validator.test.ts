@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildManifest } from "../src/lib/planner";
-import { validateManifest } from "../src/io/manifest-validator";
+import { validateManifest } from "../src/api/manifest-validator";
 import type { Layer } from "../src/lib/layer";
 import type { Manifest } from "../src/lib/manifest";
 
