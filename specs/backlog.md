@@ -99,7 +99,7 @@ Spec 016 landed the system reorganization (`core/`, `core/bpy_helpers/`, and `op
 - **import_photoshop reports through `core.report` (done).** Replaced raw `self.report` + inline `"Proscenio: "` with `report_info` / `report_error`.
 - **`scene_has_pre_pack_snapshot` relocated (done).** Now in `core/bpy_helpers/atlas/snapshot.py`; the atlas panel imports it from core instead of reaching into `operators/atlas_pack`.
 
-**Remaining verification:** the moved modal draw / status-bar callbacks run only during the live modal, which the headless gates do not exercise. A one-time in-editor smoke test of the Quick Armature and Automesh Authoring modals (preview overlay, axis-lock guideline, status-bar chords, outside-canvas tooltip) confirms no moved reference broke at runtime.
+**Verified:** the moved modal draw / status-bar callbacks run only during the live modal, which the headless gates do not exercise, so this was confirmed by an in-editor smoke test of both the Quick Armature and Automesh Authoring modals (preview overlay, axis-lock guideline, status-bar chords, outside-canvas tooltip) - all intact at runtime.
 
 ### General rig orientation detection
 
