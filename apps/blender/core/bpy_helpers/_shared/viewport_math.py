@@ -6,11 +6,18 @@ Lives in ``core/bpy_helpers/`` (the code-modularity split).
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import bpy
 
+from ..._shared.viewport_state import is_front_ortho
+
+if TYPE_CHECKING:
+    from mathutils import Quaternion, Vector
+
 PlaneAxis = Literal["X", "Y", "Z"]
+
+_FRONT_ORTHO_TOLERANCE = 1e-4
 
 
 def mouse_event_to_plane_point(
@@ -120,3 +127,70 @@ def region_event_to_xz_offset(
         return None
     hit = origin + direction * t
     return (hit.x, hit.z)
+
+
+def point_in_region_rect(x: int, y: int, region: bpy.types.Region) -> bool:
+    """Return True when window-space ``(x, y)`` falls inside ``region``.
+
+    All Blender regions report ``x``/``y``/``width``/``height`` in window
+    pixel coords, matching ``event.mouse_x`` / ``mouse_y``.
+    """
+    return bool(
+        region.x <= x <= region.x + region.width and region.y <= y <= region.y + region.height
+    )
+
+
+def find_window_region(area: bpy.types.Area) -> bpy.types.Region | None:
+    """Return the main WINDOW region of ``area`` (the actual viewport).
+
+    The N-panel UI region, header region, and tool region all live inside
+    the same area. When an operator fires from a panel button,
+    ``context.region`` points at the panel, not the viewport canvas.
+    """
+    for region in area.regions:
+        if region.type == "WINDOW":
+            return region
+    return None
+
+
+def view_pose_equal(
+    loc: Vector,
+    rot: Quaternion,
+    dist: float,
+    other_loc: Vector | None,
+    other_rot: Quaternion | None,
+    other_dist: float,
+    location_tolerance: float = 1e-3,
+    rotation_tolerance: float = 1e-3,
+    distance_tolerance: float = 1e-3,
+) -> bool:
+    """Compare two RegionView3D poses via decomposed components.
+
+    Matrix-based comparison (via ``view_matrix``) accumulates float
+    precision drift across Blender mode-toggle round-trips; decomposed
+    values stay stable. Tolerances are wide enough to absorb that drift
+    but tight enough that any user-driven camera move - including a tiny
+    orbit - registers as a difference.
+    """
+    if other_loc is None or other_rot is None:
+        return True
+    if (loc - other_loc).length > location_tolerance:
+        return False
+    if abs(dist - other_dist) > distance_tolerance:
+        return False
+    diff_w = abs(rot.w - other_rot.w)
+    diff_x = abs(rot.x - other_rot.x)
+    diff_y = abs(rot.y - other_rot.y)
+    diff_z = abs(rot.z - other_rot.z)
+    return bool(max(diff_w, diff_x, diff_y, diff_z) <= rotation_tolerance)
+
+
+def rv3d_is_front_ortho(rv3d: bpy.types.RegionView3D) -> bool:
+    """True when ``rv3d`` is in the Front Orthographic view (within tolerance)."""
+    rotation = rv3d.view_matrix.to_3x3()
+    matrix_rows: list[list[float]] = [
+        [float(rotation[row][col]) for col in range(3)] for row in range(3)
+    ]
+    return bool(
+        is_front_ortho(rv3d.view_perspective, matrix_rows, tolerance=_FRONT_ORTHO_TOLERANCE)
+    )

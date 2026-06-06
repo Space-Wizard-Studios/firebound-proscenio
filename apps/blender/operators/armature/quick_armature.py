@@ -23,13 +23,13 @@ from ...core._shared.report import (  # type: ignore[import-not-found]
     report_info,
     report_warn,
 )
-from ...core._shared.viewport_state import is_front_ortho  # type: ignore[import-not-found]
-from ...core.armature.quick_armature_math import (  # type: ignore[import-not-found]
-    DEFAULT_NAME_PREFIX as _DEFAULT_NAME_PREFIX_CORE,
-)
 from ...core.armature.quick_armature_math import (
+    BONE_TOO_SHORT_TOLERANCE,
     AxisLock,
     PressMode,
+)
+from ...core.armature.quick_armature_math import (  # type: ignore[import-not-found]
+    DEFAULT_NAME_PREFIX as _DEFAULT_NAME_PREFIX_CORE,
 )
 from ...core.armature.quick_armature_math import (
     apply_axis_lock as _apply_axis_lock,
@@ -59,8 +59,13 @@ from ...core.bpy_helpers._shared.modal_overlay import (  # type: ignore[import-n
     draw_text_panel_2d,
 )
 from ...core.bpy_helpers._shared.viewport_math import (  # type: ignore[import-not-found]
+    find_window_region,
     mouse_event_to_plane_point,
+    point_in_region_rect,
+    rv3d_is_front_ortho,
+    view_pose_equal,
 )
+from ._status_bar import emit_chord_layout
 
 _QUICK_RIG_NAME = "Proscenio.QuickRig"
 
@@ -77,8 +82,6 @@ _PREVIEW_LINE_WIDTH = 2.0
 
 _CHEATSHEET_WARNING_TEXT_COLOR = (1.0, 0.55, 0.55, 1.0)
 
-_FRONT_ORTHO_TOLERANCE = 1e-4
-_BONE_TOO_SHORT_TOLERANCE = 1e-4
 _DEFAULT_NAME_PREFIX = _DEFAULT_NAME_PREFIX_CORE
 
 
@@ -227,7 +230,7 @@ class PROSCENIO_OT_quick_armature(bpy.types.Operator):
         # bone-creation events against the UI region would block every
         # click in the viewport, so resolve to the WINDOW region of
         # the same area.
-        cls._invoke_region = _find_window_region(context.area)
+        cls._invoke_region = find_window_region(context.area)
 
         if self._ensure_armature(context) is None:
             report_error(self, "failed to create QuickRig armature")
@@ -372,12 +375,12 @@ class PROSCENIO_OT_quick_armature(bpy.types.Operator):
             return True
         x = event.mouse_x
         y = event.mouse_y
-        if not _point_in_region_rect(x, y, window_region):
+        if not point_in_region_rect(x, y, window_region):
             return False
         for region in area.regions:
             if region.type == "WINDOW":
                 continue
-            if _point_in_region_rect(x, y, region):
+            if point_in_region_rect(x, y, region):
                 return False
         return True
 
@@ -425,7 +428,7 @@ class PROSCENIO_OT_quick_armature(bpy.types.Operator):
         tail = self._resolve_release_tail(head, raw_tail)
         if tail is None:
             return {"RUNNING_MODAL"}
-        if (Vector(tail) - Vector(head)).length < _BONE_TOO_SHORT_TOLERANCE:
+        if (Vector(tail) - Vector(head)).length < BONE_TOO_SHORT_TOLERANCE:
             report_info(self, "bone too short, skipped")
             if context.area is not None:
                 context.area.tag_redraw()
@@ -682,7 +685,7 @@ class PROSCENIO_OT_quick_armature(bpy.types.Operator):
         if rv3d is None:
             return
         cls = type(self)
-        if _rv3d_is_front_ortho(rv3d):
+        if rv3d_is_front_ortho(rv3d):
             cls._did_auto_snap = False
             return
         # ``view3d.view_axis`` honors the active region; the operator
@@ -710,7 +713,7 @@ class PROSCENIO_OT_quick_armature(bpy.types.Operator):
         # float precision drift across mode-toggle round-trips even when
         # the user does not actually move the camera; decomposed values
         # stay stable.
-        if not _view_pose_equal(
+        if not view_pose_equal(
             rv3d.view_location,
             rv3d.view_rotation,
             float(rv3d.view_distance),
@@ -916,85 +919,6 @@ def _resolve_quick_armature_props(
     return getattr(proscenio, "quick_armature", None)
 
 
-def _build_status_bar_text(cls: type[PROSCENIO_OT_quick_armature]) -> str:
-    """Short canonical form of the cheatsheet for the bottom status bar."""
-    chord = (
-        "drag = connected | Shift = unparented | Alt = disconnected"
-        if cls._default_chain
-        else "drag = unparented | Shift = connected | Alt = disconnected"
-    )
-    return (
-        f"Quick Armature: {chord} | X/Z = axis lock | Ctrl = grid snap "
-        "| Ctrl+Z = undo | Enter = confirm | Esc/RMB = exit"
-    )
-
-
-def _point_in_region_rect(x: int, y: int, region: bpy.types.Region) -> bool:
-    """Return True when window-space ``(x, y)`` falls inside ``region``.
-
-    All Blender regions report ``x``/``y``/``width``/``height`` in
-    window pixel coords, matching ``event.mouse_x`` / ``mouse_y``.
-    """
-    return bool(
-        region.x <= x <= region.x + region.width and region.y <= y <= region.y + region.height
-    )
-
-
-def _find_window_region(area: bpy.types.Area) -> bpy.types.Region | None:
-    """Return the main WINDOW region of ``area`` (the actual viewport).
-
-    The N-panel UI region, header region, and tool region all live
-    inside the same area. When the operator fires from a panel button,
-    ``context.region`` points at the panel, not the viewport canvas.
-    """
-    for region in area.regions:
-        if region.type == "WINDOW":
-            return region
-    return None
-
-
-def _view_pose_equal(
-    loc: Vector,
-    rot: Quaternion,
-    dist: float,
-    other_loc: Vector | None,
-    other_rot: Quaternion | None,
-    other_dist: float,
-    location_tolerance: float = 1e-3,
-    rotation_tolerance: float = 1e-3,
-    distance_tolerance: float = 1e-3,
-) -> bool:
-    """Compare two RegionView3D poses via decomposed components.
-
-    Matrix-based comparison (via ``view_matrix``) accumulates float
-    precision drift across Blender mode-toggle round-trips inside the
-    operator; decomposed values stay stable. Tolerances are wide enough
-    to absorb that drift but tight enough that any user-driven camera
-    move - including a tiny orbit - registers as a difference.
-    """
-    if other_loc is None or other_rot is None:
-        return True
-    if (loc - other_loc).length > location_tolerance:
-        return False
-    if abs(dist - other_dist) > distance_tolerance:
-        return False
-    diff_w = abs(rot.w - other_rot.w)
-    diff_x = abs(rot.x - other_rot.x)
-    diff_y = abs(rot.y - other_rot.y)
-    diff_z = abs(rot.z - other_rot.z)
-    return bool(max(diff_w, diff_x, diff_y, diff_z) <= rotation_tolerance)
-
-
-def _rv3d_is_front_ortho(rv3d: bpy.types.RegionView3D) -> bool:
-    rotation = rv3d.view_matrix.to_3x3()
-    matrix_rows: list[list[float]] = [
-        [float(rotation[row][col]) for col in range(3)] for row in range(3)
-    ]
-    return bool(
-        is_front_ortho(rv3d.view_perspective, matrix_rows, tolerance=_FRONT_ORTHO_TOLERANCE)
-    )
-
-
 def _draw_preview_3d(cls: type[PROSCENIO_OT_quick_armature]) -> None:
     head = cls._drag_head
     cursor = cls._cursor_world
@@ -1029,7 +953,7 @@ def _draw_preview_3d(cls: type[PROSCENIO_OT_quick_armature]) -> None:
     if (
         press_point is not None
         and cls._press_mode == "connected"
-        and (Vector(press_point) - Vector(head)).length > _BONE_TOO_SHORT_TOLERANCE
+        and (Vector(press_point) - Vector(head)).length > BONE_TOO_SHORT_TOLERANCE
     ):
         draw_circle_3d(
             press_point,
@@ -1124,71 +1048,13 @@ def _draw_cursor_warning_2d(cls: type[PROSCENIO_OT_quick_armature]) -> None:
     )
 
 
-def _emit_chord_layout(
-    layout: bpy.types.UILayout,
-    cls: type[PROSCENIO_OT_quick_armature],
-) -> None:
-    """Shared chord rendering for the STATUSBAR + 3D viewport headers.
-
-    Uses Blender's native ``EVENT_*`` / ``MOUSE_*`` icons via
-    ``layout.label(icon=...)`` so the hint visually matches Blender's
-    own modal status bar (knife tool, loop cut, etc).
-    """
-    if cls._default_chain:
-        connect_label = "connected"
-        unparented_label = "unparented"
-    else:
-        connect_label = "unparented"
-        unparented_label = "connected"
-
-    row = layout.row(align=True)
-    row.label(text="", icon="MOUSE_LMB_DRAG")
-    row.label(text=connect_label)
-
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_SHIFT")
-    row.label(text="+")
-    row.label(text="", icon="MOUSE_LMB_DRAG")
-    row.label(text=unparented_label)
-
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_ALT")
-    row.label(text="+")
-    row.label(text="", icon="MOUSE_LMB_DRAG")
-    row.label(text="disconnected")
-
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_X")
-    row.label(text="/")
-    row.label(text="", icon="EVENT_Z")
-    row.label(text="axis lock")
-
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_CTRL")
-    row.label(text="grid snap")
-
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_CTRL")
-    row.label(text="+")
-    row.label(text="", icon="EVENT_Z")
-    row.label(text="undo")
-
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_RETURN")
-    row.label(text="confirm")
-
-    row = layout.row(align=True)
-    row.label(text="", icon="EVENT_ESC")
-    row.label(text="exit")
-
-
 def _draw_statusbar_quick_armature(
     self: bpy.types.Header,
     _context: bpy.types.Context,
 ) -> None:
     """Render the chord cheatsheet on the LEFT side of the STATUS BAR."""
     layout = self.layout
-    _emit_chord_layout(layout, PROSCENIO_OT_quick_armature)
+    emit_chord_layout(layout, PROSCENIO_OT_quick_armature)
     # Push Blender's default statistics widgets to the right edge so
     # they keep their conventional spot.
     layout.separator_spacer()
@@ -1207,7 +1073,7 @@ def _draw_view3d_header_quick_armature(
     """
     layout = self.layout
     layout.separator_spacer()
-    _emit_chord_layout(layout, PROSCENIO_OT_quick_armature)
+    emit_chord_layout(layout, PROSCENIO_OT_quick_armature)
 
 
 def _sweep_orphan_handlers() -> None:
