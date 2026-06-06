@@ -6,7 +6,7 @@ import React from "react";
 import type { UxpFolder } from "uxp";
 
 import { runExport, type ExportFlowResult } from "../controllers/export-flow";
-import type { ExportOptions } from "../domain/planner";
+import type { ExportOptions } from "../lib/planner";
 
 const DEFAULT_OPTS: ExportOptions = {
     skipHidden: true,

@@ -17,7 +17,7 @@ import { adaptDocument } from "../adapters/photoshop-layer";
 import {
     planUnderscoreMigration,
     type UnderscoreMigrationCandidate,
-} from "../domain/legacy-migration";
+} from "../lib/legacy-migration";
 import { log } from "../util/log";
 
 export interface MigrationPreview {

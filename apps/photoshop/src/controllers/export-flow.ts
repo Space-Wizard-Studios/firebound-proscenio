@@ -23,8 +23,8 @@ import {
     type ExportPlan,
     type PlanWarning,
     type SkippedLayer,
-} from "../domain/planner";
-import type { Manifest } from "../domain/manifest";
+} from "../lib/planner";
+import type { Manifest } from "../lib/manifest";
 import { validateManifest } from "../io/manifest-validator";
 import { writeManifest } from "../io/manifest-writer";
 import { runWrites, type PngWriteResult } from "../io/png-writer";

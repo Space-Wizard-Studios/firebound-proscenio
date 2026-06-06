@@ -20,7 +20,7 @@ import React from "react";
 import { app } from "photoshop";
 
 import { adaptDocument } from "../adapters/photoshop-layer";
-import { buildTagTreeReusing, type TagTreeNode } from "../domain/tag-tree";
+import { buildTagTreeReusing, type TagTreeNode } from "../lib/tag-tree";
 import { renameLayer, type RenameResult } from "../io/layer-rename";
 import { elementsEqual } from "../util/arrays";
 

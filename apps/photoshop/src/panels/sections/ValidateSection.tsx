@@ -8,7 +8,7 @@
 import React from "react";
 
 import type { ExportPreview } from "../../controllers/export-flow";
-import type { PlanWarning, SkippedLayer } from "../../domain/planner";
+import type { PlanWarning, SkippedLayer } from "../../lib/planner";
 import { selectLayerByPath } from "../../io/ps-selection";
 import { Accordion } from "../common/Accordion";
 

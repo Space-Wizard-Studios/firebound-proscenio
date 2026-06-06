@@ -8,8 +8,8 @@
 
 import React from "react";
 
-import type { TagBag } from "../../../domain/tag-parser";
-import type { TagTreeNode } from "../../../domain/tag-tree";
+import type { TagBag } from "../../../lib/tag-parser";
+import type { TagTreeNode } from "../../../lib/tag-tree";
 import { readSelectionCenter } from "../../../io/ps-selection-bounds";
 import { log } from "../../../util/log";
 

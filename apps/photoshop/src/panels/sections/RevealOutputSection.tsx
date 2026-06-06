@@ -11,7 +11,7 @@ import React from "react";
 import type { UxpFolder } from "uxp";
 
 import type { ExportPreview } from "../../controllers/export-flow";
-import type { ManifestEntry } from "../../domain/manifest";
+import type { ManifestEntry } from "../../lib/manifest";
 import { elementsEqual } from "../../util/arrays";
 import { Accordion } from "../common/Accordion";
 import { KeyValueRow } from "../common/KeyValueRow";

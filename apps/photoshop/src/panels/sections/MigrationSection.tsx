@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { UnderscoreMigrationCandidate } from "../../domain/legacy-migration";
+import type { UnderscoreMigrationCandidate } from "../../lib/legacy-migration";
 import type { MigrationPreview, MigrationResult } from "../../io/legacy-migration";
 import { selectLayerByPath } from "../../io/ps-selection";
 import { Accordion } from "../common/Accordion";

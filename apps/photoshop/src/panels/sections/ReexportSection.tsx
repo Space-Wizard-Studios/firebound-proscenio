@@ -15,7 +15,7 @@ import {
     type ExportPreview,
     type SingleLayerExportResult,
 } from "../../controllers/export-flow";
-import type { ExportOptions } from "../../domain/planner";
+import type { ExportOptions } from "../../lib/planner";
 import { elementsEqual } from "../../util/arrays";
 import { log } from "../../util/log";
 import { Accordion } from "../common/Accordion";

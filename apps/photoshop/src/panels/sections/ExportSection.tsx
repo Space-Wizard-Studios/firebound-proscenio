@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ExportFlowResult } from "../../controllers/export-flow";
-import type { ExportOptions } from "../../domain/planner";
+import type { ExportOptions } from "../../lib/planner";
 import { Accordion } from "../common/Accordion";
 import { KeyValueRow } from "../common/KeyValueRow";
 
