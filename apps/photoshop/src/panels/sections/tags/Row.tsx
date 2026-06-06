@@ -13,7 +13,7 @@ import {
     setKindTag,
     toggleTag,
 } from "../../../lib/tag-writer";
-import { selectLayerByPath } from "../../../api/ps-selection";
+import { useLayerSelection } from "../../../hooks/useLayerSelection";
 import { log } from "../../../util/log";
 import { BadgeStrip, hasBadge } from "./Badges";
 import { TagDetails } from "./Details";
@@ -46,11 +46,12 @@ const TagRowImpl: React.FC<TagRowProps> = ({
     onToggleCollapse,
 }) => {
     const [expanded, setExpanded] = React.useState(false);
+    const select = useLayerSelection();
 
     const onClickName = React.useCallback(() => {
         log.debug("TagsSection", "select", node.layerPath);
-        void selectLayerByPath(node.layerPath);
-    }, [node.layerPath]);
+        select(node.layerPath);
+    }, [select, node.layerPath]);
 
     const onClickDisclosure = React.useCallback(() => {
         if (node.isGroup) onToggleCollapse(node.displayPath);
