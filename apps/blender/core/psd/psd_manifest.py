@@ -9,9 +9,9 @@ Usage::
     loaded = psd_manifest.load(Path("firebound/firebound.json"))
     for layer in loaded.manifest.layers:
         if layer.kind == "mesh":
-            stamp_polygon(layer, loaded)
+            stamp_mesh(layer, loaded)
         else:
-            stamp_sprite_frame(layer, loaded)
+            stamp_sprite(layer, loaded)
 
 The data shape is defined by ``proscenio_models.PsdManifest`` (the
 ``packages/models/`` pydantic source of truth). The JSON Schema artifact

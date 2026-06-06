@@ -65,20 +65,20 @@ def build_sprite(
     world_godot: dict[str, BoneWorld],
     ppu: float,
 ) -> MeshElement | SpriteElement:
-    """Build a sprite entry. The sprite kind is read from
-    ``Object.proscenio.sprite_type`` (PropertyGroup), falling back to the
+    """Build an element entry. The kind is read from
+    ``Object.proscenio.element_type`` (PropertyGroup), falling back to the
     legacy ``proscenio_type`` Custom Property when the PropertyGroup is
-    unavailable (default ``"polygon"``).
+    unavailable (default ``"mesh"``).
     """
-    sprite_type: str = str(
-        read_field(obj, pg_field="sprite_type", cp_key="proscenio_type", default="polygon")
+    element_type: str = str(
+        read_field(obj, pg_field="element_type", cp_key="proscenio_type", default="mesh")
     )
-    if sprite_type == "sprite_frame":
+    if element_type == "sprite":
         return build_sprite_frame(obj)
-    if sprite_type != "polygon":
+    if element_type != "mesh":
         raise RuntimeError(
-            f"Proscenio: object {obj.name!r} has unknown proscenio_type "
-            f"{sprite_type!r}; expected 'polygon' or 'sprite_frame'."
+            f"Proscenio: object {obj.name!r} has unknown element_type "
+            f"{element_type!r}; expected 'mesh' or 'sprite'."
         )
 
     mesh = expect_mesh(obj)
