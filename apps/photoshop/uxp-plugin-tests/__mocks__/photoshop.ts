@@ -9,8 +9,11 @@
 import { vi } from "vitest";
 
 // Mutable so a test can set the active document, then reset in afterEach.
-export const app: { activeDocument: unknown } = {
-    activeDocument: null,
+// documents.add / open are vi.fn stubs the flow tests configure.
+export const app = {
+    activeDocument: null as unknown,
+    documents: { add: vi.fn() },
+    open: vi.fn(),
 };
 
 export const core = {
@@ -26,4 +29,9 @@ export const action = {
     addNotificationListener: vi.fn(),
 };
 
-export const constants: Record<string, unknown> = {};
+export const constants = {
+    DocumentFill: { TRANSPARENT: "transparent" },
+    NewDocumentMode: { RGB: "rgb" },
+    TrimType: { TRANSPARENT: "transparent" },
+    ElementPlacement: { PLACEATEND: "placeAtEnd" },
+};
