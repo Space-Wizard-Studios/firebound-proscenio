@@ -142,7 +142,7 @@ Layer = Annotated[
 
 
 class PsdManifest(_Strict):
-    """Root of a PSD manifest v2 document."""
+    """Root of a PSD manifest v1 document."""
 
     model_config = ConfigDict(
         extra="forbid",

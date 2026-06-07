@@ -41,8 +41,11 @@ static func attach_elements(
 	if elements == null:
 		return
 	for element: ProscenioElement in elements:
-		# Discriminator dispatch: this builder only handles mesh elements.
-		# Default to ProscenioMeshElement when `type` is absent.
+		# Discriminator dispatch: this builder handles only ProscenioMeshElement.
+		# The "type absent -> mesh" default is applied upstream by
+		# ProscenioElement.from_dict (data.get("type", "mesh")), so a tag-less
+		# element has already parsed as ProscenioMeshElement by the time it
+		# reaches here - change the default there, not in this filter.
 		if not (element is ProscenioMeshElement):
 			continue
 		_build_mesh(element as ProscenioMeshElement, skeleton, atlas, slot_map, source_dir)

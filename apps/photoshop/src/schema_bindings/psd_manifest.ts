@@ -109,7 +109,7 @@ export type PixelsPerUnit = number;
 export type Size2 = [number, number];
 
 /**
- * Root of a PSD manifest v2 document.
+ * Root of a PSD manifest v1 document.
  */
 export interface ProscenioPSDManifest {
   anchor?: Anchor;

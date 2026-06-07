@@ -249,7 +249,7 @@
   },
   "$id": "https://space-wizard-studios.github.io/proscenio/schemas/psd_manifest.schema.json",
   "additionalProperties": false,
-  "description": "Root of a PSD manifest v2 document.",
+  "description": "Root of a PSD manifest v1 document.",
   "properties": {
     "anchor": {
       "anyOf": [
