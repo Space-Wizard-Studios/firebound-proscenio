@@ -59,7 +59,6 @@ def main() -> int:
         data_suffix=suite,
     )
     cov.start()
-    rc = 1
     try:
         rc = _run_suite(runner)
     finally:
