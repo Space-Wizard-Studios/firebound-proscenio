@@ -29,9 +29,40 @@ def _has(issues: list[Issue], severity: str, substr: str) -> bool:
     return any(i.severity == severity and substr in i.message for i in issues)
 
 
+def _armature(*bone_names: str) -> SimpleNamespace:
+    return SimpleNamespace(
+        type="ARMATURE",
+        data=SimpleNamespace(bones=[SimpleNamespace(name=n) for n in bone_names]),
+    )
+
+
+def _mesh(name: str, *, parent_bone: str, groups: list[str]) -> SimpleNamespace:
+    return SimpleNamespace(
+        name=name,
+        type="MESH",
+        data=SimpleNamespace(polygons=[object()]),
+        parent_bone=parent_bone,
+        vertex_groups=[SimpleNamespace(name=g) for g in groups],
+    )
+
+
 def test_validate_export_requires_an_armature() -> None:
     issues = validate_export(SimpleNamespace(objects=[]))
     assert _has(issues, "error", "no Armature")
+
+
+def test_full_pass_flags_an_unresolved_element() -> None:
+    scene = SimpleNamespace(
+        objects=[_armature("spine"), _mesh("torso", parent_bone="", groups=["ghost"])],
+    )
+    assert _has(validate_export(scene), "error", "none resolve to bones")
+
+
+def test_full_pass_on_a_clean_scene_has_no_errors() -> None:
+    scene = SimpleNamespace(
+        objects=[_armature("spine"), _mesh("torso", parent_bone="spine", groups=[])],
+    )
+    assert [i for i in validate_export(scene) if i.severity == "error"] == []
 
 
 def test_element_with_parent_bone_is_clean() -> None:
