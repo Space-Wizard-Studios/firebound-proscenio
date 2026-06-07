@@ -23,6 +23,7 @@ export const core = {
 
 export const action = {
     batchPlay: vi.fn(async (): Promise<unknown[]> => []),
+    addNotificationListener: vi.fn(),
 };
 
 export const constants: Record<string, unknown> = {};
