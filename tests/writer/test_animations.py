@@ -39,6 +39,7 @@ def _fcurve(data_path: str, array_index: int, samples: list[tuple[float, float]]
         ('pose.bones["arm"].scale', ("arm", "scale")),
         ("location", (None, None)),  # missing pose.bones prefix
         ('pose.bones["arm"].foo', (None, None)),  # unknown property
+        ('pose.bones["arm"', (None, None)),  # malformed: no closing bracket
     ],
 )
 def test_parse_bone_data_path(
@@ -126,6 +127,13 @@ def test_resolve_scale_emits_xz() -> None:
     assert delta.scale == [2.0, 0.5]
 
 
+def test_resolve_quaternion_rotation() -> None:
+    theta = math.pi / 2
+    quat = {0: math.cos(theta / 2), 2: math.sin(theta / 2)}
+    delta = anim._resolve_pose_entry({"rotation_quaternion": quat}, ppu=1.0)
+    assert delta.rotation == pytest.approx(theta)
+
+
 # --- build_bone_track -----------------------------------------------------
 
 
@@ -170,6 +178,13 @@ def test_build_bone_track_uses_rest_fallback_for_unknown_bone() -> None:
     track = anim.build_bone_track("ghost", by_time, ppu=100.0, rest_local={})
     # _REST_FALLBACK position is (0, 0) -> 0 + 0.1 * 100 on x.
     assert track.keys[0].position == [10.0, 0.0]
+
+
+def test_build_bone_track_scale_channel() -> None:
+    by_time = {0.0: {"scale": {0: 2.0, 2: 0.5}}}
+    track = anim.build_bone_track("arm", by_time, ppu=1.0, rest_local=_REST)
+    # rest scale (1, 1) multiplied by the delta (2, 0.5).
+    assert track.keys[0].scale == [2.0, 0.5]
 
 
 # --- action_fcurves / collect_bone_keys -----------------------------------
