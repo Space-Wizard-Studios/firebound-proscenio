@@ -343,3 +343,4 @@ anim
 monkeypatch
 monkeypatching
 unstub
+delitem
