@@ -35,6 +35,6 @@ static func from_dict(data: Dictionary) -> ProscenioPsdManifest:
 		res.anchor = PackedInt32Array(data["anchor"])
 		res._set_fields.append("anchor")
 	if data.has("layers") and data["layers"] != null:
-		res.layers = ProscenioParseHelpers._parse_dispatched(ProscenioLayer, data["layers"])
+		res.layers.assign(ProscenioParseHelpers._parse_dispatched(ProscenioLayer, data["layers"]))
 		res._set_fields.append("layers")
 	return res

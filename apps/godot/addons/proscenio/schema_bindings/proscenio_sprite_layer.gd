@@ -38,7 +38,7 @@ static func from_dict(data: Dictionary) -> ProscenioSpriteLayer:
 		res.z_order = int(data["z_order"])
 		res._set_fields.append("z_order")
 	if data.has("frames") and data["frames"] != null:
-		res.frames = ProscenioParseHelpers._parse_array(ProscenioFrameEntry, data["frames"])
+		res.frames.assign(ProscenioParseHelpers._parse_array(ProscenioFrameEntry, data["frames"]))
 		res._set_fields.append("frames")
 	if data.has("origin") and data["origin"] != null:
 		res.origin = PackedInt32Array(data["origin"])

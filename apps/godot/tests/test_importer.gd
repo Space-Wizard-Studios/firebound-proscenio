@@ -335,7 +335,14 @@ func _fail(msg: String) -> void:
 
 
 func _finish() -> void:
-	if _failures.is_empty():
+	# Zero passes means a build errored out before any assertion ran (e.g.
+	# from_dict throwing). The engine prints those as SCRIPT ERRORs that do
+	# not land in `_failures`, so guard on the pass count too - otherwise an
+	# all-errors run reports "PASS: 0 assertions" and exits 0 (false green).
+	if _passes == 0:
+		printerr("FAIL: 0 assertions ran - a build errored before any check")
+		quit(1)
+	elif _failures.is_empty():
 		print("PASS: %d assertions" % _passes)
 		quit(0)
 	else:

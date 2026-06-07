@@ -34,15 +34,19 @@ static func from_dict(data: Dictionary) -> ProscenioDocument:
 		res.skeleton = ProscenioSkeleton.from_dict(data["skeleton"])
 		res._set_fields.append("skeleton")
 	if data.has("elements") and data["elements"] != null:
-		res.elements = ProscenioParseHelpers._parse_dispatched(ProscenioElement, data["elements"])
+		res.elements.assign(
+			ProscenioParseHelpers._parse_dispatched(ProscenioElement, data["elements"])
+		)
 		res._set_fields.append("elements")
 	if data.has("slots") and data["slots"] != null:
-		res.slots = ProscenioParseHelpers._parse_array(ProscenioSlot, data["slots"])
+		res.slots.assign(ProscenioParseHelpers._parse_array(ProscenioSlot, data["slots"]))
 		res._set_fields.append("slots")
 	if data.has("atlas") and data["atlas"] != null:
 		res.atlas = String(data["atlas"])
 		res._set_fields.append("atlas")
 	if data.has("animations") and data["animations"] != null:
-		res.animations = ProscenioParseHelpers._parse_array(ProscenioAnimation, data["animations"])
+		res.animations.assign(
+			ProscenioParseHelpers._parse_array(ProscenioAnimation, data["animations"])
+		)
 		res._set_fields.append("animations")
 	return res

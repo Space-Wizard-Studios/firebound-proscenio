@@ -43,6 +43,6 @@ static func from_dict(data: Dictionary) -> ProscenioMeshElement:
 		res.texture = String(data["texture"])
 		res._set_fields.append("texture")
 	if data.has("weights") and data["weights"] != null:
-		res.weights = ProscenioParseHelpers._parse_array(ProscenioWeight, data["weights"])
+		res.weights.assign(ProscenioParseHelpers._parse_array(ProscenioWeight, data["weights"]))
 		res._set_fields.append("weights")
 	return res
