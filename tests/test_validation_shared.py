@@ -69,12 +69,12 @@ def test_armature_bone_names_empty_when_malformed() -> None:
 
 
 def test_abspath_or_none_returns_plain_path_without_bpy(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(sys.modules, "bpy", raising=False)
+    monkeypatch.setitem(sys.modules, "bpy", None)
     assert abspath_or_none("textures/atlas.png") == "textures/atlas.png"
 
 
 def test_abspath_or_none_none_for_blender_relative_without_bpy(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delitem(sys.modules, "bpy", raising=False)
+    monkeypatch.setitem(sys.modules, "bpy", None)
     assert abspath_or_none("//atlas.png") is None

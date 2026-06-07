@@ -105,7 +105,7 @@ def test_duplicate_slot_name_errors() -> None:
 
 
 def test_atlas_missing_file_warns(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(sys.modules, "bpy", raising=False)
+    monkeypatch.setitem(sys.modules, "bpy", None)
     node = SimpleNamespace(
         type="TEX_IMAGE", image=SimpleNamespace(filepath="missing_atlas_zzz.png")
     )
