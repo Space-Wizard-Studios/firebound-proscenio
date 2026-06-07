@@ -66,9 +66,14 @@ class _AutoTypes(types.ModuleType):
 
 
 def _install_bpy_stub() -> None:
-    """Register a minimal ``bpy`` module so the writer chain imports."""
-    if "bpy" in sys.modules:
-        return
+    """Register a minimal ``bpy`` module so the writer chain imports.
+
+    Installed unconditionally (overwriting any earlier stand-in, e.g. the
+    ``MagicMock`` another suite installs): the writer modules capture
+    whatever ``sys.modules['bpy']`` holds when they import, which is right
+    after this conftest runs. Suites collected earlier already captured
+    their own ``bpy`` by reference, so the overwrite does not reach them.
+    """
     bpy = types.ModuleType("bpy")
 
     types_mod = _AutoTypes("bpy.types")
@@ -88,9 +93,12 @@ def _install_bpy_stub() -> None:
 
 
 def _install_mathutils_stub() -> None:
-    """Register a minimal ``mathutils`` with a 3-component ``Vector``."""
-    if "mathutils" in sys.modules:
-        return
+    """Register a minimal ``mathutils`` with a 3-component ``Vector``.
+
+    Installed unconditionally for the same reason as the bpy stub: it must
+    win over any earlier ``MagicMock`` so the writer captures a real
+    ``Vector`` at import time.
+    """
     mathutils = types.ModuleType("mathutils")
 
     class Vector:
