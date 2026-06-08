@@ -14,6 +14,7 @@ Submodules per concern:
 - helpers.py         - PROSCENIO_PT_helpers (Preview Camera)
 - skeleton.py        - PROSCENIO_PT_skeleton + UL_bones
 - mesh_generation.py - PROSCENIO_PT_mesh_generation + automesh subpanels
+- weight_paint.py     - PROSCENIO_PT_weight_paint + bind / weight subpanels
 - outliner.py        - PROSCENIO_PT_outliner + UL_sprite_outliner
 - animation.py       - PROSCENIO_PT_animation + UL_actions
 - atlas.py           - PROSCENIO_PT_atlas + packer box
@@ -40,6 +41,7 @@ from . import (
     skeleton,
     slots,
     validation,
+    weight_paint,
 )
 
 
@@ -74,6 +76,7 @@ def register() -> None:
     slots.register()
     skeleton.register()
     mesh_generation.register()
+    weight_paint.register()
     animation.register()
     atlas.register()
     validation.register()
@@ -95,6 +98,7 @@ def unregister() -> None:
     validation.unregister()
     atlas.unregister()
     animation.unregister()
+    weight_paint.unregister()
     mesh_generation.unregister()
     skeleton.unregister()
     slots.unregister()

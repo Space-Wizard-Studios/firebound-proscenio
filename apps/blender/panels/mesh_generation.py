@@ -6,11 +6,9 @@ accordion subpanels: Automesh from Alpha (the one-shot alpha-trace),
 Automesh Interactive (the modal authoring entry), and Debug Pipeline
 (the stage enum + clear button).
 
-The five weight boxes (Bind / Edit Weights / Weight Transfer / Snapshot
-/ Sidecar IO) ride along in a trailing transitional subpanel
-(``PROSCENIO_PT_weights_legacy``). Phase 4 moves them into the dedicated
-mesh-only Weight Paint panel and deletes that subpanel. The status badge
-+ help button on each automesh subpanel header land with the
+Weight painting (Bind / Edit Weights / Snapshot / Sidecar IO / Weight
+Transfer) lives in the dedicated mesh-only ``weight_paint`` panel. The
+status badge + help button on each automesh subpanel header land with the
 header-convention pass (a later phase); the parent keeps the existing
 ``skinning`` badge until the feature-id rename in that same phase.
 """
@@ -21,7 +19,6 @@ from typing import ClassVar
 
 import bpy
 
-from ..core._shared.cp_keys import PROSCENIO_WEIGHT_SIDECAR  # type: ignore[import-not-found]
 from ._helpers import draw_subpanel_header
 
 
@@ -115,36 +112,6 @@ class PROSCENIO_PT_debug_pipeline(bpy.types.Panel):
 
     def draw(self, context: bpy.types.Context) -> None:
         _draw_debug_pipeline(self.layout, _scene_skinning(context))
-
-
-class PROSCENIO_PT_weights_legacy(bpy.types.Panel):
-    """Transitional Weight Paint ride-along - moves to its own panel in Phase 4.
-
-    Keeps the Bind / Edit Weights / Weight Transfer / Snapshot / Sidecar
-    IO boxes reachable while the dedicated mesh-only Weight Paint panel is
-    not built yet. Phase 4 extracts these into ``PROSCENIO_PT_weight_paint``
-    subpanels and removes this class.
-    """
-
-    bl_label = "Weight Paint"
-    bl_idname = "PROSCENIO_PT_weights_legacy"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Proscenio"
-    bl_parent_id = "PROSCENIO_PT_mesh_generation"
-    bl_order = 3
-    bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
-
-    def draw(self, context: bpy.types.Context) -> None:
-        layout = self.layout
-        skinning_props = _scene_skinning(context)
-        picker = _active_armature(context)
-        obj = context.active_object
-        _draw_bind_box(layout, skinning_props, picker, obj)
-        _draw_edit_weights_box(layout, obj, picker)
-        _draw_weight_transfer_box(layout)
-        _draw_snapshot_box(layout, skinning_props, obj)
-        _draw_sidecar_io_box(layout, obj)
 
 
 def _draw_automesh_alpha(
@@ -244,225 +211,11 @@ def _draw_debug_pipeline(
     )
 
 
-def _draw_bind_box(
-    layout: bpy.types.UILayout,
-    skinning_props: bpy.types.PropertyGroup | None,
-    picker: bpy.types.Object | None,
-    obj: bpy.types.Object | None = None,
-) -> None:
-    """Sub-box for the Bind to Picker Armature operator.
-
-    Surfaces the Bind mode dropdown (BONE_HEAT default + 4 Proscenio
-    fallbacks) and the run button. Button greys out when no picker
-    armature is set in the Skeleton panel - the most common cause of
-    bind failure, caught visually instead of via post-click ERROR.
-
-    falloff_power + max_distance are not surfaced here; they reach
-    the user via F3 redo after the operator runs, keeping the panel
-    UI focused on the common case.
-
-    Per-bone Soft/Hard override rows appear below the run button when
-    a picker armature is present. Each bone gets a two-button toggle;
-    depress=True marks the active override. Missing entry means the
-    bone uses the operator-level default (bind_init_mode).
-    """
-    from ..core.skinning.bone_modes import read_bone_modes  # type: ignore[import-not-found]
-
-    box = layout.box()
-    box.label(text="Bind to picker", icon="LINK_BLEND")
-    if skinning_props is not None:
-        box.prop(skinning_props, "bind_init_mode", text="Mode")
-    row = box.row()
-    row.enabled = picker is not None
-    row.operator(
-        "proscenio.bind_mesh_to_armature",
-        text="Bind to Picker Armature",
-        icon="MOD_ARMATURE",
-    )
-
-    if picker is None or obj is None or obj.type != "MESH":
-        return
-
-    modes = read_bone_modes(obj)
-    bones = picker.data.bones if picker.data is not None else []
-    if not bones:
-        return
-
-    override_box = box.box()
-    override_box.label(text="Per-bone Soft/Hard overrides:")
-    for bone in bones:
-        current = modes.get(bone.name, "")
-        bone_row = override_box.row(align=True)
-        bone_row.label(text=bone.name)
-        op_soft = bone_row.operator(
-            "proscenio.set_bone_mode",
-            text="Soft",
-            depress=(current == "SOFT"),
-        )
-        op_soft.bone_name = bone.name
-        op_soft.mode = "SOFT"
-        op_hard = bone_row.operator(
-            "proscenio.set_bone_mode",
-            text="Hard",
-            depress=(current == "HARD"),
-        )
-        op_hard.bone_name = bone.name
-        op_hard.mode = "HARD"
-
-
-def _draw_edit_weights_box(
-    layout: bpy.types.UILayout,
-    obj: bpy.types.Object | None,
-    picker: bpy.types.Object | None,
-) -> None:
-    """Sub-box surfacing the Edit Weights modal entry button.
-
-    Button enabled only when (a) picker armature set, (b) mesh has
-    a populated sidecar (binds preceded edit). Active vertex group
-    label hints which bone the modal will start painting.
-
-    Brush curve presets (O4) appear below the entry button as a
-    4-button aligned row so the artist can switch curve shape without
-    opening the brush curve editor.
-    """
-    from ..core.skinning.brush_curve_presets import (  # type: ignore[import-not-found]
-        PRESET_LABELS,
-        PRESETS,
-    )
-
-    box = layout.box()
-    box.label(text="Edit Weights", icon="BRUSHES_ALL")
-    active_label = _active_group_label(obj)
-    box.label(text=f"Active group: {active_label}")
-    row = box.row()
-    row.enabled = _edit_weights_button_enabled(obj, picker)
-    row.operator(
-        "proscenio.edit_weights",
-        text="Edit Weights",
-        icon="BRUSHES_ALL",
-    )
-    if obj is None or obj.type != "MESH":
-        return
-    if obj.get(PROSCENIO_WEIGHT_SIDECAR) is None:
-        box.label(text="bind first to enable", icon="INFO")
-
-    box.label(text="Brush curve preset:")
-    row = box.row(align=True)
-    for preset_name in PRESETS:
-        op = row.operator("proscenio.set_brush_preset", text=PRESET_LABELS[preset_name])
-        op.preset_name = preset_name
-
-
-def _active_group_label(obj: bpy.types.Object | None) -> str:
-    if obj is None or obj.type != "MESH":
-        return "(no mesh)"
-    if len(obj.vertex_groups) == 0:
-        return "(none)"
-    active = obj.vertex_groups.active
-    return active.name if active else "(none)"
-
-
-def _edit_weights_button_enabled(
-    obj: bpy.types.Object | None, picker: bpy.types.Object | None
-) -> bool:
-    if obj is None or obj.type != "MESH":
-        return False
-    if picker is None:
-        return False
-    if len(obj.vertex_groups) == 0:
-        return False
-    return obj.get(PROSCENIO_WEIGHT_SIDECAR) is not None
-
-
-def _draw_weight_transfer_box(layout: bpy.types.UILayout) -> None:
-    """Sub-box surfacing the Copy Weights to Selected operator.
-
-    Active mesh = source; other selected meshes = targets. Button
-    enabled by operator poll (active MESH + at least one other selected MESH).
-    """
-    box = layout.box()
-    box.label(text="Weight transfer:", icon="DUPLICATE")
-    box.operator("proscenio.copy_weights_to_selected", icon="DUPLICATE")
-
-
-def _draw_snapshot_box(
-    layout: bpy.types.UILayout,
-    skinning_props: bpy.types.PropertyGroup | None,
-    obj: bpy.types.Object | None,
-) -> None:
-    """Sub-box surfacing the sidecar toggles + counts pill + Restore button.
-
-    Counts are recomputed live from the JSON payload stored on the
-    active mesh (single source of truth on the active mesh).
-    Toggle for show_provenance_overlay reserves UI for the weight-paint overlay
-    even though the GPU draw handler is not in scope yet.
-    """
-    box = layout.box()
-    box.label(text="Snapshot", icon="FILE_TICK")
-    if skinning_props is not None:
-        box.prop(skinning_props, "preserve_on_regen")
-        box.prop(skinning_props, "show_provenance_overlay")
-    counts = _sidecar_counts(obj)
-    if counts is None:
-        box.label(text="no sidecar (run Bind first)", icon="INFO")
-    else:
-        box.label(
-            text=(
-                f"{counts['user_paint']} paint / "
-                f"{counts['auto_seed']} seed / "
-                f"{counts['reprojected']} reprojected"
-            )
-        )
-    row = box.row()
-    row.enabled = counts is not None
-    row.operator(
-        "proscenio.restore_weight_snapshot",
-        text="Reset to Last Saved Weights",
-        icon="LOOP_BACK",
-    )
-
-
-def _sidecar_counts(obj: bpy.types.Object | None) -> dict[str, int] | None:
-    """Parse the sidecar JSON + count entries by provenance. None = no sidecar."""
-    if obj is None or obj.type != "MESH":
-        return None
-    payload = obj.get(PROSCENIO_WEIGHT_SIDECAR)
-    if payload is None:
-        return None
-    try:
-        import json
-
-        data = json.loads(payload)
-    except (ValueError, TypeError):
-        return None
-    counts = {"user_paint": 0, "auto_seed": 0, "reprojected": 0}
-    for entry in data.get("entries", []) or []:
-        provenance = entry.get("provenance") if isinstance(entry, dict) else None
-        if provenance in counts:
-            counts[provenance] += 1
-    return counts
-
-
-def _draw_sidecar_io_box(
-    layout: bpy.types.UILayout,
-    obj: bpy.types.Object | None,
-) -> None:
-    """Sub-box with Export + Import file-dialog buttons for sidecar JSON."""
-    box = layout.box()
-    box.label(text="Sidecar IO", icon="FILE_TEXT")
-    row = box.row(align=True)
-    row.operator("proscenio.export_sidecar", text="Export", icon="EXPORT")
-    row.operator("proscenio.import_sidecar", text="Import", icon="IMPORT")
-    if obj is not None and obj.type == "MESH" and obj.get(PROSCENIO_WEIGHT_SIDECAR) is None:
-        box.label(text="no sidecar yet (run Bind first)", icon="INFO")
-
-
 _classes: tuple[type, ...] = (
     PROSCENIO_PT_mesh_generation,
     PROSCENIO_PT_automesh_alpha,
     PROSCENIO_PT_automesh_interactive,
     PROSCENIO_PT_debug_pipeline,
-    PROSCENIO_PT_weights_legacy,
 )
 
 
