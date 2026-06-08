@@ -9,7 +9,7 @@ of the way.
 Submodules per concern:
 
 - _helpers.py        - cross-cutting (header drawer, mode predicates)
-- active_element.py  - PROSCENIO_PT_active_element + helpers
+- element.py         - PROSCENIO_PT_element + per-kind subpanels
 - active_slot.py     - PROSCENIO_PT_active_slot + attachment helpers
 - skeleton.py        - PROSCENIO_PT_skeleton + UL_bones
 - skinning.py        - PROSCENIO_PT_skinning
@@ -27,11 +27,11 @@ from __future__ import annotations
 import bpy
 
 from . import (
-    active_element,
     active_slot,
     animation,
     atlas,
     diagnostics,
+    element,
     export,
     help,
     outliner,
@@ -68,7 +68,7 @@ _main_classes: tuple[type, ...] = (PROSCENIO_PT_main,)
 
 def register() -> None:
     outliner.register()
-    active_element.register()
+    element.register()
     active_slot.register()
     skeleton.register()
     skinning.register()
@@ -94,5 +94,5 @@ def unregister() -> None:
     skinning.unregister()
     skeleton.unregister()
     active_slot.unregister()
-    active_element.unregister()
+    element.unregister()
     outliner.unregister()
