@@ -15,7 +15,7 @@ class PROSCENIO_PT_validation(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Proscenio"
-    bl_parent_id = "PROSCENIO_PT_main"
+    bl_order = 8
 
     def draw_header_preset(self, _context: bpy.types.Context) -> None:
         draw_subpanel_header(self.layout, "validation", "validation")

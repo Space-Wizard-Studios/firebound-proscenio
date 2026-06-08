@@ -1,9 +1,10 @@
 """Proscenio panels package.
 
-The sidebar is anchored by ``PROSCENIO_PT_main``. Every other panel is
-a child via ``bl_parent_id``, which gives us collapsible subsections
-users can fold individually. Subpanels poll on the active selection
-(or scene state) so empty subpanels do not clutter the sidebar.
+Every tool is a sibling top-level panel in the ``Proscenio`` tab,
+ordered by ``bl_order``. ``PROSCENIO_PT_main`` is the footer (version
+banner + repo link), pinned last with a high ``bl_order``. Panels poll
+on the active selection (or scene state) so irrelevant panels stay out
+of the way.
 
 Submodules per concern:
 
@@ -41,20 +42,23 @@ from . import (
 
 
 class PROSCENIO_PT_main(bpy.types.Panel):
-    """Sidebar root - version banner; child panels do the work."""
+    """Sidebar footer - version banner + repo link, pinned below every tool panel."""
 
-    bl_label = "Proscenio"
+    bl_label = "About"
     bl_idname = "PROSCENIO_PT_main"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Proscenio"
+    bl_order = 100
 
     def draw(self, _context: bpy.types.Context) -> None:
         layout = self.layout
-        row = layout.row()
+        row = layout.row(align=True)
         row.label(text="Pipeline v0.1.0")
-        right = row.row()
+        right = row.row(align=True)
         right.alignment = "RIGHT"
+        gh = right.operator("wm.url_open", text="", icon="URL", emboss=False)
+        gh.url = "https://github.com/Space-Wizard-Studios/firebound-proscenio"
         op = right.operator("proscenio.help", text="", icon="QUESTION", emboss=False)
         op.topic = "pipeline_overview"
 
@@ -63,32 +67,32 @@ _main_classes: tuple[type, ...] = (PROSCENIO_PT_main,)
 
 
 def register() -> None:
-    for cls in _main_classes:
-        bpy.utils.register_class(cls)
+    outliner.register()
     active_element.register()
     active_slot.register()
     skeleton.register()
     skinning.register()
-    outliner.register()
     animation.register()
     atlas.register()
     validation.register()
     export.register()
     help.register()
     diagnostics.register()
+    for cls in _main_classes:
+        bpy.utils.register_class(cls)
 
 
 def unregister() -> None:
+    for cls in reversed(_main_classes):
+        bpy.utils.unregister_class(cls)
     diagnostics.unregister()
     help.unregister()
     export.unregister()
     validation.unregister()
     atlas.unregister()
     animation.unregister()
-    outliner.unregister()
     skinning.unregister()
     skeleton.unregister()
     active_slot.unregister()
     active_element.unregister()
-    for cls in reversed(_main_classes):
-        bpy.utils.unregister_class(cls)
+    outliner.unregister()

@@ -43,7 +43,7 @@ class PROSCENIO_PT_active_element(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Proscenio"
-    bl_parent_id = "PROSCENIO_PT_main"
+    bl_order = 2
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
     @classmethod
