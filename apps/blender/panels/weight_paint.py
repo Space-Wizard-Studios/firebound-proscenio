@@ -3,10 +3,9 @@
 Split out of Mesh Generation. The parent polls on the active element
 being a mesh (weight painting does not apply to sprite elements) and
 surfaces the picker readout; the work lives in accordion subpanels: Bind,
-Edit Weights, Snapshot, Sidecar IO, Weight Transfer. The mesh-only
-warning (render-on-sprite instead of hide) + the status badge / help
-button on each header land with the warn-not-hide + header-convention
-pass (a later phase).
+Edit Weights, Snapshot, Sidecar IO, Weight Transfer. The panel renders
+on any selection and shows a mesh-only hint when the active element is
+not a mesh; every header carries a status badge + help button.
 """
 
 from __future__ import annotations
@@ -16,6 +15,7 @@ from typing import ClassVar
 import bpy
 
 from ..core._shared.cp_keys import PROSCENIO_WEIGHT_SIDECAR  # type: ignore[import-not-found]
+from ._helpers import draw_subpanel_header
 
 
 def _scene_skinning(context: bpy.types.Context) -> bpy.types.PropertyGroup | None:
@@ -50,6 +50,9 @@ class PROSCENIO_PT_weight_paint(bpy.types.Panel):
     bl_order = 6
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "weight_paint", "weight_paint")
+
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
         if not _is_mesh_element(context):
@@ -79,6 +82,9 @@ class PROSCENIO_PT_bind(bpy.types.Panel):
     def poll(cls, context: bpy.types.Context) -> bool:
         return _is_mesh_element(context)
 
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "bind", "weight_paint")
+
     def draw(self, context: bpy.types.Context) -> None:
         _draw_bind(
             self.layout, _scene_skinning(context), _active_armature(context), context.active_object
@@ -101,6 +107,9 @@ class PROSCENIO_PT_edit_weights(bpy.types.Panel):
     def poll(cls, context: bpy.types.Context) -> bool:
         return _is_mesh_element(context)
 
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "edit_weights", "weight_paint")
+
     def draw(self, context: bpy.types.Context) -> None:
         _draw_edit_weights(self.layout, context.active_object, _active_armature(context))
 
@@ -120,6 +129,9 @@ class PROSCENIO_PT_snapshot(bpy.types.Panel):
     @classmethod
     def poll(cls, context: bpy.types.Context) -> bool:
         return _is_mesh_element(context)
+
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "snapshot", "weight_paint")
 
     def draw(self, context: bpy.types.Context) -> None:
         _draw_snapshot(self.layout, _scene_skinning(context), context.active_object)
@@ -141,6 +153,9 @@ class PROSCENIO_PT_sidecar_io(bpy.types.Panel):
     def poll(cls, context: bpy.types.Context) -> bool:
         return _is_mesh_element(context)
 
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "sidecar_io", "weight_paint")
+
     def draw(self, context: bpy.types.Context) -> None:
         _draw_sidecar_io(self.layout, context.active_object)
 
@@ -160,6 +175,9 @@ class PROSCENIO_PT_weight_transfer(bpy.types.Panel):
     @classmethod
     def poll(cls, context: bpy.types.Context) -> bool:
         return _is_mesh_element(context)
+
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "weight_transfer", "weight_paint")
 
     def draw(self, _context: bpy.types.Context) -> None:
         self.layout.operator("proscenio.copy_weights_to_selected", icon="DUPLICATE")

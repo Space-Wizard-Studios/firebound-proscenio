@@ -6,6 +6,8 @@ from typing import ClassVar
 
 import bpy
 
+from ._helpers import draw_subpanel_header
+
 
 class PROSCENIO_PT_diagnostics(bpy.types.Panel):
     """Smoke test + future addon-health buttons."""
@@ -17,6 +19,9 @@ class PROSCENIO_PT_diagnostics(bpy.types.Panel):
     bl_category = "Proscenio"
     bl_order = 13
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
+
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "diagnostics", "pipeline_overview")
 
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout

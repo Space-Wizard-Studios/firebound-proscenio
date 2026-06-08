@@ -12,6 +12,8 @@ from typing import ClassVar
 
 import bpy
 
+from ._helpers import draw_subpanel_header
+
 
 class PROSCENIO_PT_helpers(bpy.types.Panel):
     """Helpers - viewport authoring aids (Preview Camera)."""
@@ -23,6 +25,9 @@ class PROSCENIO_PT_helpers(bpy.types.Panel):
     bl_category = "Proscenio"
     bl_order = 11
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
+
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "helpers", "helpers")
 
     def draw(self, _context: bpy.types.Context) -> None:
         self.layout.operator(

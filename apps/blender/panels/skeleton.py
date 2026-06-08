@@ -135,6 +135,9 @@ class PROSCENIO_PT_armature(bpy.types.Panel):
         target = _explicit_target(context)
         return target is not None and bool(getattr(target.data, "bones", None))
 
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "armature", "skeleton")
+
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
         target = _explicit_target(context)
@@ -164,6 +167,9 @@ class PROSCENIO_PT_pose_mode(bpy.types.Panel):
     bl_category = "Proscenio"
     bl_parent_id = "PROSCENIO_PT_skeleton"
     bl_order = 1
+
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "pose_mode", "skeleton")
 
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
@@ -195,6 +201,9 @@ class PROSCENIO_PT_quick_armature(bpy.types.Panel):
     bl_parent_id = "PROSCENIO_PT_skeleton"
     bl_order = 2
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
+
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "quick_armature", "quick_armature")
 
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout

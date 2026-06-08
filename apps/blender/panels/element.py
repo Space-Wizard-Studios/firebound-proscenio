@@ -6,8 +6,8 @@ accordion subpanels: Active Mesh / Active Sprite (one shows per
 ``element_type``), plus the shared Texture Region and Drive from Bone
 subpanels. Per-kind body draws live in ``_draw_mesh`` / ``_draw_sprite``,
 the shared region box in ``_draw_region``, the driver shortcut in
-``_draw_driver_shortcut``. The status badge + help button on each
-subpanel header land with the header-convention pass (a later phase).
+``_draw_driver_shortcut``. Every subpanel carries a status badge + help
+button via ``draw_header_preset``.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ class PROSCENIO_PT_element(bpy.types.Panel):
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
     def draw_header_preset(self, _context: bpy.types.Context) -> None:
-        draw_subpanel_header(self.layout, "active_element", "active_element")
+        draw_subpanel_header(self.layout, "element", "active_element")
 
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
@@ -83,6 +83,9 @@ class PROSCENIO_PT_active_mesh(bpy.types.Panel):
         props = _active_mesh_props(context)
         return props is not None and props.element_type == "mesh"
 
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "active_mesh", "active_element")
+
     def draw(self, context: bpy.types.Context) -> None:
         obj = context.active_object
         _draw_mesh.draw_body(self.layout, obj, obj.proscenio)
@@ -103,6 +106,9 @@ class PROSCENIO_PT_active_sprite(bpy.types.Panel):
     def poll(cls, context: bpy.types.Context) -> bool:
         props = _active_mesh_props(context)
         return props is not None and props.element_type == "sprite"
+
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "active_sprite", "active_element")
 
     def draw(self, context: bpy.types.Context) -> None:
         obj = context.active_object
@@ -125,6 +131,9 @@ class PROSCENIO_PT_texture_region(bpy.types.Panel):
     def poll(cls, context: bpy.types.Context) -> bool:
         return _active_mesh_props(context) is not None
 
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "texture_region", "active_element")
+
     def draw(self, context: bpy.types.Context) -> None:
         props = context.active_object.proscenio
         _draw_region.draw_box(self.layout, props, element_type=props.element_type)
@@ -145,6 +154,9 @@ class PROSCENIO_PT_drive_from_bone(bpy.types.Panel):
     @classmethod
     def poll(cls, context: bpy.types.Context) -> bool:
         return _active_mesh_props(context) is not None
+
+    def draw_header_preset(self, _context: bpy.types.Context) -> None:
+        draw_subpanel_header(self.layout, "drive_from_bone", "drive_from_bone")
 
     def draw(self, context: bpy.types.Context) -> None:
         _draw_driver_shortcut.draw_box(self.layout, context.active_object.proscenio)
