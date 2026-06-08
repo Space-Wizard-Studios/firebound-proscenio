@@ -15,19 +15,7 @@ from typing import ClassVar
 import bpy
 
 from ..core._shared.cp_keys import PROSCENIO_WEIGHT_SIDECAR  # type: ignore[import-not-found]
-from ._helpers import draw_subpanel_header
-
-
-def _scene_skinning(context: bpy.types.Context) -> bpy.types.PropertyGroup | None:
-    """Return ``scene.proscenio.skinning`` defaults group, or None."""
-    scene_props = getattr(context.scene, "proscenio", None)
-    return getattr(scene_props, "skinning", None) if scene_props is not None else None
-
-
-def _active_armature(context: bpy.types.Context) -> bpy.types.Object | None:
-    """Return the scene-picked Active Armature, or None."""
-    scene_props = getattr(context.scene, "proscenio", None)
-    return getattr(scene_props, "active_armature", None) if scene_props is not None else None
+from ._helpers import _active_armature, _scene_skinning, draw_subpanel_header
 
 
 def _is_mesh_element(context: bpy.types.Context) -> bool:

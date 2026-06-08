@@ -33,7 +33,8 @@ class PROSCENIO_OT_select_slot(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set[str]:
         obj = bpy.data.objects.get(self.slot_name)
-        if obj is None or obj.type != "EMPTY":
+        props = getattr(obj, "proscenio", None) if obj is not None else None
+        if obj is None or obj.type != "EMPTY" or not getattr(props, "is_slot", False):
             report_warn(self, f"slot '{self.slot_name}' not found")
             return {"CANCELLED"}
         select_only(context, obj)

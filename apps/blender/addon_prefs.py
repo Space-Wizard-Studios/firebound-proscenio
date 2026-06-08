@@ -57,6 +57,11 @@ _classes: tuple[type, ...] = (ProscenioAddonPreferences,)
 
 
 def register() -> None:
+    if not ADDON_PACKAGE:
+        raise RuntimeError(
+            "Proscenio addon preferences need the addon package name, but "
+            "__package__ was empty - import the addon as a package, not a loose module."
+        )
     for cls in _classes:
         bpy.utils.register_class(cls)
 

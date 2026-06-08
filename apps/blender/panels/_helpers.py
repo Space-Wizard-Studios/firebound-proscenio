@@ -16,6 +16,18 @@ _HELP_OP_IDNAME = "proscenio.help"
 _STATUS_OP_IDNAME = "proscenio.status_info"
 
 
+def _scene_skinning(context: bpy.types.Context) -> bpy.types.PropertyGroup | None:
+    """Return ``scene.proscenio.skinning`` defaults group, or None."""
+    scene_props = getattr(context.scene, "proscenio", None)
+    return getattr(scene_props, "skinning", None) if scene_props is not None else None
+
+
+def _active_armature(context: bpy.types.Context) -> bpy.types.Object | None:
+    """Return the scene-picked Active Armature, or None."""
+    scene_props = getattr(context.scene, "proscenio", None)
+    return getattr(scene_props, "active_armature", None) if scene_props is not None else None
+
+
 def draw_subpanel_header(
     layout: bpy.types.UILayout,
     feature_id: str,
