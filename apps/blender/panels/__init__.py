@@ -17,7 +17,7 @@ Submodules per concern:
 - animation.py       - PROSCENIO_PT_animation + UL_actions
 - atlas.py           - PROSCENIO_PT_atlas + packer box
 - validation.py      - PROSCENIO_PT_validation
-- export.py          - PROSCENIO_PT_export
+- pipeline.py        - PROSCENIO_PT_pipeline + Import/Export subpanels
 - help.py            - PROSCENIO_PT_help
 - diagnostics.py     - PROSCENIO_PT_diagnostics
 """
@@ -32,10 +32,10 @@ from . import (
     atlas,
     diagnostics,
     element,
-    export,
     help,
     mesh_generation,
     outliner,
+    pipeline,
     skeleton,
     validation,
 )
@@ -75,7 +75,7 @@ def register() -> None:
     animation.register()
     atlas.register()
     validation.register()
-    export.register()
+    pipeline.register()
     help.register()
     diagnostics.register()
     for cls in _main_classes:
@@ -87,7 +87,7 @@ def unregister() -> None:
         bpy.utils.unregister_class(cls)
     diagnostics.unregister()
     help.unregister()
-    export.unregister()
+    pipeline.unregister()
     validation.unregister()
     atlas.unregister()
     animation.unregister()
