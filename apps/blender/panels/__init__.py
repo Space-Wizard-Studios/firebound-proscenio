@@ -10,7 +10,8 @@ Submodules per concern:
 
 - _helpers.py        - cross-cutting (header drawer, mode predicates)
 - element.py         - PROSCENIO_PT_element + per-kind subpanels
-- active_slot.py     - PROSCENIO_PT_active_slot + attachment helpers
+- slots.py           - PROSCENIO_PT_slots + Active Slot subpanel
+- helpers.py         - PROSCENIO_PT_helpers (Preview Camera)
 - skeleton.py        - PROSCENIO_PT_skeleton + UL_bones
 - mesh_generation.py - PROSCENIO_PT_mesh_generation + automesh subpanels
 - outliner.py        - PROSCENIO_PT_outliner + UL_sprite_outliner
@@ -27,16 +28,17 @@ from __future__ import annotations
 import bpy
 
 from . import (
-    active_slot,
     animation,
     atlas,
     diagnostics,
     element,
     help,
+    helpers,
     mesh_generation,
     outliner,
     pipeline,
     skeleton,
+    slots,
     validation,
 )
 
@@ -69,13 +71,14 @@ _main_classes: tuple[type, ...] = (PROSCENIO_PT_main,)
 def register() -> None:
     outliner.register()
     element.register()
-    active_slot.register()
+    slots.register()
     skeleton.register()
     mesh_generation.register()
     animation.register()
     atlas.register()
     validation.register()
     pipeline.register()
+    helpers.register()
     help.register()
     diagnostics.register()
     for cls in _main_classes:
@@ -87,12 +90,13 @@ def unregister() -> None:
         bpy.utils.unregister_class(cls)
     diagnostics.unregister()
     help.unregister()
+    helpers.unregister()
     pipeline.unregister()
     validation.unregister()
     atlas.unregister()
     animation.unregister()
     mesh_generation.unregister()
     skeleton.unregister()
-    active_slot.unregister()
+    slots.unregister()
     element.unregister()
     outliner.unregister()

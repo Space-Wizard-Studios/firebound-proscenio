@@ -15,7 +15,7 @@ class PROSCENIO_PT_diagnostics(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Proscenio"
-    bl_order = 11
+    bl_order = 13
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
     def draw(self, context: bpy.types.Context) -> None:

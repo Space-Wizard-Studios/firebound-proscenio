@@ -117,8 +117,6 @@ class PROSCENIO_PT_skeleton(bpy.types.Panel):
                     icon="ARMATURE_DATA",
                 )
                 op.armature_name = arm.name
-        layout.separator()
-        layout.operator("proscenio.create_slot", text="Create Slot", icon="LINK_BLEND")
 
 
 class PROSCENIO_PT_armature(bpy.types.Panel):
