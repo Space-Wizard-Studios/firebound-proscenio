@@ -6,6 +6,7 @@ from typing import ClassVar
 
 import bpy
 
+from ..addon_prefs import debug_mode_enabled
 from ._helpers import draw_subpanel_header
 
 
@@ -19,6 +20,10 @@ class PROSCENIO_PT_diagnostics(bpy.types.Panel):
     bl_category = "Proscenio"
     bl_order = 13
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return debug_mode_enabled(context)
 
     def draw_header_preset(self, _context: bpy.types.Context) -> None:
         draw_subpanel_header(self.layout, "diagnostics", "pipeline_overview")

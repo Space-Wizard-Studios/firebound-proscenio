@@ -19,6 +19,7 @@ from typing import ClassVar
 
 import bpy
 
+from ..addon_prefs import debug_mode_enabled
 from ._helpers import draw_subpanel_header
 
 
@@ -130,7 +131,7 @@ class PROSCENIO_PT_debug_pipeline(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context: bpy.types.Context) -> bool:
-        return _active_is_mesh(context)
+        return _active_is_mesh(context) and debug_mode_enabled(context)
 
     def draw_header_preset(self, _context: bpy.types.Context) -> None:
         draw_subpanel_header(self.layout, "debug_pipeline", "mesh_generation")
