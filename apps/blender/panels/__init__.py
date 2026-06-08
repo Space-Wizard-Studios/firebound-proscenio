@@ -12,7 +12,7 @@ Submodules per concern:
 - element.py         - PROSCENIO_PT_element + per-kind subpanels
 - active_slot.py     - PROSCENIO_PT_active_slot + attachment helpers
 - skeleton.py        - PROSCENIO_PT_skeleton + UL_bones
-- skinning.py        - PROSCENIO_PT_skinning
+- mesh_generation.py - PROSCENIO_PT_mesh_generation + automesh subpanels
 - outliner.py        - PROSCENIO_PT_outliner + UL_sprite_outliner
 - animation.py       - PROSCENIO_PT_animation + UL_actions
 - atlas.py           - PROSCENIO_PT_atlas + packer box
@@ -34,9 +34,9 @@ from . import (
     element,
     export,
     help,
+    mesh_generation,
     outliner,
     skeleton,
-    skinning,
     validation,
 )
 
@@ -71,7 +71,7 @@ def register() -> None:
     element.register()
     active_slot.register()
     skeleton.register()
-    skinning.register()
+    mesh_generation.register()
     animation.register()
     atlas.register()
     validation.register()
@@ -91,7 +91,7 @@ def unregister() -> None:
     validation.unregister()
     atlas.unregister()
     animation.unregister()
-    skinning.unregister()
+    mesh_generation.unregister()
     skeleton.unregister()
     active_slot.unregister()
     element.unregister()
