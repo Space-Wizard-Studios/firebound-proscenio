@@ -165,12 +165,11 @@ class PROSCENIO_PT_pose_mode(bpy.types.Panel):
     bl_parent_id = "PROSCENIO_PT_skeleton"
     bl_order = 1
 
-    @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
-        return context.mode == "POSE"
-
-    def draw(self, _context: bpy.types.Context) -> None:
+    def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
+        if context.mode != "POSE":
+            layout.label(text="enter Pose mode to bake / save poses", icon="INFO")
+            return
         layout.operator("proscenio.bake_current_pose", text="Bake Current Pose", icon="KEY_HLT")
         layout.operator("proscenio.toggle_ik_chain", text="Toggle IK", icon="CON_KINEMATIC")
         layout.operator(

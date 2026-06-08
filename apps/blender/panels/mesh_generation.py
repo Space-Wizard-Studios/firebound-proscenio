@@ -34,6 +34,12 @@ def _active_armature(context: bpy.types.Context) -> bpy.types.Object | None:
     return getattr(scene_props, "active_armature", None) if scene_props is not None else None
 
 
+def _active_is_mesh(context: bpy.types.Context) -> bool:
+    """True when the active object is a MESH (any element type)."""
+    obj = context.active_object
+    return obj is not None and obj.type == "MESH"
+
+
 class PROSCENIO_PT_mesh_generation(bpy.types.Panel):
     """Mesh Generation - isolated Interior Mode + picker readout; body in subpanels."""
 
@@ -45,16 +51,14 @@ class PROSCENIO_PT_mesh_generation(bpy.types.Panel):
     bl_order = 5
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
-    @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
-        obj = context.active_object
-        return obj is not None and obj.type == "MESH"
-
     def draw_header_preset(self, _context: bpy.types.Context) -> None:
         draw_subpanel_header(self.layout, "skinning", "skinning")
 
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
+        if not _active_is_mesh(context):
+            layout.label(text="select a mesh to generate or edit", icon="INFO")
+            return
         skinning_props = _scene_skinning(context)
         picker = _active_armature(context)
         picker_row = layout.row(align=True)
@@ -78,6 +82,10 @@ class PROSCENIO_PT_automesh_alpha(bpy.types.Panel):
     bl_parent_id = "PROSCENIO_PT_mesh_generation"
     bl_order = 0
 
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return _active_is_mesh(context)
+
     def draw(self, context: bpy.types.Context) -> None:
         _draw_automesh_alpha(self.layout, _scene_skinning(context))
 
@@ -94,6 +102,10 @@ class PROSCENIO_PT_automesh_interactive(bpy.types.Panel):
     bl_order = 1
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return _active_is_mesh(context)
+
     def draw(self, context: bpy.types.Context) -> None:
         _draw_automesh_interactive(self.layout, _scene_skinning(context), context.active_object)
 
@@ -109,6 +121,10 @@ class PROSCENIO_PT_debug_pipeline(bpy.types.Panel):
     bl_parent_id = "PROSCENIO_PT_mesh_generation"
     bl_order = 2
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return _active_is_mesh(context)
 
     def draw(self, context: bpy.types.Context) -> None:
         _draw_debug_pipeline(self.layout, _scene_skinning(context))

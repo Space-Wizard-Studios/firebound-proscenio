@@ -18,7 +18,7 @@ import bpy
 
 from ..core import validation  # type: ignore[import-not-found]
 from . import _draw_driver_shortcut, _draw_mesh, _draw_region, _draw_sprite
-from ._helpers import _OBJECT_FRIENDLY_MODES, draw_subpanel_header
+from ._helpers import draw_subpanel_header
 
 
 def _active_mesh_props(context: bpy.types.Context) -> bpy.types.AnyType | None:
@@ -40,24 +40,24 @@ class PROSCENIO_PT_element(bpy.types.Panel):
     bl_order = 2
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
-    @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
-        obj = context.active_object
-        if obj is None or obj.type != "MESH":
-            return False
-        return context.mode in _OBJECT_FRIENDLY_MODES
-
     def draw_header_preset(self, _context: bpy.types.Context) -> None:
         draw_subpanel_header(self.layout, "active_element", "active_element")
 
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
         obj = context.active_object
-        if obj is None:
+        if obj is None or obj.type != "MESH":
+            layout.label(text="select a mesh or sprite element", icon="INFO")
             return
         props = getattr(obj, "proscenio", None)
         if props is None:
             layout.label(text="proscenio property group not registered", icon="ERROR")
+            return
+        if context.mode == "PAINT_WEIGHT":
+            col = layout.column()
+            col.enabled = False
+            col.prop(props, "element_type")
+            layout.label(text="element type is locked in Weight Paint mode", icon="INFO")
             return
         layout.prop(props, "element_type")
         for issue in validation.validate_active_element(obj):

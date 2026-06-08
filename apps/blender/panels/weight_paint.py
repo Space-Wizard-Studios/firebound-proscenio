@@ -50,12 +50,11 @@ class PROSCENIO_PT_weight_paint(bpy.types.Panel):
     bl_order = 6
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
-    @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
-        return _is_mesh_element(context)
-
     def draw(self, context: bpy.types.Context) -> None:
         layout = self.layout
+        if not _is_mesh_element(context):
+            layout.label(text="select a mesh element (Weight Paint is mesh-only)", icon="INFO")
+            return
         picker = _active_armature(context)
         row = layout.row(align=True)
         row.label(text="", icon="ARMATURE_DATA")
@@ -76,6 +75,10 @@ class PROSCENIO_PT_bind(bpy.types.Panel):
     bl_parent_id = "PROSCENIO_PT_weight_paint"
     bl_order = 0
 
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return _is_mesh_element(context)
+
     def draw(self, context: bpy.types.Context) -> None:
         _draw_bind(
             self.layout, _scene_skinning(context), _active_armature(context), context.active_object
@@ -94,6 +97,10 @@ class PROSCENIO_PT_edit_weights(bpy.types.Panel):
     bl_order = 1
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return _is_mesh_element(context)
+
     def draw(self, context: bpy.types.Context) -> None:
         _draw_edit_weights(self.layout, context.active_object, _active_armature(context))
 
@@ -109,6 +116,10 @@ class PROSCENIO_PT_snapshot(bpy.types.Panel):
     bl_parent_id = "PROSCENIO_PT_weight_paint"
     bl_order = 2
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return _is_mesh_element(context)
 
     def draw(self, context: bpy.types.Context) -> None:
         _draw_snapshot(self.layout, _scene_skinning(context), context.active_object)
@@ -126,6 +137,10 @@ class PROSCENIO_PT_sidecar_io(bpy.types.Panel):
     bl_order = 3
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
 
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return _is_mesh_element(context)
+
     def draw(self, context: bpy.types.Context) -> None:
         _draw_sidecar_io(self.layout, context.active_object)
 
@@ -141,6 +156,10 @@ class PROSCENIO_PT_weight_transfer(bpy.types.Panel):
     bl_parent_id = "PROSCENIO_PT_weight_paint"
     bl_order = 4
     bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return _is_mesh_element(context)
 
     def draw(self, _context: bpy.types.Context) -> None:
         self.layout.operator("proscenio.copy_weights_to_selected", icon="DUPLICATE")

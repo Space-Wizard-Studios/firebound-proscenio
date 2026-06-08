@@ -11,7 +11,6 @@ import bpy
 
 from ..core._shared.feature_status import badge_for, status_for  # type: ignore[import-not-found]
 
-_OBJECT_FRIENDLY_MODES = {"OBJECT", "EDIT_MESH", "PAINT_WEIGHT", "PAINT_VERTEX"}
 _POSE_FRIENDLY_MODES = {"OBJECT", "POSE", "EDIT_ARMATURE"}
 _HELP_OP_IDNAME = "proscenio.help"
 _STATUS_OP_IDNAME = "proscenio.status_info"
