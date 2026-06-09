@@ -6,6 +6,7 @@ from collections.abc import Iterator, Sequence
 from pathlib import Path
 
 from .._shared.material_images import iter_material_node_images
+from ..slot.slot_emit import is_slot_empty
 from ._shared import abspath_or_none, armature_bone_names, name_of
 from .active_element import validate_active_element
 from .active_slot import validate_active_slot
@@ -47,10 +48,7 @@ def _validate_slots(scene_objects: Sequence[object]) -> list[Issue]:
     seen: set[str] = set()
     issues: list[Issue] = []
     for obj in scene_objects:
-        if getattr(obj, "type", None) != "EMPTY":
-            continue
-        props = getattr(obj, "proscenio", None)
-        if props is None or not bool(getattr(props, "is_slot", False)):
+        if not is_slot_empty(obj):
             continue
         name = name_of(obj)
         if name in seen:

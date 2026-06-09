@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from ..slot.slot_emit import is_slot_empty
 from ._shared import name_of
 from .issue import Issue
 
@@ -32,10 +33,7 @@ def validate_active_slot(obj: object) -> list[Issue]:
 
 
 def _is_active_slot(obj: object) -> bool:
-    if obj is None or getattr(obj, "type", None) != "EMPTY":
-        return False
-    props = getattr(obj, "proscenio", None)
-    return props is not None and bool(getattr(props, "is_slot", False))
+    return is_slot_empty(obj)
 
 
 def _check_slot_default(obj: object, children: list[object], obj_name: str) -> list[Issue]:

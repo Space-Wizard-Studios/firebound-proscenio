@@ -16,15 +16,13 @@ from typing import ClassVar
 import bpy
 
 from ..core import validation  # type: ignore[import-not-found]
+from ..core.slot.slot_emit import is_slot_empty  # type: ignore[import-not-found]
 from ._helpers import draw_subpanel_header
 
 
 def _is_slot(obj: bpy.types.Object) -> bool:
     """True when ``obj`` is an Empty flagged as a Proscenio slot."""
-    if obj.type != "EMPTY":
-        return False
-    props = getattr(obj, "proscenio", None)
-    return props is not None and bool(getattr(props, "is_slot", False))
+    return is_slot_empty(obj)
 
 
 def _attachment_kind_for(mesh_obj: bpy.types.Object) -> str:
