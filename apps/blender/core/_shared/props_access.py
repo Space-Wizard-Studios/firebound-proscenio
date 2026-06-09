@@ -49,3 +49,16 @@ def object_props(obj: bpy.types.Object | None) -> object | None:
     if obj is None:
         return None
     return getattr(obj, "proscenio", None)
+
+
+def resolve_pixels_per_unit(context: bpy.types.Context) -> float:
+    """Scene pixels-per-unit, defaulting to 100.0 when unset or unregistered.
+
+    Routes through :func:`scene_props` so the ``context.scene`` /
+    ``proscenio`` None-guards live in one place. The ``or 100.0`` also
+    maps a stored 0 to the default (a zero scale is never valid).
+    """
+    props = scene_props(context)
+    if props is None:
+        return 100.0
+    return float(getattr(props, "pixels_per_unit", 0.0)) or 100.0

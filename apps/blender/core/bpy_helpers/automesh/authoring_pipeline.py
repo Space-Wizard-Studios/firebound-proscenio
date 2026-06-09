@@ -22,6 +22,7 @@ from ..._shared.cp_keys import (
 from ..._shared.cp_keys import (
     PROSCENIO_USER_STROKES as _USER_STROKES_KEY,
 )
+from ..._shared.props_access import resolve_pixels_per_unit
 from ...automesh import (
     BoneSegment2D,
     arc_length_resample,
@@ -72,7 +73,7 @@ def compute_outer(
     outer_dilate = max(1, round(params.margin_pixels * params.resolution))
     alpha_grid = read_alpha_grid(image, params.resolution)
     pixel_contour = extract_outer_contour(alpha_grid, params.alpha_threshold, outer_dilate)
-    world_scale = 1.0 / _resolve_pixels_per_unit(bpy.context)
+    world_scale = 1.0 / resolve_pixels_per_unit(bpy.context)
     source_width, source_height = image.size[0], image.size[1]
     local = pixel_contour_to_world(
         to_float_contour(pixel_contour),
@@ -96,7 +97,7 @@ def compute_inner_loops_for_stage(
     """
     if params.inner_loop_count <= 0:
         return []
-    pixels_per_unit = _resolve_pixels_per_unit(bpy.context)
+    pixels_per_unit = resolve_pixels_per_unit(bpy.context)
     spacing_px = max(1, int(params.inner_loop_spacing * pixels_per_unit * params.resolution))
     alpha_grid = read_alpha_grid(image, params.resolution)
     base_mask = binarize(alpha_grid, params.alpha_threshold)
@@ -407,7 +408,7 @@ def _build_authoring_mesh(
     (which wraps it with the weight-sidecar reproject) and the SIMPLE
     triangulation preview (which runs it on a throwaway obj copy). Does NOT
     touch the weight sidecar, so it is safe to call without an armature."""
-    world_scale = 1.0 / _resolve_pixels_per_unit(bpy.context)
+    world_scale = 1.0 / resolve_pixels_per_unit(bpy.context)
     outer_world_raw = compute_outer(obj, image, params)
 
     outer_extends, outer_cuts = _split_outer_strokes(output.user_outer_strokes)
@@ -510,13 +511,6 @@ def compute_triangulation_preview(
             bpy.data.objects.remove(temp_obj, do_unlink=True)
         if temp_mesh is not None:
             bpy.data.meshes.remove(temp_mesh, do_unlink=True)
-
-
-def _resolve_pixels_per_unit(context: bpy.types.Context) -> float:
-    scene_props = getattr(context.scene, "proscenio", None)
-    if scene_props is None:
-        return 100.0
-    return float(scene_props.pixels_per_unit) or 100.0
 
 
 def _world_to_local_xz(obj: bpy.types.Object, world_pt: Point2D) -> Point2D:

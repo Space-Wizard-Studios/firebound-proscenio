@@ -31,6 +31,9 @@ from bpy.props import (
 from ...core._shared.material_images import (  # type: ignore[import-not-found]
     first_material_image,
 )
+from ...core._shared.props_access import (  # type: ignore[import-not-found]
+    resolve_pixels_per_unit,
+)
 from ...core._shared.report import (  # type: ignore[import-not-found]
     report_debug,
     report_error,
@@ -52,14 +55,6 @@ from ...core.bpy_helpers.skinning import (  # type: ignore[import-not-found]
 
 if TYPE_CHECKING:
     from ...core.automesh import BoneSegment2D
-
-
-def _resolve_pixels_per_unit(context: bpy.types.Context) -> float:
-    """Read the scene's pixels-per-unit, fall back to 100 when unset."""
-    scene_props = getattr(context.scene, "proscenio", None)
-    if scene_props is None:
-        return 100.0
-    return float(scene_props.pixels_per_unit) or 100.0
 
 
 class PROSCENIO_OT_automesh_from_alpha(bpy.types.Operator):
@@ -202,7 +197,7 @@ class PROSCENIO_OT_automesh_from_alpha(bpy.types.Operator):
             return {"CANCELLED"}
 
         bone_segments = self._resolve_bone_segments(context)
-        world_scale = 1.0 / _resolve_pixels_per_unit(context)
+        world_scale = 1.0 / resolve_pixels_per_unit(context)
 
         scene_props = getattr(context.scene, "proscenio", None)
         picker_armature = getattr(scene_props, "active_armature", None) if scene_props else None
