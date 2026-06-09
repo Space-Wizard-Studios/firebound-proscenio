@@ -22,6 +22,7 @@ from ..._shared.cp_keys import (
 from ..._shared.cp_keys import (
     PROSCENIO_USER_STROKES as _USER_STROKES_KEY,
 )
+from ..._shared.json_cp import read_json_list_cp
 from ..._shared.props_access import resolve_pixels_per_unit
 from ...automesh import (
     BoneSegment2D,
@@ -123,15 +124,7 @@ def compute_inner_loops_for_stage(
 
 def read_user_steiners(obj: bpy.types.Object) -> list[Point2D]:
     """Read obj['proscenio_user_steiners']; empty list when absent or corrupt."""
-    payload = obj.get(_EDIT_INTERIOR_POINTS_KEY)
-    if payload is None:
-        return []
-    try:
-        data = json.loads(payload) if isinstance(payload, str) else list(payload)
-    except (ValueError, TypeError):
-        return []
-    if not isinstance(data, list):
-        return []
+    data = read_json_list_cp(obj, _EDIT_INTERIOR_POINTS_KEY)
     points: list[Point2D] = []
     for item in data:
         if not (isinstance(item, list | tuple) and len(item) == 2):
@@ -179,14 +172,7 @@ def read_user_outer_strokes(obj: bpy.types.Object) -> list[Stroke]:
     helper is scaffolded here so the persistence key is registered and
     round-trip tests can verify it before capture is wired.
     """
-    payload = obj.get(_EDIT_OUTLINE_STROKES_KEY)
-    if payload is None:
-        return []
-    try:
-        data = json.loads(payload) if isinstance(payload, str) else list(payload)
-    except (ValueError, TypeError):
-        return []
-    return _parse_strokes(data)
+    return _parse_strokes(read_json_list_cp(obj, _EDIT_OUTLINE_STROKES_KEY))
 
 
 def write_user_outer_strokes(obj: bpy.types.Object, strokes: list[Stroke]) -> None:
