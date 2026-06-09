@@ -53,9 +53,15 @@ Phase 1 + Phase 2 shipped (commit 25af912):
 
 Gates green: ruff, ruff-format, mypy (166 files), `pytest tests/` (613), Blender operator suite (50), fixture suite (7/7).
 
+Addon reference docs shipped on `feat/spec-023-help-docs`:
+
+- New Docusaurus section "Blender addon" (sidebar + navbar) under `docs/02-blender-addon/` - an index + one page per sidebar panel, with brief per-panel / per-subpanel text mirroring the `?` help.
+- `topic_for` fills each topic's `doc_url` from a central map pointing at the matching reference page + anchor, so the "Open online docs" button now lands somewhere real. Docusaurus build is clean.
+
 Deferred (follow-up pass):
 
 - Phase 3 string-isolation module / full i18n migration - D7, "translate as we go".
 - Custom Godot badge icon (PNG + `previews` lifecycle) - D6.
 - Tooltip audit (most operators / fields already carry `bl_description`; Blender panels have no hover-tooltip slot).
-- Migrating the local-path see-also refs (`specs/`, `examples/`) to online `doc_url`s once the docs site exists - they stay plain labels until then, since they do not resolve in an installed addon.
+- Migrating the inline see-also refs (`specs/`, `examples/`) to online links - the per-topic `doc_url` now points at the new reference, but the see-also entries themselves still render as plain labels (they do not resolve in an installed addon).
+- Expanding the addon reference pages beyond the first-cut placeholders (screenshots, deeper per-tool detail) as the panels settle.
