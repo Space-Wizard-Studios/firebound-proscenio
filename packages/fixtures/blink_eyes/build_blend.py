@@ -7,7 +7,7 @@ Run with::
 Loads PNGs produced by ``draw_blink_eyes.py`` from disk and builds:
 
 - 1-bone armature (`head`)
-- 1 sprite_frame mesh (`eye`) referencing ``eye_spritesheet.png`` with
+- 1 sprite mesh (`eye`) referencing ``eye_spritesheet.png`` with
   ``hframes=4``, ``vframes=1``
 - 1 action `blink` animating ``proscenio.frame`` 0→1→2→3→2→1→0 over
   12 frames
@@ -43,7 +43,7 @@ def main() -> None:
         sys.exit(1)
     _wipe_blend()
     armature_obj = _build_armature()
-    _build_sprite_frame_plane(armature_obj)
+    _build_sprite_plane(armature_obj)
     _build_blink_action()
     _save_blend()
     _rewrite_image_to_relpath()
@@ -81,7 +81,7 @@ def _build_armature() -> bpy.types.Object:
     return arm_obj
 
 
-def _build_sprite_frame_plane(armature_obj: bpy.types.Object) -> bpy.types.Object:
+def _build_sprite_plane(armature_obj: bpy.types.Object) -> bpy.types.Object:
     w = FRAME_W / PIXELS_PER_UNIT
     h = FRAME_H / PIXELS_PER_UNIT
     mesh = bpy.data.meshes.new("eye")
