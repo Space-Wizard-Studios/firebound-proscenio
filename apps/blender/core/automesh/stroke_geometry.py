@@ -17,9 +17,8 @@ import itertools
 import math
 from collections.abc import Sequence
 
+from .._shared.geometry_2d import Point2D
 from .._shared.nearest import nearest_index
-
-Point2D = tuple[float, float]
 
 
 def subdivide_polyline(points: Sequence[Point2D], n: int) -> list[Point2D]:

@@ -15,8 +15,9 @@ from __future__ import annotations
 
 from typing import Literal
 
+from .._shared.geometry_2d import Point2D
 from ..automesh.density import distance_to_segment
-from .planar_proximity import BoneSegmentNamed2D, Point2D, compute_proximity_weights
+from .planar_proximity import BoneSegmentNamed2D, compute_proximity_weights
 
 BindMode = Literal["BONE_HEAT", "PROXIMITY", "ENVELOPE", "SINGLE_NEAREST", "EMPTY"]
 

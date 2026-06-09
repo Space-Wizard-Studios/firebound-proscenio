@@ -22,6 +22,7 @@ from ..._shared.cp_keys import (
 from ..._shared.cp_keys import (
     PROSCENIO_USER_STROKES as _USER_STROKES_KEY,
 )
+from ..._shared.geometry_2d import Point2D
 from ..._shared.json_cp import read_json_list_cp
 from ..._shared.props_access import resolve_pixels_per_unit
 from ...automesh import (
@@ -34,7 +35,7 @@ from ...automesh import (
     point_in_polygon,
     to_float_contour,
 )
-from ...skinning.authoring_stages import Point2D, StageOutput, StageParams, Stroke
+from ...skinning.authoring_stages import StageOutput, StageParams, Stroke
 from .bridge import (
     _EXTRA_INDEX_SENTINEL,
     AutomeshBuildParams,

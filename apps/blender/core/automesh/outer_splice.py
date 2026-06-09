@@ -23,10 +23,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from .._shared.geometry_2d import Point2D
 from .._shared.nearest import nearest_index
 from .density import point_in_polygon
-
-Point2D = tuple[float, float]
 
 
 def _nearest_outer_vert_index(query: Point2D, outer: Sequence[Point2D]) -> int:
