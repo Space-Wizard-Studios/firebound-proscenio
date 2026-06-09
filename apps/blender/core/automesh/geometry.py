@@ -275,13 +275,10 @@ def build_annulus_edge_pairs(
     if 0 < inner_count < 3:
         raise ValueError(f"inner_count must be 0 or >= 3, got {inner_count}")
 
-    edges: list[tuple[int, int]] = []
-    for index in range(outer_count):
-        edges.append((index, (index + 1) % outer_count))
+    edges: list[tuple[int, int]] = cyclic_loop_edges(0, outer_count)
     if inner_count >= 3:
         offset = outer_count
-        for index in range(inner_count):
-            edges.append((offset + index, offset + (index + 1) % inner_count))
+        edges.extend(cyclic_loop_edges(offset, inner_count))
         # Radial bridges (annulus strip topology) when outer and
         # inner counts match. Without these, triangle_fill produces
         # spiky fan triangles between the two loops because the
@@ -294,3 +291,9 @@ def build_annulus_edge_pairs(
                 inner_index = (index + normalized_offset) % inner_count
                 edges.append((index, offset + inner_index))
     return edges
+
+
+def cyclic_loop_edges(start_index: int, count: int) -> list[tuple[int, int]]:
+    """The ``count`` edges that close a loop of ``count`` verts laid out
+    contiguously from ``start_index``; the last edge wraps to the start."""
+    return [(start_index + i, start_index + (i + 1) % count) for i in range(count)]
