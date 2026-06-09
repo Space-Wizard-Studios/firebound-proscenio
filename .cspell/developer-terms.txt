@@ -364,3 +364,4 @@ characterised
 pmdcode
 msys
 pathconv
+autouse
