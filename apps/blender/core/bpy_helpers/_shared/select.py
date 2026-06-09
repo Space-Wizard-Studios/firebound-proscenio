@@ -12,6 +12,8 @@ contract.
 
 from __future__ import annotations
 
+import contextlib
+
 import bpy
 
 
@@ -28,3 +30,29 @@ def select_only(context: bpy.types.Context, obj: bpy.types.Object) -> None:
         other.select_set(False)
     obj.select_set(True)
     context.view_layer.objects.active = obj
+
+
+def restore_selection(
+    context: bpy.types.Context,
+    prior_selected_names: list[str],
+    prior_active: bpy.types.Object | None,
+) -> None:
+    """Restore a captured selection: deselect the current selection, reselect
+    ``prior_selected_names`` by name, then restore ``prior_active``.
+
+    Each step suppresses the ``RuntimeError`` / ``ReferenceError`` a stale
+    (undo-recreated or deleted) datablock raises, so a partial restore never
+    aborts a modal operator's ``finally`` cleanup. Object lookups go by name
+    so undo-driven recreation does not strand the restore on a dead pointer.
+    """
+    for obj in list(context.selected_objects):
+        with contextlib.suppress(RuntimeError, ReferenceError):
+            obj.select_set(False)
+    for name in prior_selected_names:
+        obj = bpy.data.objects.get(name)
+        if obj is not None:
+            with contextlib.suppress(RuntimeError):
+                obj.select_set(True)
+    if prior_active is not None:
+        with contextlib.suppress(RuntimeError, ReferenceError):
+            context.view_layer.objects.active = prior_active
