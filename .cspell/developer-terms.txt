@@ -1,6 +1,7 @@
 abspath
 AnyPortrait
 autocalculate
+autouse
 automesh
 autorado
 bmesh
@@ -364,4 +365,3 @@ characterised
 pmdcode
 msys
 pathconv
-autouse
