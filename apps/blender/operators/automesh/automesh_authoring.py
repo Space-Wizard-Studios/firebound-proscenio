@@ -16,6 +16,9 @@ import bpy
 from ...core._shared.material_images import (  # type: ignore[import-not-found]
     first_material_image,
 )
+from ...core._shared.props_access import (  # type: ignore[import-not-found]
+    active_armature,
+)
 from ...core._shared.report import (  # type: ignore[import-not-found]
     report_error,
     report_info,
@@ -1267,13 +1270,7 @@ def _snapshot_params(context: bpy.types.Context) -> StageParams:
 
 
 def _resolve_picker(context: bpy.types.Context) -> bpy.types.Object | None:
-    scene_props = getattr(context.scene, "proscenio", None)
-    if scene_props is None:
-        return None
-    picker = getattr(scene_props, "active_armature", None)
-    if picker is None or picker.type != "ARMATURE":
-        return None
-    return picker
+    return active_armature(context)
 
 
 def _draw_statusbar_authoring(self: bpy.types.Header, _context: bpy.types.Context) -> None:

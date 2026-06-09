@@ -14,6 +14,10 @@ from ..core._shared.feature_status import (  # type: ignore[import-not-found]
     badge_for,
     status_for,
 )
+from ..core._shared.props_access import (  # type: ignore[import-not-found]
+    active_armature,
+    scene_skinning,
+)
 from ..core.bpy_helpers.preview_icons import (  # type: ignore[import-not-found]
     blender_icon_id,
     godot_icon_id,
@@ -26,14 +30,12 @@ _STATUS_OP_IDNAME = "proscenio.status_info"
 
 def _scene_skinning(context: bpy.types.Context) -> bpy.types.PropertyGroup | None:
     """Return ``scene.proscenio.skinning`` defaults group, or None."""
-    scene_props = getattr(context.scene, "proscenio", None)
-    return getattr(scene_props, "skinning", None) if scene_props is not None else None
+    return scene_skinning(context)
 
 
 def _active_armature(context: bpy.types.Context) -> bpy.types.Object | None:
     """Return the scene-picked Active Armature, or None."""
-    scene_props = getattr(context.scene, "proscenio", None)
-    return getattr(scene_props, "active_armature", None) if scene_props is not None else None
+    return active_armature(context)
 
 
 def _draw_status_button(layout: bpy.types.UILayout, feature_id: str) -> None:
