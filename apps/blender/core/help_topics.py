@@ -65,7 +65,7 @@ HELP_TOPICS: dict[str, HelpTopic] = {
         summary="Quick legend for the icons next to every Proscenio panel header.",
         sections=(
             _section(
-                "godot-ready (CHECKMARK)",
+                "godot-ready (Godot mark)",
                 "Exports to .proscenio + ships in the Godot importer. Edits to",
                 "fields under this panel reach the runtime scene.",
             ),
