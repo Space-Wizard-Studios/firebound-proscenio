@@ -21,9 +21,10 @@ _PREFIX = "Proscenio: "
 # Report-verbosity gate. The addon preferences (spec 024) push the user's
 # choice here via ``set_min_level``; pure-module callers + the pytest mocks
 # keep the default, where everything emits. ``errors`` shows only error
-# reports; ``info`` (default) shows info + warnings + errors; ``debug`` adds
-# verbose developer notes on top.
-_LEVELS = {"errors": 0, "info": 1, "debug": 2}
+# reports; ``info`` (default) shows info + warnings + errors. A future
+# ``debug`` level (report_debug + verbose call sites) re-joins when there
+# are debug messages to gate.
+_LEVELS = {"errors": 0, "info": 1}
 _INFO_LEVEL = _LEVELS["info"]
 _min_level = _LEVELS["info"]
 

@@ -22,7 +22,7 @@ ADDON_PACKAGE = __package__ or ""
 
 def _on_log_level_update(self: ProscenioAddonPreferences, _context: bpy.types.Context) -> None:
     """Push the chosen verbosity into the shared report gate immediately."""
-    set_min_level(str(getattr(self, "log_level", "info")))
+    set_min_level(self.log_level)
 
 
 class ProscenioAddonPreferences(bpy.types.AddonPreferences):
@@ -34,13 +34,11 @@ class ProscenioAddonPreferences(bpy.types.AddonPreferences):
         name="Log level",
         description=(
             "How much Proscenio operators report to the Info log. Errors only = "
-            "just failures; Info = the default running commentary; Debug = adds "
-            "verbose developer notes"
+            "just failures; Info = the default running commentary"
         ),
         items=[
             ("errors", "Errors only", "Only error reports surface"),
             ("info", "Info", "Info + warnings + errors (default)"),
-            ("debug", "Debug", "Everything, including verbose developer notes"),
         ],
         default="info",
         update=_on_log_level_update,
