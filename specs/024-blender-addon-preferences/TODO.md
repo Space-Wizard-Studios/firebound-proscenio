@@ -35,6 +35,13 @@ Successor to spec 022 (which landed the minimal `ProscenioAddonPreferences` + `d
 - Cross-tool global defaults (e.g. a configurable docs URL) - only if 023 needs it.
 - Any per-project override surface.
 
-## Status
+## Status - shipped on `feat/spec-023-024-help-prefs`
 
-- [ ] not started
+Phase 1 + Phase 2 shipped (commit 3a2fe48):
+
+- `log_level` (errors / info / debug) preference, gated once in `core/_shared/report` (info + warnings suppressed below the level; errors always show). The report helpers stay pure; the bpy layer pushes the level via `set_min_level` on change + at register.
+- `debug_mode` + `log_level` grouped under a Developer box in the preferences draw.
+
+Gates green: ruff, ruff-format, mypy (166 files), `pytest tests/` (613), Blender operator suite (50), fixture suite (7/7).
+
+Deferred: cross-tool global defaults + per-project overrides (none needed yet).
