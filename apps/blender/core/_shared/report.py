@@ -18,6 +18,21 @@ from typing import Protocol, runtime_checkable
 
 _PREFIX = "Proscenio: "
 
+# Report-verbosity gate. The addon preferences (spec 024) push the user's
+# choice here via ``set_min_level``; pure-module callers + the pytest mocks
+# keep the default, where everything emits. ``errors`` shows only error
+# reports; ``info`` (default) shows info + warnings + errors; ``debug`` adds
+# verbose developer notes on top.
+_LEVELS = {"errors": 0, "info": 1, "debug": 2}
+_INFO_LEVEL = _LEVELS["info"]
+_min_level = _LEVELS["info"]
+
+
+def set_min_level(name: str) -> None:
+    """Set the report-verbosity gate from a preference enum value."""
+    global _min_level
+    _min_level = _LEVELS.get(name, _LEVELS["info"])
+
 
 @runtime_checkable
 class ReportTarget(Protocol):
@@ -27,13 +42,15 @@ class ReportTarget(Protocol):
 
 
 def report_info(op: ReportTarget, msg: str) -> None:
-    """Emit an INFO report with the ``Proscenio:`` prefix."""
-    op.report({"INFO"}, _PREFIX + msg)
+    """Emit an INFO report with the ``Proscenio:`` prefix (gated by log level)."""
+    if _min_level >= _INFO_LEVEL:
+        op.report({"INFO"}, _PREFIX + msg)
 
 
 def report_warn(op: ReportTarget, msg: str) -> None:
-    """Emit a WARNING report with the ``Proscenio:`` prefix."""
-    op.report({"WARNING"}, _PREFIX + msg)
+    """Emit a WARNING report with the ``Proscenio:`` prefix (gated by log level)."""
+    if _min_level >= _INFO_LEVEL:
+        op.report({"WARNING"}, _PREFIX + msg)
 
 
 def report_error(op: ReportTarget, msg: str) -> None:
