@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from .._shared.nearest import nearest_index
 from .density import point_in_polygon
 
 Point2D = tuple[float, float]
@@ -30,15 +31,7 @@ Point2D = tuple[float, float]
 
 def _nearest_outer_vert_index(query: Point2D, outer: Sequence[Point2D]) -> int:
     """Index of the closest outer vert (linear scan; outer is typically <256 verts)."""
-    qx, qy = query
-    best_idx = 0
-    best_d2 = float("inf")
-    for i, (vx, vy) in enumerate(outer):
-        d2 = (vx - qx) ** 2 + (vy - qy) ** 2
-        if d2 < best_d2:
-            best_d2 = d2
-            best_idx = i
-    return best_idx
+    return nearest_index(query, outer)
 
 
 def _extract_outside_run(
