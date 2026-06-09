@@ -63,6 +63,10 @@ Spec 023 finalized on `feat/spec-023-help-docs`:
 - Custom Godot badge icon (D6): the official Godot mark loads via `bpy.utils.previews` and renders for the godot-ready band, falling back to `CHECKMARK` on a missing / headless load.
 - i18n isolation (D7): `core/i18n.py` wires `bpy.app.translations` the idiomatic way - English stays inline as the msgid and Blender auto-translates registered strings, so no call-site rewrite. Per-locale tables are deferred (the STUDY non-goal), added by appending rows to `TRANSLATIONS`.
 - Tooltip / help pass verified: 41/41 operators carry a tooltip (40 `bl_description` + the dynamic status-badge `description`), properties carry descriptions, and panel headers expose a hover tooltip (the status badge) plus the `?` detail popup. Blender panels have no hover-tooltip slot, so that is the complete surface.
+- Help panel disposition (decided 2026-06-08): per-operator tooltips are satisfied in each operator's home panel - every operator carries a `bl_description` that shows on hover where the operator is a button. The Help panel stays the F3 idname cheat-sheet rather than duplicating those as runnable operator buttons (which would turn it into a launcher with an accidental-run foot-gun).
+- See-also disposition: the inline `specs/` / `examples/` see-also refs stay plain labels because they do not resolve in an installed (zipped) extension; the working clickable docs link is the per-topic `doc_url` / "Open online docs" button. Migrating those refs to online URLs is the follow-up below.
+
+With that, the 023 scope is concluded - the only open items are the explicit STUDY non-goal (per-locale translation tables) and one documented follow-up (migrating the local see-also refs to online URLs).
 
 Deferred (STUDY non-goals + follow-ups):
 
