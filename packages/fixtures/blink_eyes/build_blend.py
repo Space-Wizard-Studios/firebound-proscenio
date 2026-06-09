@@ -124,12 +124,12 @@ def _build_sprite_frame_plane(armature_obj: bpy.types.Object) -> bpy.types.Objec
     mesh.materials.append(mat)
 
     if hasattr(obj, "proscenio"):
-        obj.proscenio.sprite_type = "sprite_frame"
+        obj.proscenio.element_type = "sprite"
         obj.proscenio.hframes = HFRAMES
         obj.proscenio.vframes = VFRAMES
         obj.proscenio.frame = 0
         obj.proscenio.centered = True
-    obj["proscenio_type"] = "sprite_frame"
+    obj["proscenio_type"] = "sprite"
     obj["proscenio_hframes"] = HFRAMES
     obj["proscenio_vframes"] = VFRAMES
     obj["proscenio_frame"] = 0
