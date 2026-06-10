@@ -7,6 +7,8 @@ constants for the help / status operators.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import bpy
 
 from ..core._shared.feature_status import (  # type: ignore[import-not-found]
@@ -22,6 +24,9 @@ from ..core.bpy_helpers.preview_icons import (  # type: ignore[import-not-found]
     blender_icon_id,
     godot_icon_id,
 )
+
+if TYPE_CHECKING:
+    from ..core.validation.issue import Issue
 
 _POSE_FRIENDLY_MODES = {"OBJECT", "POSE", "EDIT_ARMATURE"}
 _HELP_OP_IDNAME = "proscenio.help"
@@ -117,3 +122,29 @@ def draw_picker_readout(layout: bpy.types.UILayout, picker: bpy.types.Object | N
         row.label(text=f"Picker: {picker.name}")
     else:
         row.label(text="Picker: (none - set in Skeleton panel)", icon="INFO")
+
+
+def draw_issue_row(layout: bpy.types.UILayout, issue: Issue) -> None:
+    """Render one validation Issue as a panel row.
+
+    ERROR / INFO icon plus an alert tint by severity. When the issue names
+    an object the row is a clickable select-issue-object button
+    (``[name] message``); otherwise a plain label. Shared by the
+    Validation, Active Element and Active Slot panels so the issue row
+    reads (and behaves) identically wherever findings surface - panels
+    whose issues never set ``obj_name`` simply get the plain label.
+    """
+    row = layout.row(align=True)
+    is_error = issue.severity == "error"
+    row.alert = is_error
+    icon = "ERROR" if is_error else "INFO"
+    if issue.obj_name:
+        op = row.operator(
+            "proscenio.select_issue_object",
+            text=f"[{issue.obj_name}] {issue.message}",
+            icon=icon,
+            emboss=False,
+        )
+        op.obj_name = issue.obj_name
+    else:
+        row.label(text=issue.message, icon=icon)

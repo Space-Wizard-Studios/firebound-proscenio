@@ -17,7 +17,7 @@ import bpy
 
 from ..core import validation  # type: ignore[import-not-found]
 from ..core.slot.slot_emit import is_slot_empty  # type: ignore[import-not-found]
-from ._helpers import draw_subpanel_header
+from ._helpers import draw_issue_row, draw_subpanel_header
 
 
 def _is_slot(obj: bpy.types.Object) -> bool:
@@ -147,10 +147,7 @@ class PROSCENIO_PT_active_slot(bpy.types.Panel):
         )
 
         for issue in validation.validate_active_slot(empty):
-            row = layout.row()
-            icon = "ERROR" if issue.severity == "error" else "INFO"
-            row.alert = issue.severity == "error"
-            row.label(text=issue.message, icon=icon)
+            draw_issue_row(layout, issue)
 
 
 _classes: tuple[type, ...] = (
