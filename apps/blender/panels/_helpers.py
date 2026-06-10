@@ -101,3 +101,19 @@ def draw_subbox_header(
     _draw_status_button(spacer, feature_id)
     op = spacer.operator(_HELP_OP_IDNAME, text="", icon="QUESTION", emboss=False)
     op.topic = help_topic
+
+
+def draw_picker_readout(layout: bpy.types.UILayout, picker: bpy.types.Object | None) -> None:
+    """Draw the one-line "Picker: <armature>" readout row.
+
+    ARMATURE_DATA icon then the picker name, or an INFO-marked
+    "(none - set in Skeleton panel)" prompt when no armature is set.
+    Shared by the Mesh Generation + Weight Paint panels so the picker
+    affordance reads identically in both.
+    """
+    row = layout.row(align=True)
+    row.label(text="", icon="ARMATURE_DATA")
+    if picker is not None:
+        row.label(text=f"Picker: {picker.name}")
+    else:
+        row.label(text="Picker: (none - set in Skeleton panel)", icon="INFO")
