@@ -24,6 +24,7 @@ from ...core._shared.report import (  # type: ignore[import-not-found]
     report_info,
     report_warn,
 )
+from ...core.bpy_helpers._shared.redraw import tag_redraw_areas  # type: ignore[import-not-found]
 from ...core.bpy_helpers._shared.viewport_math import (  # type: ignore[import-not-found]
     region_event_to_xz,
     region_event_to_xz_offset,
@@ -1290,15 +1291,7 @@ def _tag_redraw_view3d(context: bpy.types.Context) -> None:
     may have been invoked from one but the user may be looking at another.
     The statusbar reads class-level stage state, so a stage advance/retreat
     must repaint it explicitly (it otherwise only refreshes on mouse move)."""
-    wm = context.window_manager
-    if wm is None:
-        return
-    for window in wm.windows:
-        if window.screen is None:
-            continue
-        for area in window.screen.areas:
-            if area.type in {"VIEW_3D", "STATUSBAR"}:
-                area.tag_redraw()
+    tag_redraw_areas(context.window_manager, {"VIEW_3D", "STATUSBAR"})
 
 
 _classes: tuple[type, ...] = (PROSCENIO_OT_automesh_authoring,)
