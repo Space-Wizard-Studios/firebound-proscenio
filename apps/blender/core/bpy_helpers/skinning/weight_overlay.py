@@ -68,7 +68,12 @@ def _read_provenance_entries(obj: bpy.types.Object, mode: OverlayMode) -> list[o
 
 
 def _draw_color_groups(color_groups: _PointColorGroups) -> None:
-    """Render each color's world points as discs via the uniform shader."""
+    """Render each color's world points as discs via the uniform shader.
+
+    Multi-batch under one bind (one POINTS batch per color): kept distinct
+    from ``modal_overlay.draw_batch``, which is single-batch - collapsing
+    here would re-cycle the blend / point-size state per color.
+    """
     shader = gpu.shader.from_builtin(_UNIFORM_COLOR_SHADER)
     gpu.state.blend_set("ALPHA")
     gpu.state.point_size_set(_DISC_SIZE)
