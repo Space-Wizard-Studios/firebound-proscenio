@@ -13,8 +13,11 @@ contract.
 from __future__ import annotations
 
 import contextlib
+from collections.abc import Callable
 
 import bpy
+
+from ..._shared.report import report_warn
 
 
 def select_only(context: bpy.types.Context, obj: bpy.types.Object) -> None:
@@ -56,3 +59,35 @@ def restore_selection(
     if prior_active is not None:
         with contextlib.suppress(RuntimeError, ReferenceError):
             context.view_layer.objects.active = prior_active
+
+
+def select_named_or_warn(
+    operator: bpy.types.Operator,
+    context: bpy.types.Context,
+    name: str,
+    *,
+    not_found_message: str | None = None,
+    predicate: Callable[[bpy.types.Object], bool] | None = None,
+) -> bpy.types.Object | None:
+    """Look up ``name`` in ``bpy.data.objects`` and make it the sole selection.
+
+    Returns the object after selecting + activating it via
+    :func:`select_only`, or ``None`` after reporting a warning when the
+    name is absent (or ``predicate`` rejects the match - evaluated before
+    anything is selected, so a rejected object is never selected).
+
+    ``not_found_message`` overrides the default ``object '<name>' not
+    found`` so slot / issue callers phrase the miss in their own terms.
+    ``predicate`` adds a type / flag gate (e.g. the slot-Empty check);
+    it is only called when the object exists.
+
+    The empty-``name`` short-circuit is left to callers: some want a
+    distinct message, some stay silent, and ``bpy.data.objects.get("")``
+    already returns ``None`` here regardless.
+    """
+    obj = bpy.data.objects.get(name)
+    if obj is None or (predicate is not None and not predicate(obj)):
+        report_warn(operator, not_found_message or f"object '{name}' not found")
+        return None
+    select_only(context, obj)
+    return obj
