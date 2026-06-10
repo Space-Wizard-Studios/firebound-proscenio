@@ -13,7 +13,7 @@ contract.
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 
 import bpy
 
@@ -59,6 +59,26 @@ def restore_selection(
     if prior_active is not None:
         with contextlib.suppress(RuntimeError, ReferenceError):
             context.view_layer.objects.active = prior_active
+
+
+@contextlib.contextmanager
+def preserve_selection(context: bpy.types.Context) -> Iterator[None]:
+    """Snapshot the current selection + active object, restore on exit.
+
+    Captures the selected object names + the active object on entry and
+    restores them via :func:`restore_selection` when the block exits, even
+    if the body raises. Selection is captured by name so undo-driven
+    recreation inside the body does not strand the restore on a dead
+    datablock. Wrap an operator step that has to commandeer the selection
+    (``parent_set``, a mode toggle, a ``bpy.ops`` call) and hand it back
+    untouched.
+    """
+    prior_selected_names = [obj.name for obj in context.selected_objects]
+    prior_active = context.view_layer.objects.active
+    try:
+        yield
+    finally:
+        restore_selection(context, prior_selected_names, prior_active)
 
 
 def select_named_or_warn(

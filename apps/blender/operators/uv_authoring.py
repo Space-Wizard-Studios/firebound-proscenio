@@ -14,6 +14,9 @@ from ..core._shared.report import report_info, report_warn  # type: ignore[impor
 from ..core.bpy_helpers._shared.mesh_uvs import (  # type: ignore[import-not-found]
     collect_mesh_loop_uvs,
 )
+from ..core.bpy_helpers._shared.select import (  # type: ignore[import-not-found]
+    preserve_selection,
+)
 
 
 class PROSCENIO_OT_reproject_sprite_uv(bpy.types.Operator):
@@ -56,28 +59,23 @@ class PROSCENIO_OT_reproject_sprite_uv(bpy.types.Operator):
     def execute(self, context: bpy.types.Context) -> set[str]:
         obj = context.active_object
         prior_mode = context.mode
-        prior_active = context.view_layer.objects.active
-        prior_selection = [o for o in context.scene.objects if o.select_get()]
 
-        try:
-            for other in context.scene.objects:
-                other.select_set(False)
-            obj.select_set(True)
-            context.view_layer.objects.active = obj
-            if prior_mode != "EDIT_MESH":
-                bpy.ops.object.mode_set(mode="EDIT")
-            bpy.ops.mesh.select_all(action="SELECT")
-            bpy.ops.uv.smart_project(angle_limit=self.angle_limit)
-        finally:
-            if prior_mode != "EDIT_MESH":
-                with contextlib.suppress(RuntimeError):
-                    bpy.ops.object.mode_set(mode="OBJECT")
-            for other in context.scene.objects:
-                other.select_set(False)
-            for o in prior_selection:
-                o.select_set(True)
-            if prior_active is not None:
-                context.view_layer.objects.active = prior_active
+        # preserve_selection hands back the user's selection + active object;
+        # the inner finally is only for the Edit-Mode toggle this op makes.
+        with preserve_selection(context):
+            try:
+                for other in context.scene.objects:
+                    other.select_set(False)
+                obj.select_set(True)
+                context.view_layer.objects.active = obj
+                if prior_mode != "EDIT_MESH":
+                    bpy.ops.object.mode_set(mode="EDIT")
+                bpy.ops.mesh.select_all(action="SELECT")
+                bpy.ops.uv.smart_project(angle_limit=self.angle_limit)
+            finally:
+                if prior_mode != "EDIT_MESH":
+                    with contextlib.suppress(RuntimeError):
+                        bpy.ops.object.mode_set(mode="OBJECT")
 
         report_info(self, f"reprojected UVs on '{obj.name}'")
         return {"FINISHED"}

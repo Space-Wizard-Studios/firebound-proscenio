@@ -10,7 +10,6 @@ weights succeed, builds a populated ``WeightSidecar`` via
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 
 import bpy
@@ -25,6 +24,7 @@ from ...skinning.bone_modes import BoneMode, bone_mode_for
 from ...skinning.planar_proximity import BoneSegmentNamed2D
 from ...skinning.sidecar_schema import to_json
 from ...skinning.skinning_modes import BindMode, bind_weights_for_mode
+from .._shared.select import preserve_selection
 from ._helpers import deform_bone_world_segments, iter_deform_bones, wipe_non_base_groups
 from .sidecar_io import snapshot_sidecar
 
@@ -267,26 +267,16 @@ def _apply_bone_heat(obj: bpy.types.Object, armature: bpy.types.Object) -> dict[
     groups_wiped = wipe_non_base_groups(obj)
 
     deform_bone_names = [b.name for b in armature.data.bones if b.use_deform]
-    prior_active = bpy.context.view_layer.objects.active
-    prior_selected = list(bpy.context.selected_objects)
-    try:
-        for other in prior_selected:
+    with preserve_selection(bpy.context):
+        # parent_set commandeers the selection (obj + armature selected,
+        # armature active) and leaves it that way; preserve_selection hands
+        # the user's pre-bind selection back on exit, success or failure.
+        for other in list(bpy.context.selected_objects):
             other.select_set(False)
         obj.select_set(True)
         armature.select_set(True)
         bpy.context.view_layer.objects.active = armature
         bpy.ops.object.parent_set(type="ARMATURE_AUTO")
-    finally:
-        # Restore the full selection state, not just the active object.
-        # parent_set leaves obj + armature selected; user's pre-bind
-        # selection should survive an in-or-out success/failure.
-        obj.select_set(False)
-        armature.select_set(False)
-        for prior in prior_selected:
-            # ReferenceError = object was removed mid-operation; skip silently.
-            with contextlib.suppress(ReferenceError):
-                prior.select_set(True)
-        bpy.context.view_layer.objects.active = prior_active
 
     sidecar = snapshot_sidecar(obj, armature, provenance="auto_seed")
     obj[_SIDECAR_KEY] = to_json(sidecar)
