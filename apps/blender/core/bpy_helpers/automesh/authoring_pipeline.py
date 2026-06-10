@@ -148,22 +148,25 @@ def read_user_strokes(obj: bpy.types.Object) -> list[Stroke]:
     """Read obj['proscenio_user_strokes']; backward compat with legacy
     proscenio_user_steiners flat list (treated as kind='point' strokes).
     """
-    payload = obj.get(_USER_STROKES_KEY)
-    if payload is not None:
-        try:
-            data = json.loads(payload) if isinstance(payload, str) else list(payload)
-        except (ValueError, TypeError):
-            return []
-        return _parse_strokes(data)
+    if _USER_STROKES_KEY in obj:
+        # Present payload routes through the shared codec (corrupt -> []);
+        # only a genuinely absent key falls back to the legacy steiners.
+        return _parse_strokes(read_json_list_cp(obj, _USER_STROKES_KEY))
     # Legacy fallback: flat list of points -> wrap each as kind='point'
     legacy_points = read_user_steiners(obj)
     return [{"kind": "point", "points": [p]} for p in legacy_points]
 
 
-def write_user_strokes(obj: bpy.types.Object, strokes: list[Stroke]) -> None:
-    obj[_USER_STROKES_KEY] = json.dumps(
+def _encode_strokes(strokes: list[Stroke]) -> str:
+    """Serialise strokes to the canonical JSON CP payload: a JSON list of
+    ``{"kind", "points": [[x, y], ...]}`` objects."""
+    return json.dumps(
         [{"kind": s["kind"], "points": [[p[0], p[1]] for p in s["points"]]} for s in strokes]
     )
+
+
+def write_user_strokes(obj: bpy.types.Object, strokes: list[Stroke]) -> None:
+    obj[_USER_STROKES_KEY] = _encode_strokes(strokes)
 
 
 def read_user_outer_strokes(obj: bpy.types.Object) -> list[Stroke]:
@@ -178,9 +181,7 @@ def read_user_outer_strokes(obj: bpy.types.Object) -> list[Stroke]:
 
 def write_user_outer_strokes(obj: bpy.types.Object, strokes: list[Stroke]) -> None:
     """Persist Stage 2 (EDIT_OUTLINE) strokes as JSON string."""
-    obj[_EDIT_OUTLINE_STROKES_KEY] = json.dumps(
-        [{"kind": s["kind"], "points": [[p[0], p[1]] for p in s["points"]]} for s in strokes]
-    )
+    obj[_EDIT_OUTLINE_STROKES_KEY] = _encode_strokes(strokes)
 
 
 def _parse_stroke_points(raw_pts: list[object]) -> list[tuple[float, float]]:
