@@ -266,7 +266,7 @@ def _apply_bone_heat(obj: bpy.types.Object, armature: bpy.types.Object) -> dict[
         del obj[_SIDECAR_KEY]
     groups_wiped = wipe_non_base_groups(obj)
 
-    deform_bone_names = [b.name for b in armature.data.bones if b.use_deform]
+    deform_bone_names = [b.name for b in iter_deform_bones(armature)]
     with preserve_selection(bpy.context):
         # parent_set commandeers the selection (obj + armature selected,
         # armature active) and leaves it that way; preserve_selection hands

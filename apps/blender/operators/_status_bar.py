@@ -30,9 +30,11 @@ def append_statusbar_draw(operator_cls: type, draw_fn: Callable[..., None]) -> N
     """Prepend ``draw_fn`` to the STATUSBAR header once for ``operator_cls``.
 
     Idempotent via the operator's ``_statusbar_appended`` class flag, so a
-    re-entered modal does not stack duplicate header callbacks.
+    re-entered modal does not stack duplicate header callbacks. The flag is
+    read with ``getattr`` so the helper stays self-contained even for a
+    class that has not declared it yet (the first append sets it).
     """
-    if not operator_cls._statusbar_appended:
+    if not getattr(operator_cls, "_statusbar_appended", False):
         bpy.types.STATUSBAR_HT_header.prepend(draw_fn)
         operator_cls._statusbar_appended = True
 
@@ -44,7 +46,7 @@ def remove_statusbar_draw(operator_cls: type, draw_fn: Callable[..., None]) -> N
     RuntimeError Blender raises when the callback was already detached (e.g.
     an addon reload between invoke and cancel).
     """
-    if operator_cls._statusbar_appended:
+    if getattr(operator_cls, "_statusbar_appended", False):
         with contextlib.suppress(ValueError, RuntimeError):
             bpy.types.STATUSBAR_HT_header.remove(draw_fn)
         operator_cls._statusbar_appended = False
