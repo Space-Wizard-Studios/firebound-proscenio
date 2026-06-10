@@ -47,6 +47,7 @@ materialiser
 mult
 mutação
 neighbouring
+normalisation
 objs
 Opção
 persp
@@ -92,6 +93,7 @@ tofile
 toggla
 Toon
 trippable
+unrecognised
 visualisers
 Vite
 vitest
