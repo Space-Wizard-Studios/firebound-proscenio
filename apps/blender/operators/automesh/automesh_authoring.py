@@ -7,7 +7,6 @@ Coexists with the one-shot automesh_from_alpha operator.
 
 from __future__ import annotations
 
-import contextlib
 import traceback
 from typing import ClassVar, Literal, cast
 
@@ -65,6 +64,7 @@ from ...core.skinning.authoring_stages import (  # type: ignore[import-not-found
     StageParams,
     Stroke,
 )
+from .._status_bar import append_statusbar_draw, remove_statusbar_draw
 from ._status_bar import emit_authoring_chord_layout
 
 _TIMER_INTERVAL = 0.1
@@ -1242,15 +1242,10 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         return {"CANCELLED" if cancel else "FINISHED"}
 
     def _append_statusbar(self) -> None:
-        if not type(self)._statusbar_appended:
-            bpy.types.STATUSBAR_HT_header.prepend(_draw_statusbar_authoring)
-            type(self)._statusbar_appended = True
+        append_statusbar_draw(type(self), _draw_statusbar_authoring)
 
     def _remove_statusbar(self) -> None:
-        if type(self)._statusbar_appended:
-            with contextlib.suppress(ValueError, RuntimeError):
-                bpy.types.STATUSBAR_HT_header.remove(_draw_statusbar_authoring)
-            type(self)._statusbar_appended = False
+        remove_statusbar_draw(type(self), _draw_statusbar_authoring)
 
 
 def _snapshot_params(context: bpy.types.Context) -> StageParams:

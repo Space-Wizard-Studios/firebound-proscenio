@@ -35,6 +35,7 @@ from ...core.bpy_helpers.skinning import (  # type: ignore[import-not-found]
 from ...core.skinning.sidecar_schema import (  # type: ignore[import-not-found]
     from_json,
 )
+from .._status_bar import append_statusbar_draw, remove_statusbar_draw
 
 
 class PROSCENIO_OT_edit_weights_modal(bpy.types.Operator):
@@ -144,15 +145,10 @@ class PROSCENIO_OT_edit_weights_modal(bpy.types.Operator):
         return {"CANCELLED" if cancel else "FINISHED"}
 
     def _append_statusbar(self) -> None:
-        if not type(self)._statusbar_appended:
-            bpy.types.STATUSBAR_HT_header.prepend(_draw_statusbar_edit_weights)
-            type(self)._statusbar_appended = True
+        append_statusbar_draw(type(self), _draw_statusbar_edit_weights)
 
     def _remove_statusbar(self) -> None:
-        if type(self)._statusbar_appended:
-            with contextlib.suppress(ValueError, RuntimeError):
-                bpy.types.STATUSBAR_HT_header.remove(_draw_statusbar_edit_weights)
-            type(self)._statusbar_appended = False
+        remove_statusbar_draw(type(self), _draw_statusbar_edit_weights)
 
 
 def _validate_invoke_preconditions(

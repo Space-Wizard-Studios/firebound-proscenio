@@ -10,6 +10,9 @@ row so the icon/text layout never drifts between operators.
 
 from __future__ import annotations
 
+import contextlib
+from collections.abc import Callable
+
 import bpy
 
 
@@ -21,3 +24,27 @@ def chord(layout: bpy.types.UILayout, *parts: tuple[str, str]) -> None:
     row = layout.row(align=True)
     for icon, text in parts:
         row.label(text=text, icon=icon or "NONE")
+
+
+def append_statusbar_draw(operator_cls: type, draw_fn: Callable[..., None]) -> None:
+    """Prepend ``draw_fn`` to the STATUSBAR header once for ``operator_cls``.
+
+    Idempotent via the operator's ``_statusbar_appended`` class flag, so a
+    re-entered modal does not stack duplicate header callbacks.
+    """
+    if not operator_cls._statusbar_appended:
+        bpy.types.STATUSBAR_HT_header.prepend(draw_fn)
+        operator_cls._statusbar_appended = True
+
+
+def remove_statusbar_draw(operator_cls: type, draw_fn: Callable[..., None]) -> None:
+    """Remove ``draw_fn`` from the STATUSBAR header for ``operator_cls``.
+
+    Clears the ``_statusbar_appended`` flag and suppresses the ValueError /
+    RuntimeError Blender raises when the callback was already detached (e.g.
+    an addon reload between invoke and cancel).
+    """
+    if operator_cls._statusbar_appended:
+        with contextlib.suppress(ValueError, RuntimeError):
+            bpy.types.STATUSBAR_HT_header.remove(draw_fn)
+        operator_cls._statusbar_appended = False
