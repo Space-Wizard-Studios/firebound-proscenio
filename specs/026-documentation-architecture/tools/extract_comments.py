@@ -14,7 +14,6 @@ from __future__ import annotations
 import ast
 import io
 import json
-import re
 import subprocess
 import tokenize
 from pathlib import Path
@@ -55,6 +54,7 @@ def extract_py(rel: str, src: str, rec: list[dict]) -> None:
                         rec.append({"file": rel, "line": body0.lineno, "lang": "py",
                                     "kind": "docstring", "text": ast.get_docstring(node, clean=False)[:400]})
     except SyntaxError:
+        # Unparseable file: skip docstrings; the tokenizer pass below still runs.
         pass
     try:
         for tok in tokenize.generate_tokens(io.StringIO(src).readline):
@@ -62,6 +62,7 @@ def extract_py(rel: str, src: str, rec: list[dict]) -> None:
                 rec.append({"file": rel, "line": tok.start[0], "lang": "py",
                             "kind": "comment", "text": tok.string})
     except (tokenize.TokenError, IndentationError):
+        # Best-effort: a malformed file yields no comments rather than aborting the run.
         pass
 
 
