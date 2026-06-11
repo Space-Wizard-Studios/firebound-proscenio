@@ -137,6 +137,12 @@ class PROSCENIO_PT_active_slot(bpy.types.Panel):
             row.label(text=child.name)
             kind = _attachment_kind_for(child)
             row.label(text=kind, icon=_attachment_icon_for(kind))
+            key_op = row.operator(
+                "proscenio.keyframe_slot_attachment",
+                text="",
+                icon="KEYFRAME_HLT",
+            )
+            key_op.attachment_name = child.name
 
         layout.separator()
         row = layout.row()
