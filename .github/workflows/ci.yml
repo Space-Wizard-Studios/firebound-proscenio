@@ -47,6 +47,9 @@ jobs:
       - name: Typecheck
         working-directory: apps/photoshop
         run: pnpm run typecheck
+      - name: Lint
+        working-directory: apps/photoshop
+        run: pnpm run lint
       - name: Unit tests
         working-directory: apps/photoshop
         run: pnpm test
