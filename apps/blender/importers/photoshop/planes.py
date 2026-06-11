@@ -279,6 +279,7 @@ def _snapshot_before_rebuild(obj: bpy.types.Object) -> None:
             if from_json(payload).entries:
                 return
         except ValueError:
+            # Corrupt stored sidecar - fall through to a live-weights snapshot.
             pass
     snapshot = snapshot_live_vgroups(obj)
     if snapshot is not None:
