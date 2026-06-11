@@ -74,8 +74,12 @@ class PROSCENIO_OT_automesh_from_alpha(bpy.types.Operator):
     bl_options: ClassVar[set[str]] = {"REGISTER", "UNDO"}
 
     resolution: FloatProperty(  # type: ignore[valid-type]
-        name="Resolution",
-        description=("Image downscale factor for the contour walker (1.0 = full, 0.25 = quarter)"),
+        name="Trace resolution",
+        description=(
+            "Alpha-silhouette trace resolution, an image downscale factor. "
+            "1.0 = full image (finest, slowest), 0.25 = quarter (coarser, faster); "
+            "sets outline fidelity, not vertex count"
+        ),
         default=0.25,
         min=0.01,
         max=1.0,
@@ -119,7 +123,7 @@ class PROSCENIO_OT_automesh_from_alpha(bpy.types.Operator):
     )
     density_under_bones: BoolProperty(  # type: ignore[valid-type]
         name="Density under bones",
-        default=True,
+        default=False,
     )
     bone_radius: FloatProperty(  # type: ignore[valid-type]
         name="Bone radius",

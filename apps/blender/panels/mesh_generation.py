@@ -142,13 +142,16 @@ def _draw_automesh_alpha(
         col.prop(skinning_props, "automesh_alpha_threshold")
         col.prop(skinning_props, "automesh_margin_pixels")
         col.prop(skinning_props, "automesh_contour_vertices")
+        # Interior spacing is not dense-only: the interactive modal reads it in
+        # SIMPLE mode too (free-draw resample + fold snap radius), so it stays
+        # in the always-active column rather than greyed behind DENSE.
+        col.prop(skinning_props, "automesh_interior_spacing")
         col.separator()
         col.prop(skinning_props, "preserve_base_quad")
         col.separator()
         is_dense = skinning_props.automesh_interior_mode == "DENSE"
         dense_col = col.column(align=True)
         dense_col.active = is_dense
-        dense_col.prop(skinning_props, "automesh_interior_spacing")
         dense_col.prop(skinning_props, "automesh_density_under_bones")
         sub = dense_col.column(align=True)
         sub.active = is_dense and bool(skinning_props.automesh_density_under_bones)
@@ -171,7 +174,7 @@ def _draw_automesh_interactive(
     Button greys out when active obj is not MESH or has no image texture
     (modal validates these at invoke; the panel mirror is a UX cue).
     """
-    layout.label(text="Multi-stage modal preview")
+    layout.label(text="Interactive trace and edit")
     if skinning_props is not None:
         row = layout.row(align=True)
         row.prop(skinning_props, "authoring_inner_loop_count", text="Loops")
@@ -182,7 +185,7 @@ def _draw_automesh_interactive(
     row.enabled = _authoring_button_enabled(obj)
     row.operator(
         "proscenio.automesh_authoring",
-        text="Automesh (modal)",
+        text="Author Mesh (interactive)",
         icon="MOD_REMESH",
     )
     if obj is None or obj.type != "MESH":

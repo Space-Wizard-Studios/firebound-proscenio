@@ -85,6 +85,39 @@ def test_outer_strokes_summary_acknowledges_committed_cuts(automesh_fixture):
     assert _outer_strokes_summary(mixed) == "1 extend, 2 cuts"
 
 
+def test_density_under_bones_defaults_off(automesh_fixture):
+    """Bone-aware density is opt-in: the scene PG defaults 'Density follows
+    bones' OFF, so a plain trace is not silently bone-weighted. The operator
+    reads this PG value at invoke, so the PG default drives the behaviour; only
+    a DENSE session with a picker armature consumes it."""
+    from proscenio.properties.scene_props import (
+        ProscenioSkinningProps,  # type: ignore[import-not-found]
+    )
+
+    pg = ProscenioSkinningProps.bl_rna.properties["automesh_density_under_bones"]
+    assert pg.default is False
+
+
+def test_trace_resolution_copy_is_not_inverted(automesh_fixture):
+    """The resolution knob was renamed and its blurb corrected. A HIGHER
+    downscale factor traces a finer silhouette (read_alpha_grid: 1.0 = full
+    image); the old copy claimed the opposite ('lower = denser', conflating
+    trace fidelity with mesh density). The name, description, and help topic
+    must not carry the inverted claim."""
+    from proscenio.core.help_topics import HELP_TOPICS  # type: ignore[import-not-found]
+    from proscenio.properties.scene_props import (
+        ProscenioSkinningProps,  # type: ignore[import-not-found]
+    )
+
+    prop = ProscenioSkinningProps.bl_rna.properties["automesh_resolution"]
+    assert prop.name == "Trace resolution"
+    assert "Lower values produce more" not in prop.description
+    topic = HELP_TOPICS["automesh_alpha"]
+    text = " ".join(line for section in topic.sections for line in section.body).lower()
+    assert "denser" not in text
+    assert "reads backwards" not in text
+
+
 def test_stage2_cut_overlay_color_is_red_not_orange(automesh_fixture):
     """Stage 2 cut strokes use the same RED as Stage 4 rip-cuts;
     the orange chunk-remove color is retired."""
