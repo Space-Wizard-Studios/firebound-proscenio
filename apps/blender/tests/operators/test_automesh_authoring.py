@@ -118,6 +118,41 @@ def test_trace_resolution_copy_is_not_inverted(automesh_fixture):
     assert "reads backwards" not in text
 
 
+def test_automesh_from_alpha_refuses_a_sprite_element(automesh_fixture):
+    """Mesh tools are gated on element_type == mesh. Running automesh on a
+    sprite element is refused - meshing would replace its single quad - so the
+    operator cancels and leaves the mesh untouched."""
+    obj = _activate("hand")
+    obj.proscenio.element_type = "sprite"
+    before = len(obj.data.vertices)
+    result = bpy.ops.proscenio.automesh_from_alpha(
+        resolution=0.25,
+        alpha_threshold=1,
+        margin_pixels=0,
+        contour_vertices=64,
+        interior_spacing=0.1,
+        density_under_bones=False,
+        preserve_base_quad=False,
+        debug_stage="off",
+    )
+    assert result == {"CANCELLED"}
+    assert len(obj.data.vertices) == before
+
+
+def test_mesh_generation_gate_excludes_a_sprite_element(automesh_fixture):
+    """The Mesh Generation panel gate (and the subpanel polls) treat a sprite
+    element as out of scope even though it is a Blender MESH."""
+    from proscenio.panels.mesh_generation import (
+        _active_is_mesh_element,  # type: ignore[import-not-found]
+    )
+
+    obj = _activate("hand")
+    obj.proscenio.element_type = "mesh"
+    assert _active_is_mesh_element(bpy.context) is True
+    obj.proscenio.element_type = "sprite"
+    assert _active_is_mesh_element(bpy.context) is False
+
+
 def test_stage2_cut_overlay_color_is_red_not_orange(automesh_fixture):
     """Stage 2 cut strokes use the same RED as Stage 4 rip-cuts;
     the orange chunk-remove color is retired."""

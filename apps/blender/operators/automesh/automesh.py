@@ -32,6 +32,7 @@ from ...core._shared.material_images import (  # type: ignore[import-not-found]
 )
 from ...core._shared.props_access import (  # type: ignore[import-not-found]
     active_armature,
+    element_type_of,
     resolve_pixels_per_unit,
     scene_skinning,
 )
@@ -193,6 +194,14 @@ class PROSCENIO_OT_automesh_from_alpha(bpy.types.Operator):
         obj = context.active_object
         if obj is None or obj.type != "MESH":
             report_error(self, "active object must be a mesh")
+            return {"CANCELLED"}
+        if element_type_of(obj) == "sprite":
+            report_warn(
+                self,
+                "active object is a sprite element - automesh is mesh-only; meshing "
+                "would replace its quad. To attach a sprite to a bone, parent it with "
+                "Ctrl+P > Bone instead",
+            )
             return {"CANCELLED"}
 
         image = self._preflight_image(obj)

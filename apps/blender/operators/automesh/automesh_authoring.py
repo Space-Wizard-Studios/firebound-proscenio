@@ -17,6 +17,7 @@ from ...core._shared.material_images import (  # type: ignore[import-not-found]
 )
 from ...core._shared.props_access import (  # type: ignore[import-not-found]
     active_armature,
+    element_type_of,
 )
 from ...core._shared.report import (  # type: ignore[import-not-found]
     report_error,
@@ -210,6 +211,14 @@ class PROSCENIO_OT_automesh_authoring(bpy.types.Operator):
         obj = context.active_object
         if obj is None or obj.type != "MESH":
             report_error(self, "active object must be a mesh")
+            return {"CANCELLED"}
+        if element_type_of(obj) == "sprite":
+            report_warn(
+                self,
+                "active object is a sprite element - mesh authoring is mesh-only; it "
+                "would replace its quad. To attach a sprite to a bone, parent it with "
+                "Ctrl+P > Bone instead",
+            )
             return {"CANCELLED"}
         image = first_material_image(obj)
         if image is None:
