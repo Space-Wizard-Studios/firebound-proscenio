@@ -34,6 +34,10 @@ class PROSCENIO_PT_atlas(bpy.types.Panel):
             layout.label(text="no atlas linked in materials", icon="INFO")
         else:
             layout.label(text=atlas_name, icon="IMAGE")
+        scene_props = getattr(context.scene, "proscenio", None)
+        if scene_props is not None:
+            # Read-only readout; the Export subpanel owns the editable field.
+            layout.label(text=f"pixels per unit: {scene_props.pixels_per_unit:g}", icon="DRIVER")
         _draw_packer_box(layout, context)
 
 
