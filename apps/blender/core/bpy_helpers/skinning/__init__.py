@@ -4,6 +4,7 @@ from .automesh_hook import (
     maybe_post_regen_reproject,
     maybe_pre_regen_snapshot,
     reproject_stored_sidecar,
+    snapshot_live_vgroups,
 )
 from .bind_apply import apply_bind
 from .bone_collection_visibility import BoneCollectionSnapshot
@@ -42,6 +43,7 @@ __all__ = [
     "restore_paint_preset",
     "restore_session",
     "snapshot_bone_visibility",
+    "snapshot_live_vgroups",
     "snapshot_paint_preset",
     "snapshot_sidecar",
     "unregister_handler",

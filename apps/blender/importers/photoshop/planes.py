@@ -36,6 +36,7 @@ from ...core._shared.cp_keys import (
     PROSCENIO_IMPORT_ORIGIN,
     PROSCENIO_IMPORT_PLACEMENT,
     PROSCENIO_PSD_KIND,
+    PROSCENIO_WEIGHT_SIDECAR,
 )
 from ...core.bpy_helpers._shared._bpy_compat import (
     expect_mesh,
@@ -51,8 +52,9 @@ from ...core.bpy_helpers._shared._bpy_compat import (
     uv_loop_at,
 )
 from ...core.bpy_helpers.psd.psd_spritesheet import compose_spritesheet
-from ...core.bpy_helpers.skinning import reproject_stored_sidecar
+from ...core.bpy_helpers.skinning import reproject_stored_sidecar, snapshot_live_vgroups
 from ...core.psd import psd_manifest
+from ...core.skinning.sidecar_schema import from_json, to_json
 
 Z_EPSILON = 0.001
 SPRITESHEET_DIR_NAME = "_spritesheets"
@@ -249,6 +251,8 @@ def _ensure_mesh(
     if obj is not None and _placement_unchanged(obj, size, geometry_offset):
         return obj
     rebuilt_existing = obj is not None
+    if obj is not None:
+        _snapshot_before_rebuild(obj)
     if obj is None:
         new_mesh = bpy.data.meshes.new(name)
         obj = bpy.data.objects.new(name, new_mesh)
@@ -258,6 +262,27 @@ def _ensure_mesh(
     if rebuilt_existing:
         reproject_stored_sidecar(obj)
     return obj
+
+
+def _snapshot_before_rebuild(obj: bpy.types.Object) -> None:
+    """Ensure a usable weight snapshot exists on obj before the geometry wipe.
+
+    The stored sidecar survives the rebuild, so when it is present with entries
+    nothing is needed. Otherwise - a native Auto Weights bind writes no sidecar,
+    and a corrupt one is unusable - capture the live vertex-group weights now so
+    the post-rebuild reproject restores them instead of dropping the mesh's only
+    weights.
+    """
+    payload = obj.get(PROSCENIO_WEIGHT_SIDECAR)
+    if payload is not None:
+        try:
+            if from_json(payload).entries:
+                return
+        except ValueError:
+            pass
+    snapshot = snapshot_live_vgroups(obj)
+    if snapshot is not None:
+        obj[PROSCENIO_WEIGHT_SIDECAR] = to_json(snapshot)
 
 
 def _build_quad(

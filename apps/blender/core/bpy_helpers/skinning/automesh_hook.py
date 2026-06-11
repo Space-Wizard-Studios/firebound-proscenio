@@ -96,6 +96,48 @@ def _has_any_weight(obj: bpy.types.Object) -> bool:
     return False
 
 
+def snapshot_live_vgroups(obj: bpy.types.Object) -> WeightSidecar | None:
+    """Build a sidecar from obj's current vertex-group weights + UV anchors.
+
+    Armature-free counterpart to ``snapshot_sidecar`` for the PSD re-import:
+    when a mesh carries painted weights but no usable sidecar (a native Auto
+    Weights bind writes none, or the stored one is corrupt), capture the live
+    weights before a rebuild wipes them so the post-rebuild reproject has
+    something to restore. Returns None when the mesh has no UV layer or no
+    weighted vertex.
+    """
+    anchors = per_vert_uv_anchors(obj)
+    if anchors is None:
+        return None
+    group_names = [vg.name for vg in obj.vertex_groups]
+    if not group_names:
+        return None
+    entries: list[SidecarEntry] = []
+    any_weight = False
+    for vert in obj.data.vertices:
+        weights: dict[str, float] = {}
+        for group_elem in vert.groups:
+            weight = group_elem.weight
+            if weight > 1e-6:
+                weights[obj.vertex_groups[group_elem.group].name] = weight
+                any_weight = True
+        entries.append(
+            SidecarEntry(uv_anchor=anchors[vert.index], weights=weights, provenance="auto_seed")
+        )
+    if not any_weight:
+        return None
+    new_hash = compute_topology_hash(
+        len(obj.data.vertices),
+        [list(p.vertices) for p in obj.data.polygons],
+    )
+    return WeightSidecar(
+        version=SIDECAR_VERSION,
+        vertex_group_names=group_names,
+        mesh_topology_hash=new_hash,
+        entries=entries,
+    )
+
+
 def maybe_post_regen_reproject(
     obj: bpy.types.Object,
     armature: bpy.types.Object,

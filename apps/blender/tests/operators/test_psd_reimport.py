@@ -72,10 +72,27 @@ def test_reimport_changed_bounds_reprojects_weights_not_wiped(automesh_fixture):
     obj2 = _ensure_mesh("resize_layer", (4.0, 5.0), (0.0, 0.0))
     assert obj2 is obj
     assert "arm" in obj.vertex_groups, "reproject did not recreate the weight group"
-    assert any(
-        _vert_weight(obj, "arm", v.index) > 1e-6 for v in obj.data.vertices
-    ), "weights were wiped, not reprojected"
+    reprojected = any(_vert_weight(obj, "arm", v.index) > 1e-6 for v in obj.data.vertices)
+    assert reprojected, "weights were wiped, not reprojected"
     # New width 4 -> half-width 2: the quad's x extent is [-2, 2].
     xs = [v.co.x for v in obj.data.vertices]
     assert max(xs) == pytest.approx(2.0)
     assert min(xs) == pytest.approx(-2.0)
+
+
+def test_reimport_changed_bounds_preserves_native_weights_without_sidecar(automesh_fixture):
+    # A native Auto Weights bind writes live vertex groups but no sidecar; the
+    # rebuild must snapshot those before the wipe instead of dropping them.
+    from proscenio.importers.photoshop.planes import _ensure_mesh  # type: ignore[import-not-found]
+
+    obj = _ensure_mesh("native_layer", (2.0, 3.0), (0.0, 0.0))
+    vg = obj.vertex_groups.new(name="leg")
+    for v in obj.data.vertices:
+        vg.add([v.index], 0.5, "REPLACE")
+    assert obj.get("proscenio_weight_sidecar") is None
+
+    obj2 = _ensure_mesh("native_layer", (4.0, 5.0), (0.0, 0.0))
+    assert obj2 is obj
+    assert "leg" in obj.vertex_groups
+    preserved = any(_vert_weight(obj, "leg", v.index) > 1e-6 for v in obj.data.vertices)
+    assert preserved, "native weights dropped on resize re-import"

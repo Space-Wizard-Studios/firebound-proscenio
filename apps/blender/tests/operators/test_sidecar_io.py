@@ -130,9 +130,8 @@ def test_import_applies_live_weights_when_topology_matches(automesh_fixture):
         assert "FINISHED" in bpy.ops.proscenio.import_sidecar(filepath=str(tmp_path))
         # Topology is unchanged, so import reapplied the snapshot onto live groups.
         assert len(obj.vertex_groups) > 0, "import did not re-create vertex groups"
-        assert any(
-            _vert_has_weight(obj, v.index) for v in obj.data.vertices
-        ), "import did not write live weights"
+        wrote_live_weights = any(_vert_has_weight(obj, v.index) for v in obj.data.vertices)
+        assert wrote_live_weights, "import did not write live weights"
     finally:
         tmp_path.unlink(missing_ok=True)
 
