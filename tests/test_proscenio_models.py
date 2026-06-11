@@ -63,6 +63,11 @@ def test_mesh_element_rejects_out_of_bounds_z_index() -> None:
         MeshElement(**_quad_kwargs(), z_index=99999)
 
 
+def test_mesh_element_rejects_a_negative_color_channel() -> None:
+    with pytest.raises(ValidationError, match="greater than or equal to 0"):
+        MeshElement(**_quad_kwargs(), modulate=[-0.1, 1.0, 1.0, 1.0])
+
+
 def test_sprite_element_round_trips_appearance() -> None:
     element = SpriteElement(
         **_sprite_kwargs(), modulate=[1.0, 0.5, 0.25, 1.0], z_index=-2, flip_h=True, flip_v=False

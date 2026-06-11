@@ -44,11 +44,11 @@ Rect = Annotated[
     ),
 ]
 Color = Annotated[
-    list[float],
+    list[Annotated[float, Field(ge=0)]],
     Field(
         min_length=4,
         max_length=4,
-        description="[r, g, b, a] each in 0..1 (HDR over-bright allowed).",
+        description="[r, g, b, a], each >= 0 (typically 0..1; HDR over-bright allowed).",
     ),
 ]
 
