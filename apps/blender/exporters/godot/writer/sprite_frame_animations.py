@@ -177,7 +177,9 @@ def _bake_track(
             return None
         value = min(max(raw, 0), max_frame)
         if value != last:
-            time = round((frame - 1) / float(fps), 6)
+            # (frame - 1) / fps matches the bone tracks; clamp at 0 so an action
+            # starting at frame 0 does not emit a negative time (Key.time is ge=0).
+            time = round(max(0.0, (frame - 1) / float(fps)), 6)
             keys.append(Key(time=time, interp="constant", frame=value))
             last = value
     if not keys:
