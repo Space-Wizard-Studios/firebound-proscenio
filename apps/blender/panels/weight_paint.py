@@ -98,6 +98,7 @@ class PROSCENIO_PT_edit_weights(bpy.types.Panel):
 
     def draw(self, context: bpy.types.Context) -> None:
         _draw_edit_weights(self.layout, context.active_object, _active_armature(context))
+        _draw_weight_overlay_controls(self.layout, context)
 
 
 class PROSCENIO_PT_snapshot(bpy.types.Panel):
@@ -297,6 +298,27 @@ def _edit_weights_button_enabled(
     if len(obj.vertex_groups) == 0:
         return False
     return obj.get(PROSCENIO_WEIGHT_SIDECAR) is not None
+
+
+def _draw_weight_overlay_controls(
+    layout: bpy.types.UILayout,
+    context: bpy.types.Context,
+) -> None:
+    """Native viewport overlay levers so the texture shows through while painting.
+
+    Surfaces Blender's own weight-paint opacity + Zero Weights display rather
+    than building a custom overlay (the flat-mesh display ask). Opacity 0 does
+    not fully hide the overlay - upstream Blender issue 145603.
+    """
+    box = layout.box()
+    box.label(text="Viewport display:")
+    overlay = getattr(context.space_data, "overlay", None)
+    if overlay is not None:
+        box.prop(overlay, "weight_paint_mode_opacity", text="Weight Opacity")
+    tool_settings = context.tool_settings
+    if tool_settings is not None:
+        box.prop(tool_settings, "vertex_group_user", text="Zero Weights")
+    box.label(text="opacity 0 is not fully invisible (Blender 145603)", icon="INFO")
 
 
 def _draw_snapshot(
