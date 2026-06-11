@@ -6,6 +6,23 @@ on:
       - "blender-v*"
       - "godot-v*"
       - "photoshop-v*"
+  # Tagless dry-run: exercise the package steps without uploading a
+  # release. The photoshop `.jsx` copy rotted unnoticed precisely because
+  # this job only ever ran on tags; a dispatch path keeps it exercisable.
+  workflow_dispatch:
+    inputs:
+      component:
+        description: "Component to package (dry-run, no release upload)"
+        required: true
+        type: choice
+        options:
+          - blender
+          - godot
+          - photoshop
+      version:
+        description: "Version string for the artifact name"
+        required: false
+        default: "0.0.0-dry-run"
 
 permissions:
   contents: write
@@ -19,11 +36,35 @@ jobs:
       - name: Determine component and version
         id: meta
         run: |
-          tag="${GITHUB_REF#refs/tags/}"
-          component="${tag%-v*}"
-          version="${tag##*-v}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            component="${{ inputs.component }}"
+            version="${{ inputs.version }}"
+          else
+            tag="${GITHUB_REF#refs/tags/}"
+            component="${tag%-v*}"
+            version="${tag##*-v}"
+          fi
           echo "name=$component" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # The photoshop artifact is the built UXP bundle, not a source file.
+      # `apps/photoshop/dist/` is gitignored, so the job builds it here.
+      - name: Set up Node (photoshop)
+        if: steps.meta.outputs.name == 'photoshop'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Set up pnpm (photoshop)
+        if: steps.meta.outputs.name == 'photoshop'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Build the UXP plugin (photoshop)
+        if: steps.meta.outputs.name == 'photoshop'
+        working-directory: apps/photoshop
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
 
       - name: Build artifact
         run: |
@@ -36,7 +77,10 @@ jobs:
               (cd apps/godot && zip -r "../../dist/proscenio-godot-${{ steps.meta.outputs.version }}.zip" addons/proscenio)
               ;;
             photoshop)
-              cp apps/photoshop/proscenio_export.jsx "dist/proscenio-photoshop-${{ steps.meta.outputs.version }}.jsx"
+              # The UXP plugin root is dist/ itself - manifest.json lands
+              # there after the webpack build - so archive its contents,
+              # keeping manifest.json at the zip root for the host loader.
+              (cd apps/photoshop/dist && zip -r "../../../dist/proscenio-photoshop-${{ steps.meta.outputs.version }}.zip" .)
               ;;
             *)
               echo "Unknown component: ${{ steps.meta.outputs.name }}"
@@ -44,6 +88,14 @@ jobs:
               ;;
           esac
 
+      - name: List artifact contents
+        run: |
+          for f in dist/*.zip; do
+            echo "== $f =="
+            unzip -l "$f"
+          done
+
       - uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push'
         with:
           files: dist/*
