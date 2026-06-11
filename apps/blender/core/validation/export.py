@@ -6,6 +6,7 @@ from collections.abc import Iterator, Sequence
 from pathlib import Path
 
 from .._shared.material_images import iter_material_node_images
+from .._shared.props_access import resolve_export_armature
 from ..slot.slot_emit import is_slot_empty
 from ._shared import abspath_or_none, armature_bone_names, name_of
 from .active_element import validate_active_element
@@ -28,7 +29,9 @@ def validate_export(scene: object) -> list[Issue]:
         issues.append(Issue("error", "scene has no Armature - Proscenio export requires one"))
         return issues
 
-    available_bones = armature_bone_names(armatures[0])
+    # Same picker-first resolver the writer uses, so validate and export
+    # never disagree on which rig supplies the bones in a multi-armature scene.
+    available_bones = armature_bone_names(resolve_export_armature(scene))
 
     for obj in scene_objects:
         if getattr(obj, "type", None) != "MESH":

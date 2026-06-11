@@ -36,6 +36,14 @@ def _armature(*bone_names: str) -> SimpleNamespace:
     )
 
 
+def _named_armature(name: str, *bone_names: str) -> SimpleNamespace:
+    return SimpleNamespace(
+        name=name,
+        type="ARMATURE",
+        data=SimpleNamespace(bones=[SimpleNamespace(name=n) for n in bone_names]),
+    )
+
+
 def _mesh(name: str, *, parent_bone: str, groups: list[str]) -> SimpleNamespace:
     return SimpleNamespace(
         name=name,
@@ -56,6 +64,30 @@ def test_full_pass_flags_an_unresolved_element() -> None:
         objects=[_armature("spine"), _mesh("torso", parent_bone="", groups=["ghost"])],
     )
     assert _has(validate_export(scene), "error", "none resolve to bones")
+
+
+def test_validate_export_resolves_bones_from_the_picked_armature() -> None:
+    # Two armatures; the mesh rides a bone that exists only on the picked one.
+    base = _named_armature("Base", "base")
+    spine = _named_armature("Spine", "spine")
+    mesh = _mesh("torso", parent_bone="spine", groups=[])
+    scene = SimpleNamespace(
+        objects=[base, spine, mesh],
+        proscenio=SimpleNamespace(active_armature=spine),
+    )
+    assert not _has(validate_export(scene), "warning", "no parent bone")
+
+
+def test_validate_export_without_a_picker_uses_the_first_armature() -> None:
+    base = _named_armature("Base", "base")
+    spine = _named_armature("Spine", "spine")
+    mesh = _mesh("torso", parent_bone="spine", groups=[])
+    scene = SimpleNamespace(
+        objects=[base, spine, mesh],
+        proscenio=SimpleNamespace(active_armature=None),
+    )
+    # First armature in scene order (Base) supplies bones; "spine" is unknown.
+    assert _has(validate_export(scene), "warning", "no parent bone")
 
 
 def test_full_pass_on_a_clean_scene_has_no_errors() -> None:
