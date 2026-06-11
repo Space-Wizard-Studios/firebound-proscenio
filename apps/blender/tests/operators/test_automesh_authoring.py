@@ -66,6 +66,25 @@ def test_stage_label_numbering_tracks_active_len(automesh_fixture):
     assert _stage_label(AuthoringStage.APPLY, "DENSE").startswith("6/6")
 
 
+def test_outer_strokes_summary_acknowledges_committed_cuts(automesh_fixture):
+    """A committed Stage 2 cut changes no overlay (it carves a corridor only at
+    APPLY), so it reads as a no-op. The modal surfaces a running extend/cut
+    count to acknowledge the commit."""
+    from proscenio.operators.automesh.automesh_authoring import (
+        _outer_strokes_summary,  # type: ignore[import-not-found]
+    )
+
+    assert _outer_strokes_summary([]) == ""
+    assert _outer_strokes_summary([{"kind": "cut", "points": []}]) == "1 cut"
+    assert _outer_strokes_summary([{"kind": "stroke", "points": []}]) == "1 extend"
+    mixed = [
+        {"kind": "stroke", "points": []},
+        {"kind": "cut", "points": []},
+        {"kind": "cut", "points": []},
+    ]
+    assert _outer_strokes_summary(mixed) == "1 extend, 2 cuts"
+
+
 def test_stage2_cut_overlay_color_is_red_not_orange(automesh_fixture):
     """Stage 2 cut strokes use the same RED as Stage 4 rip-cuts;
     the orange chunk-remove color is retired."""
