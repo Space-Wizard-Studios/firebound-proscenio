@@ -1,6 +1,10 @@
 """bpy-bound skinning helpers (the weight-paint productivity follow-up)."""
 
-from .automesh_hook import maybe_post_regen_reproject, maybe_pre_regen_snapshot
+from .automesh_hook import (
+    maybe_post_regen_reproject,
+    maybe_pre_regen_snapshot,
+    reproject_stored_sidecar,
+)
 from .bind_apply import apply_bind
 from .bone_collection_visibility import BoneCollectionSnapshot
 from .bone_collection_visibility import restore as restore_bone_visibility
@@ -33,6 +37,7 @@ __all__ = [
     "per_vert_uv_anchors",
     "read_mirror_flag",
     "register_handler",
+    "reproject_stored_sidecar",
     "restore_bone_visibility",
     "restore_paint_preset",
     "restore_session",
