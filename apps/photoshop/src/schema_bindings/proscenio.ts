@@ -20,10 +20,9 @@ export type Position = [number, number] | null;
 export type Rotation = number | null;
 export type Scale = [number, number] | null;
 export type Time = number;
-export type Visible = boolean | null;
 export type Keys = Key[];
 export type Target = string;
-export type Type = "bone_transform" | "sprite_frame" | "slot_attachment" | "visibility";
+export type Type = "bone_transform" | "sprite_frame" | "slot_attachment";
 export type Tracks = Track[];
 export type Atlas = string | null;
 export type Bone = string | null;
@@ -157,7 +156,6 @@ export interface Key {
   rotation?: Rotation;
   scale?: Scale;
   time: Time;
-  visible?: Visible;
 }
 /**
  * Deformable cutout element rendered as a Godot Polygon2D - vertices + UV.

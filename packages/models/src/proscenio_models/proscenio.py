@@ -308,11 +308,10 @@ class Key(_Strict):
     scale: Vec2 | None = None
     frame: int | None = Field(default=None, ge=0)
     attachment: str | None = None
-    visible: bool | None = None
 
 
 class Track(_Strict):
-    type: Literal["bone_transform", "sprite_frame", "slot_attachment", "visibility"]
+    type: Literal["bone_transform", "sprite_frame", "slot_attachment"]
     target: str = Field(min_length=1)
     keys: list[Key]
 

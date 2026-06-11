@@ -221,18 +221,6 @@
           "minimum": 0,
           "title": "Time",
           "type": "number"
-        },
-        "visible": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Visible"
         }
       },
       "required": [
@@ -634,8 +622,7 @@
           "enum": [
             "bone_transform",
             "sprite_frame",
-            "slot_attachment",
-            "visibility"
+            "slot_attachment"
           ],
           "title": "Type",
           "type": "string"

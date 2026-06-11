@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from proscenio_models import MeshElement, SpriteElement
+from proscenio_models import Key, MeshElement, SpriteElement, Track
 from pydantic import ValidationError
 
 
@@ -72,6 +72,18 @@ def test_sprite_element_round_trips_appearance() -> None:
     assert back.z_index == -2
     assert back.flip_h is True
     assert back.flip_v is False
+
+
+def test_track_rejects_the_retired_visibility_type() -> None:
+    # The slot system owns show/hide; the visibility track was an unimplemented
+    # stub on both sides and is retired.
+    with pytest.raises(ValidationError):
+        Track(type="visibility", target="mouth", keys=[])
+
+
+def test_key_rejects_the_retired_visible_field() -> None:
+    with pytest.raises(ValidationError, match="visible"):
+        Key(time=0.0, visible=True)
 
 
 def test_sprite_element_omits_appearance_by_default() -> None:
