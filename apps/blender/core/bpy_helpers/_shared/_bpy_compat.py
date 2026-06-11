@@ -98,6 +98,11 @@ def iter_poly_loop_indices(poly: bpy.types.MeshPolygon) -> Iterator[int]:
     return iter(cast(Iterator[int], poly.loop_indices))
 
 
+def object_color(obj: bpy.types.Object) -> tuple[float, ...]:
+    """Read ``obj.color`` as a plain RGBA tuple (bpy_prop_array carries no Iterable in stub)."""
+    return tuple(cast(Iterator[float], obj.color))
+
+
 def iter_keyframe_points(
     fcurve: bpy.types.FCurve,
 ) -> Iterator[bpy.types.Keyframe]:
