@@ -244,6 +244,15 @@ def test_flat_mesh_is_clean() -> None:
     assert _validate_mesh_flatness(obj) == []
 
 
+def test_flat_mesh_authored_in_xz_is_clean() -> None:
+    # A quad authored directly in world XZ has Y as its flat axis; a fixed
+    # Z-is-depth test would false-warn it. Frame-independent flatness clears it.
+    obj = _mesh_obj_with_verts(
+        "panel", [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 1.0), (0.0, 0.0, 1.0)]
+    )
+    assert _validate_mesh_flatness(obj) == []
+
+
 def test_full_pass_surfaces_a_tilted_bone_as_a_warning() -> None:
     arm = _armature_with_rest_bones(_rest_bone("spine", (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
     scene = SimpleNamespace(objects=[arm], proscenio=SimpleNamespace(active_armature=arm))

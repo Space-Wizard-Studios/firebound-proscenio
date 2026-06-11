@@ -141,23 +141,31 @@ def _direction_off_plane(head: object, tail: object) -> bool:
 
 
 def _validate_mesh_flatness(obj: object) -> list[Issue]:
-    """Warn for meshes carrying depth on the axis the exporter flattens away."""
+    """Warn for meshes that are not planar - 3D geometry the exporter flattens.
+
+    Frame-independent: a cutout sits in one plane, so its thinnest extent is
+    near zero whatever plane it lies in. Comparing the smallest axis spread to
+    the largest catches a genuinely 3D mesh without assuming which axis is the
+    depth (the writer drops world Y, but a quad may be authored in local XY or
+    XZ, so a fixed-axis test would false-warn one of them).
+    """
     mesh = getattr(obj, "data", None)
     coords = [v.co for v in getattr(mesh, "vertices", ()) if getattr(v, "co", None) is not None]
     if len(coords) < 2:
         return []
-    xs = [float(c.x) for c in coords]
-    ys = [float(c.y) for c in coords]
-    zs = [float(c.z) for c in coords]
-    face = max(max(xs) - min(xs), max(ys) - min(ys))
-    if face < 1e-6:
-        return []  # degenerate (point / line) mesh, nothing to flatten
-    if (max(zs) - min(zs)) > _FLATNESS_TOLERANCE * face:
+    spreads = sorted(
+        max(float(getattr(c, axis)) for c in coords) - min(float(getattr(c, axis)) for c in coords)
+        for axis in ("x", "y", "z")
+    )
+    extent, thickness = spreads[2], spreads[0]
+    if extent < 1e-6:
+        return []  # degenerate (point) mesh, nothing to flatten
+    if thickness > _FLATNESS_TOLERANCE * extent:
         return [
             Issue(
                 "warning",
-                "element is not flat - it has depth on the axis the exporter drops, "
-                "so the flattened export will lose geometry",
+                "element is not flat - it has thickness on every axis, so the "
+                "exporter's flatten-to-plane will lose geometry",
                 name_of(obj),
             )
         ]
