@@ -165,8 +165,16 @@ class PROSCENIO_PT_weight_transfer(bpy.types.Panel):
     def draw_header_preset(self, _context: bpy.types.Context) -> None:
         draw_subpanel_header(self.layout, "weight_transfer", "weight_transfer")
 
-    def draw(self, _context: bpy.types.Context) -> None:
-        self.layout.operator("proscenio.copy_weights_to_selected", icon="DUPLICATE")
+    def draw(self, context: bpy.types.Context) -> None:
+        layout = self.layout
+        skinning_props = _scene_skinning(context)
+        if skinning_props is not None:
+            layout.prop(skinning_props, "weight_transfer_max_distance", text="Max Distance")
+        op = layout.operator("proscenio.copy_weights_to_selected", icon="DUPLICATE")
+        if skinning_props is not None:
+            # Seed the operator from the panel so the click uses the field value;
+            # F9 redo still exposes max_distance for a one-off tweak.
+            op.max_distance = skinning_props.weight_transfer_max_distance
 
 
 def _draw_bind(
