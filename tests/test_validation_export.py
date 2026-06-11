@@ -16,7 +16,10 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps/blender"))
 
-from core.validation.active_slot import _check_slot_default  # noqa: E402
+from core.validation.active_slot import (  # noqa: E402
+    _check_slot_default,
+    _has_bone_transform_keys,
+)
 from core.validation.export import (  # noqa: E402
     _validate_atlas_files,
     _validate_element_against_armature,
@@ -145,6 +148,36 @@ def test_slot_default_validates_a_raw_custom_property_edit() -> None:
     obj = _cp_carrier(proscenio_slot_default="ghost")
     children = [SimpleNamespace(name="open"), SimpleNamespace(name="closed")]
     assert _has(_check_slot_default(obj, children, "eye"), "error", "is not a child")
+
+
+def _action_with_path(data_path: str, *, layered: bool) -> SimpleNamespace:
+    fcurve = SimpleNamespace(data_path=data_path)
+    if not layered:
+        return SimpleNamespace(fcurves=[fcurve])
+    # Blender 4.4+ layered action: flat fcurves empty, curves nest in the
+    # layer > strip > channelbag stack.
+    channelbag = SimpleNamespace(fcurves=[fcurve])
+    strip = SimpleNamespace(channelbags=[channelbag])
+    return SimpleNamespace(fcurves=[], layers=[SimpleNamespace(strips=[strip])])
+
+
+def _child_with_action(action: SimpleNamespace) -> SimpleNamespace:
+    return SimpleNamespace(name="sword", animation_data=SimpleNamespace(action=action))
+
+
+def test_transform_key_check_sees_a_layered_action() -> None:
+    child = _child_with_action(_action_with_path("location", layered=True))
+    assert _has_bone_transform_keys(child) is True
+
+
+def test_transform_key_check_sees_a_legacy_action() -> None:
+    child = _child_with_action(_action_with_path("rotation_euler", layered=False))
+    assert _has_bone_transform_keys(child) is True
+
+
+def test_transform_key_check_ignores_a_visibility_only_layered_action() -> None:
+    child = _child_with_action(_action_with_path('["proscenio_slot_index"]', layered=True))
+    assert _has_bone_transform_keys(child) is False
 
 
 def test_duplicate_slot_name_errors() -> None:

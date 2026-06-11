@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from .._shared.action_fcurves import action_fcurves
 from .._shared.cp_keys import PROSCENIO_SLOT_DEFAULT
 from .._shared.pg_cp_fallback import read_field
 from ..slot.slot_emit import is_slot_empty
@@ -108,10 +109,7 @@ def _has_bone_transform_keys(obj: object) -> bool:
     action = getattr(anim, "action", None) if anim is not None else None
     if action is None:
         return False
-    fcurves = getattr(action, "fcurves", None)
-    if fcurves is None:
-        return False
-    for fcurve in fcurves:
+    for fcurve in action_fcurves(action):
         path = str(getattr(fcurve, "data_path", ""))
         if path.startswith(("location", "rotation", "scale")):
             return True
