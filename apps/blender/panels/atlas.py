@@ -97,7 +97,7 @@ def _discover_atlas() -> tuple[str, bool] | None:
                 fp = node.image.filepath
                 if not fp:
                     return f"{node.image.name} (unsaved)", False
-                name = str(bpy.path.abspath(fp)).split("\\")[-1].split("/")[-1]
+                name = Path(bpy.path.abspath(fp)).name
                 return name, (packed is not None and name == packed)
     return None
 
