@@ -16,6 +16,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "apps/blender"))
 
+from core.validation.active_slot import _check_slot_default  # noqa: E402
 from core.validation.export import (  # noqa: E402
     _validate_atlas_files,
     _validate_element_against_armature,
@@ -23,6 +24,15 @@ from core.validation.export import (  # noqa: E402
     validate_export,
 )
 from core.validation.issue import Issue  # noqa: E402
+
+
+def _slot_empty() -> SimpleNamespace:
+    return SimpleNamespace(type="EMPTY", proscenio=SimpleNamespace(is_slot=True))
+
+
+def _cp_carrier(**cp: str) -> SimpleNamespace:
+    # Unhydrated object: no PropertyGroup, value only on the raw CP dict.
+    return SimpleNamespace(proscenio=None, get=lambda key, default=None: cp.get(key, default))
 
 
 def _has(issues: list[Issue], severity: str, substr: str) -> bool:
@@ -121,6 +131,20 @@ def test_element_with_matching_vertex_group_is_clean() -> None:
         name="torso", parent_bone="", vertex_groups=[SimpleNamespace(name="spine")]
     )
     assert _validate_element_against_armature(obj, {"spine"}) == []
+
+
+def test_slot_attachment_does_not_flag_a_missing_bone() -> None:
+    # A slot attachment inherits its bone through the slot Empty by design.
+    obj = SimpleNamespace(name="sword", parent=_slot_empty(), parent_bone="", vertex_groups=[])
+    assert _validate_element_against_armature(obj, {"spine"}) == []
+
+
+def test_slot_default_validates_a_raw_custom_property_edit() -> None:
+    # PG absent (unhydrated); slot_default lives only on the raw CP, the way
+    # the writer reads it - so the validator must see the same invalid value.
+    obj = _cp_carrier(proscenio_slot_default="ghost")
+    children = [SimpleNamespace(name="open"), SimpleNamespace(name="closed")]
+    assert _has(_check_slot_default(obj, children, "eye"), "error", "is not a child")
 
 
 def test_duplicate_slot_name_errors() -> None:

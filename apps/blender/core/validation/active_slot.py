@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from .._shared.cp_keys import PROSCENIO_SLOT_DEFAULT
+from .._shared.pg_cp_fallback import read_field
 from ..slot.slot_emit import is_slot_empty
 from ._shared import name_of
 from .issue import Issue
@@ -37,8 +39,12 @@ def _is_active_slot(obj: object) -> bool:
 
 
 def _check_slot_default(obj: object, children: list[object], obj_name: str) -> list[Issue]:
-    props = getattr(obj, "proscenio", None)
-    slot_default = str(getattr(props, "slot_default", "")) if props is not None else ""
+    # Read the way the writer emits it (PG first, raw CP fallback) so a
+    # proscenio_slot_default edited directly in the Custom Properties UI is
+    # validated against the same value the export will carry.
+    slot_default = str(
+        read_field(obj, pg_field="slot_default", cp_key=PROSCENIO_SLOT_DEFAULT, default="")
+    )
     if not slot_default:
         return []
     child_names = {name_of(c) for c in children}

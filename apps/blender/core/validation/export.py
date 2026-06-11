@@ -70,7 +70,11 @@ def _validate_element_against_armature(obj: object, bones: set[str]) -> list[Iss
     matching_groups = [vg for vg in vertex_groups if str(vg.name) in bones]
     name = name_of(obj)
 
-    if not has_parent_bone and not matching_groups:
+    # Slot attachments inherit their bone through the slot Empty, so the
+    # missing-bone warning is a false positive on every slot scene.
+    parented_to_slot = is_slot_empty(getattr(obj, "parent", None))
+
+    if not has_parent_bone and not matching_groups and not parented_to_slot:
         issues.append(
             Issue(
                 "warning",
