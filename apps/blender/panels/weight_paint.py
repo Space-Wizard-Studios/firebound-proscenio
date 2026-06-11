@@ -175,16 +175,26 @@ def _draw_bind(
     picker: bpy.types.Object | None,
     obj: bpy.types.Object | None,
 ) -> None:
-    """Bind to Picker Armature + per-bone Soft/Hard overrides.
+    """Bind mode + target armature + per-bone overrides, then the Bind button.
 
-    Run button is disabled when no picker armature is set. Per-bone
-    override rows appear once a picker is present; a missing entry means
-    the bone uses the operator-level default (bind_init_mode).
+    The Bind button is drawn last so the panel reads Mode, overrides, then
+    the action that consumes them; it is disabled when no picker armature is
+    set. The overrides box only draws its per-bone rows under the planar
+    modes - Bone Heat returns before the override pass in ``apply_bind``, so
+    under it the box shows a hint instead of inert toggles.
     """
-    from ..core.skinning.bone_modes import read_bone_modes  # type: ignore[import-not-found]
-
+    bind_mode = "BONE_HEAT"
     if skinning_props is not None:
         layout.prop(skinning_props, "bind_init_mode", text="Mode")
+        bind_mode = skinning_props.bind_init_mode
+    layout.label(
+        text=f"Target: {picker.name}" if picker is not None else "Target: (no picker armature)",
+        icon="ARMATURE_DATA",
+    )
+
+    if picker is not None and obj is not None and obj.type == "MESH":
+        _draw_bone_overrides(layout, obj, picker, bind_mode)
+
     row = layout.row()
     row.enabled = picker is not None
     row.operator(
@@ -193,16 +203,35 @@ def _draw_bind(
         icon="MOD_ARMATURE",
     )
 
-    if picker is None or obj is None or obj.type != "MESH":
-        return
 
-    modes = read_bone_modes(obj)
+def _draw_bone_overrides(
+    layout: bpy.types.UILayout,
+    obj: bpy.types.Object,
+    picker: bpy.types.Object,
+    bind_mode: str,
+) -> None:
+    """Per-bone Soft / Hard / Clear rows, or a hint when the mode ignores them.
+
+    A missing entry means the bone uses the operator-level default
+    (bind_init_mode); the per-row clear button drops an override back to it.
+    """
+    from ..core.skinning.bone_modes import (  # type: ignore[import-not-found]
+        overrides_apply_under_bind_mode,
+        read_bone_modes,
+    )
+
     bones = picker.data.bones if picker.data is not None else []
     if not bones:
         return
-
     override_box = layout.box()
     override_box.label(text="Per-bone Soft/Hard overrides:")
+    if not overrides_apply_under_bind_mode(bind_mode):
+        override_box.label(
+            text="applies only to the planar modes - Bone Heat ignores these",
+            icon="INFO",
+        )
+        return
+    modes = read_bone_modes(obj)
     for bone in bones:
         current = modes.get(bone.name, "")
         bone_row = override_box.row(align=True)
@@ -221,6 +250,11 @@ def _draw_bind(
         )
         op_hard.bone_name = bone.name
         op_hard.mode = "HARD"
+        clear_sub = bone_row.row(align=True)
+        clear_sub.enabled = current != ""
+        op_clear = clear_sub.operator("proscenio.set_bone_mode", text="", icon="X")
+        op_clear.bone_name = bone.name
+        op_clear.mode = "CLEAR"
 
 
 def _draw_edit_weights(
