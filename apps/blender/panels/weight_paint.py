@@ -2,9 +2,9 @@
 
 The parent polls on the active element being a mesh (weight painting does
 not apply to sprite elements) and surfaces the picker readout; the work
-lives in accordion subpanels: Bind, Edit Weights, Snapshot, Sidecar IO,
-Weight Transfer. The panel renders on any selection and shows a mesh-only
-hint when the active element is not a mesh.
+lives in accordion subpanels: Bind, Edit Weights, Snapshot (which also holds
+the snapshot file export / import), Weight Transfer. The panel renders on any
+selection and shows a mesh-only hint when the active element is not a mesh.
 """
 
 from __future__ import annotations
@@ -121,29 +121,6 @@ class PROSCENIO_PT_snapshot(bpy.types.Panel):
 
     def draw(self, context: bpy.types.Context) -> None:
         _draw_snapshot(self.layout, _scene_skinning(context), context.active_object)
-
-
-class PROSCENIO_PT_sidecar_io(bpy.types.Panel):
-    """Sidecar IO subpanel - export / import the weight sidecar JSON."""
-
-    bl_label = "Sidecar IO"
-    bl_idname = "PROSCENIO_PT_sidecar_io"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Proscenio"
-    bl_parent_id = "PROSCENIO_PT_weight_paint"
-    bl_order = 3
-    bl_options: ClassVar[set[str]] = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
-        return _is_mesh_element(context)
-
-    def draw_header_preset(self, _context: bpy.types.Context) -> None:
-        draw_subpanel_header(self.layout, "sidecar_io", "sidecar_io")
-
-    def draw(self, context: bpy.types.Context) -> None:
-        _draw_sidecar_io(self.layout, context.active_object)
 
 
 class PROSCENIO_PT_weight_transfer(bpy.types.Panel):
@@ -327,16 +304,19 @@ def _draw_snapshot(
     skinning_props: bpy.types.PropertyGroup | None,
     obj: bpy.types.Object | None,
 ) -> None:
-    """Sidecar toggles + provenance counts pill + Restore button.
+    """Snapshot toggles + provenance counts pill + Restore + file IO.
 
     Counts are recomputed live from the JSON payload stored on the active mesh.
+    The Export / Import buttons (folded in from the former Sidecar IO subpanel)
+    write the snapshot to a file or load one back; Import also pushes it onto
+    the live weights when the mesh topology still matches.
     """
     if skinning_props is not None:
         layout.prop(skinning_props, "preserve_on_regen")
         layout.prop(skinning_props, "show_provenance_overlay")
     counts = _sidecar_counts(obj)
     if counts is None:
-        layout.label(text="no sidecar (run Bind first)", icon="INFO")
+        layout.label(text="no snapshot (run Bind first)", icon="INFO")
     else:
         layout.label(
             text=(
@@ -352,6 +332,10 @@ def _draw_snapshot(
         text="Reset to Last Saved Weights",
         icon="LOOP_BACK",
     )
+    layout.separator()
+    io_row = layout.row(align=True)
+    io_row.operator("proscenio.export_sidecar", text="Export Snapshot", icon="EXPORT")
+    io_row.operator("proscenio.import_sidecar", text="Import Snapshot", icon="IMPORT")
 
 
 def _sidecar_counts(obj: bpy.types.Object | None) -> dict[str, int] | None:
@@ -375,24 +359,11 @@ def _sidecar_counts(obj: bpy.types.Object | None) -> dict[str, int] | None:
     return counts
 
 
-def _draw_sidecar_io(
-    layout: bpy.types.UILayout,
-    obj: bpy.types.Object | None,
-) -> None:
-    """Export + Import file-dialog buttons for the sidecar JSON."""
-    row = layout.row(align=True)
-    row.operator("proscenio.export_sidecar", text="Export", icon="EXPORT")
-    row.operator("proscenio.import_sidecar", text="Import", icon="IMPORT")
-    if obj is not None and obj.type == "MESH" and obj.get(PROSCENIO_WEIGHT_SIDECAR) is None:
-        layout.label(text="no sidecar yet (run Bind first)", icon="INFO")
-
-
 _classes: tuple[type, ...] = (
     PROSCENIO_PT_weight_paint,
     PROSCENIO_PT_bind,
     PROSCENIO_PT_edit_weights,
     PROSCENIO_PT_snapshot,
-    PROSCENIO_PT_sidecar_io,
     PROSCENIO_PT_weight_transfer,
 )
 
