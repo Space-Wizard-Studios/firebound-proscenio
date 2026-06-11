@@ -99,7 +99,8 @@ def test_wrapped_attachment_keeps_world_transform(automesh_fixture):
     before = seed.matrix_world.to_translation().copy()
 
     _select_only([seed])
-    bpy.ops.proscenio.create_slot()
+    result = bpy.ops.proscenio.create_slot()
+    assert "FINISHED" in result
     bpy.context.view_layer.update()
 
     after = seed.matrix_world.to_translation()
