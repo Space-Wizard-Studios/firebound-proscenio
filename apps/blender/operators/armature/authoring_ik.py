@@ -8,7 +8,7 @@ import bpy
 from bpy.props import IntProperty
 from mathutils import Vector
 
-from ...core._shared.report import report_info  # type: ignore[import-not-found]
+from ...core._shared.report import report_info, report_warn  # type: ignore[import-not-found]
 
 _IK_CONSTRAINT_NAME = "Proscenio IK"
 _IK_TARGET_SUFFIX = ".IK"
@@ -128,7 +128,100 @@ class PROSCENIO_OT_toggle_ik_chain(bpy.types.Operator):
         return {"FINISHED"}
 
 
-_classes: tuple[type, ...] = (PROSCENIO_OT_toggle_ik_chain,)
+def _chain_member_bones(
+    pose_bone: bpy.types.PoseBone, chain_count: int
+) -> list[bpy.types.PoseBone]:
+    """Pose bones in the IK chain: the constrained bone plus parents.
+
+    ``chain_count`` counts bones from the constrained bone toward the root;
+    0 means the whole parent chain.
+    """
+    members: list[bpy.types.PoseBone] = []
+    current: bpy.types.PoseBone | None = pose_bone
+    remaining = chain_count if chain_count > 0 else -1
+    while current is not None and remaining != 0:
+        members.append(current)
+        current = current.parent
+        if remaining > 0:
+            remaining -= 1
+    return members
+
+
+def _set_bone_select(pose_bone: bpy.types.PoseBone, selected: bool) -> None:
+    """Set viewport selection, tolerant of the 4.x Bone vs 5.1 PoseBone layout.
+
+    Blender 5.1 exposes the select flag on PoseBone; older builds kept it on the
+    data Bone. ``nla.bake(only_selected=True)`` reads this to scope the bake to
+    the IK chain.
+    """
+    if hasattr(pose_bone, "select"):
+        pose_bone.select = selected
+    elif hasattr(pose_bone.bone, "select"):
+        pose_bone.bone.select = selected
+
+
+def _bake_frame_range(armature: bpy.types.Object, scene: bpy.types.Scene) -> tuple[int, int]:
+    """Action frame range when the rig carries one, else the scene play range."""
+    anim = armature.animation_data
+    action = anim.action if anim is not None else None
+    if action is not None:
+        frame_range = action.frame_range
+        return int(frame_range[0]), int(frame_range[1])
+    return scene.frame_start, scene.frame_end
+
+
+class PROSCENIO_OT_bake_ik_chain(bpy.types.Operator):
+    """Bake the active pose bone's IK chain to bone keyframes over the action range."""
+
+    bl_idname = "proscenio.bake_ik_chain"
+    bl_label = "Proscenio: Bake IK to Keyframes"
+    bl_description = (
+        "Bakes the active pose bone's IK chain to bone keyframes across the "
+        "action range (visual keying) and clears the IK constraint, so the "
+        "exporter reads real bone motion instead of flat fcurves. Requires Pose "
+        "Mode and an IK constraint on the active bone."
+    )
+    bl_options: ClassVar[set[str]] = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        if context.mode != "POSE":
+            return False
+        bone = getattr(context, "active_pose_bone", None)
+        return bone is not None and any(c.type == "IK" for c in bone.constraints)
+
+    def execute(self, context: bpy.types.Context) -> set[str]:
+        armature = context.active_object
+        bone = context.active_pose_bone
+        ik = next((c for c in bone.constraints if c.type == "IK"), None)
+        if ik is None:
+            report_warn(self, f"'{bone.name}' has no IK constraint to bake")
+            return {"CANCELLED"}
+
+        chain_names = {pb.name for pb in _chain_member_bones(bone, ik.chain_count)}
+        for pose_bone in armature.pose.bones:
+            _set_bone_select(pose_bone, pose_bone.name in chain_names)
+        frame_start, frame_end = _bake_frame_range(armature, context.scene)
+        bpy.ops.nla.bake(
+            frame_start=frame_start,
+            frame_end=frame_end,
+            only_selected=True,
+            visual_keying=True,
+            clear_constraints=True,
+            use_current_action=True,
+            bake_types={"POSE"},
+        )
+        report_info(
+            self,
+            f"baked IK chain from '{bone.name}' over frames {frame_start}-{frame_end}",
+        )
+        return {"FINISHED"}
+
+
+_classes: tuple[type, ...] = (
+    PROSCENIO_OT_toggle_ik_chain,
+    PROSCENIO_OT_bake_ik_chain,
+)
 
 
 def register() -> None:

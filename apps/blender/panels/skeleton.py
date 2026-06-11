@@ -173,6 +173,7 @@ class PROSCENIO_PT_pose_mode(bpy.types.Panel):
             return
         layout.operator("proscenio.bake_current_pose", text="Bake Current Pose", icon="KEY_HLT")
         layout.operator("proscenio.toggle_ik_chain", text="Toggle IK", icon="CON_KINEMATIC")
+        layout.operator("proscenio.bake_ik_chain", text="Bake IK to Keyframes", icon="KEYFRAME_HLT")
         layout.operator(
             "proscenio.save_pose_asset",
             text="Save Pose to Library",
