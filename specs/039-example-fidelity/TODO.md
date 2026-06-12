@@ -7,7 +7,7 @@ Sequenced from the verdicts in [STUDY.md](STUDY.md): two defects that make every
 ### PR 1: fix the wrapper script paths across every example
 
 - [ ] Rewrite each `examples/generated/**/godot/<Name>.tscn` `ext_resource` script path from `res://examples/<name>/godot/<Name>.gd` to the flat `res://examples/<name>/<Name>.gd` - the convention [sync_fixtures.py](../../scripts/godot/sync_fixtures.py) `_link_wrappers` documents and the layout it actually produces (the instanced `.proscenio` path is already flat and stays). Sweep all wrappers (`slot_cycle`, `slot_swap`, `atlas_pack`, `blink_eyes`, `mouth_drive`, `shared_atlas`, `simple_psd`, `mixed_feature`).
-- [ ] Verify headless: run `python scripts/godot/sync_fixtures.py`, then load each synced wrapper (`godot --headless --path apps/godot --quit` over the project, or open each `res://examples/<name>/<Name>.tscn`) and confirm zero "Load failed due to missing dependencies" for the wrapper scripts.
+- [ ] Verify headless: run `python scripts/godot/sync_fixtures.py`, then script a load of each `res://examples/<name>/<Name>.tscn` (a bare `godot --headless --quit` only opens the project, it never loads the wrapper scenes, so it cannot surface the missing-dependency) and confirm zero "Load failed due to missing dependencies" for the wrapper scripts.
 
 ### PR 2: make imported examples render their textures
 
