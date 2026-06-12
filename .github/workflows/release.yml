@@ -35,10 +35,16 @@ jobs:
 
       - name: Determine component and version
         id: meta
+        # Route the dispatch inputs through env vars rather than expanding
+        # `${{ inputs.* }}` straight into the script body: `version` is a
+        # free-text input, so a direct expansion is a shell-injection vector.
+        env:
+          INPUT_COMPONENT: ${{ inputs.component }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            component="${{ inputs.component }}"
-            version="${{ inputs.version }}"
+            component="$INPUT_COMPONENT"
+            version="$INPUT_VERSION"
           else
             tag="${GITHUB_REF#refs/tags/}"
             component="${tag%-v*}"
@@ -67,23 +73,28 @@ jobs:
           pnpm run build
 
       - name: Build artifact
+        # Same defense as the meta step: the version rides an env var, never
+        # a `${{ }}` expansion inside the script body.
+        env:
+          COMPONENT: ${{ steps.meta.outputs.name }}
+          VERSION: ${{ steps.meta.outputs.version }}
         run: |
           mkdir -p dist
-          case "${{ steps.meta.outputs.name }}" in
+          case "$COMPONENT" in
             blender)
-              (cd apps/blender && zip -r "../../dist/proscenio-blender-${{ steps.meta.outputs.version }}.zip" . -x "tests/*" "pyproject.toml" "README.md")
+              (cd apps/blender && zip -r "../../dist/proscenio-blender-$VERSION.zip" . -x "tests/*" "pyproject.toml" "README.md")
               ;;
             godot)
-              (cd apps/godot && zip -r "../../dist/proscenio-godot-${{ steps.meta.outputs.version }}.zip" addons/proscenio)
+              (cd apps/godot && zip -r "../../dist/proscenio-godot-$VERSION.zip" addons/proscenio)
               ;;
             photoshop)
               # The UXP plugin root is dist/ itself - manifest.json lands
               # there after the webpack build - so archive its contents,
               # keeping manifest.json at the zip root for the host loader.
-              (cd apps/photoshop/dist && zip -r "../../../dist/proscenio-photoshop-${{ steps.meta.outputs.version }}.zip" .)
+              (cd apps/photoshop/dist && zip -r "../../../dist/proscenio-photoshop-$VERSION.zip" .)
               ;;
             *)
-              echo "Unknown component: ${{ steps.meta.outputs.name }}"
+              echo "Unknown component: $COMPONENT"
               exit 1
               ;;
           esac
