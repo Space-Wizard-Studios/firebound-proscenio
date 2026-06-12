@@ -295,6 +295,12 @@ def _install_mouth_driver(mouth_obj: bpy.types.Object, armature_obj: bpy.types.O
 
     driver = fcurve.driver
     driver.type = "SCRIPTED"
+    # Matches the Drive-from-Bone operator default (and the mouth_drive fixture):
+    # `var` is jaw ROT_Y in radians, so across the action's [-pi/2, +pi/2] sweep
+    # `var * 2 + 2` ranges roughly [-1.1, 5.1]. The overshoot is intentional - the
+    # writer's frame-driver bake clamps to [0, hframes*vframes-1], yielding a full
+    # 0..3 cell sweep with frame 2 at the rest pose. The fixture exercises exactly
+    # that clamp path, so the raw expression is the point, not a bug.
     driver.expression = "var * 2 + 2"
     var = driver.variables[0] if driver.variables else driver.variables.new()
     var.name = "var"
