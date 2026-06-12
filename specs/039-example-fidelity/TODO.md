@@ -15,6 +15,12 @@ Sequenced from the verdicts in [STUDY.md](STUDY.md): two defects that make every
 - [ ] Fix the ordering: declare each referenced image as an import dependency so Godot imports it first and reimports the `.proscenio` when it changes (or raise `_get_import_order`, or add an explicit reimport pass). Confirm against the earlier passing `SlotSwap` validation in [backlog-manual-testing.md](../backlog-manual-testing.md) (section 2.x) to pin what regressed.
 - [ ] Verify in the editor: open `atlas_pack`, `mixed_feature`, and one PSD-sourced fixture in the `apps/godot` dev project after a clean reimport; every `Polygon2D` / `Sprite2D` shows its atlas region textured, none white.
 
+### PR 3: test-godot builds against the real baked goldens
+
+- [ ] Drive the Godot smoke test from the Blender-baked goldens (`examples/generated/**/*.expected.proscenio`) instead of hand-authored copies: run `sync_fixtures.py` in the `test-godot` CI job to populate `apps/godot/examples/`, then have [test_importer.gd](../../apps/godot/tests/test_importer.gd) (or a sibling pass) walk the synced goldens and assert the builders produce a sane node tree (counts, kinds, weights, slots, tracks). This is the coverage that exercises the writer-to-builder path end to end.
+- [ ] Audit the four hand-authored fixtures (`dummy`, `effect`, `skinned_dummy`, `slots_demo`): keep only the genuine edge cases the baked goldens do not already cover (e.g. `effect`'s sprite-appearance flags), drop or convert the rest, and retire the committed `tests/fixtures/mixed_feature.proscenio` copy in favor of its synced golden.
+- [ ] Note in the PR: a headless assert still cannot catch a visually-wrong-but-structurally-consistent export (the edge-on bones are rotation 0 on both sides); this item closes the drift and the builds-against-real-output gap, not the visual-convention gap - that stays with the bone-orientation item.
+
 ## Deferred
 
 Gate item; lands when its trigger fires.
