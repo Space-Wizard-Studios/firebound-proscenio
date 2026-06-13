@@ -61,12 +61,12 @@ Gatilho da spec [040-end-to-end-verification](040-end-to-end-verification/STUDY.
 
 **Causa raiz (dois fatores compostos):**
 
-- **Sem try/catch por layer.** `runWrites` chama `writeLayerPng` sem proteção (`png-writer.ts:29-43` + `46-77`); qualquer rejeição da API UXP (`documents.add`, `layer.duplicate`, `merge`, `trim`, `saveAs.png`) propaga, rejeita o `core.executeAsModal` e cai no catch externo que retorna `failed` — o manifest nunca chega a ser escrito.
+- **Sem try/catch por layer.** `runWrites` chama `writeLayerPng` sem proteção (`png-writer.ts:29-43` + `46-77`); qualquer rejeição da API UXP (`documents.add`, `layer.duplicate`, `merge`, `trim`, `saveAs.png`) propaga, rejeita o `core.executeAsModal` e cai no catch externo que retorna `failed` - o manifest nunca chega a ser escrito.
 - **Gate atômico tudo-ou-nada.** O manifest só é gravado se `results.every(r => r.ok)` (`export-flow.ts:120-137`). Uma única layer que não resolve (`findLayerByPath === null`) zera `allOk` e suprime o manifest do documento inteiro. O match é por nome bruto, byte-exato (`_layer-find.ts:22-31`), então qualquer rename no meio da sessão quebra.
 
 **Fix proposto:**
 
-- Envolver `writeLayerPng` em try/catch por-layer, coletando a falha como `{ ok: false, outputPath, reason }` em vez de deixar propagar — uma layer ruim vira um aviso por-entrada, não um abort global.
+- Envolver `writeLayerPng` em try/catch por-layer, coletando a falha como `{ ok: false, outputPath, reason }` em vez de deixar propagar - uma layer ruim vira um aviso por-entrada, não um abort global.
 - Reavaliar o gate atômico: ou (a) escrever o manifest com as entradas que deram certo + relatar as puladas, ou (b) manter atômico mas com erro **acionável** nomeando a layer culpada (nome + motivo) no lugar do banner genérico.
 - Tornar `findLayerByPath` resiliente a rename: casar por id de layer quando disponível, ou re-resolver a partir do plano em vez do nome bruto (`_layer-find.ts:22-31`). Relacionado: F-24 (nomes-irmãos duplicados roteiam toda edição para o primeiro match).
 
@@ -74,4 +74,24 @@ Gatilho da spec [040-end-to-end-verification](040-end-to-end-verification/STUDY.
 
 **Arquivos:** `apps/photoshop/src/api/png-writer.ts:29-77`, `apps/photoshop/src/api/export-flow.ts:118-155`, `apps/photoshop/src/api/_layer-find.ts:22-31`.
 
-**Severity:** high - bloqueia o export do manifest por completo, sem mensagem acionável. Confirmado por usuário em uso real.
+**Severity:** high - bloqueava o export do manifest por completo, sem mensagem acionável. **FIX APLICADO (spec [041](041-photoshop-overhaul/TODO.md), working tree, 13-jun-2026):** try/catch por-layer em `runWrites` (uma rejeição UXP vira `{ok:false}` em vez de derrubar o modal) + export parcial em `runExport` (escreve o manifest com as entradas que deram certo e nomeia as que falharam; invariante manifest-vs-disco preservada). Coberto por testes que assertam o conteúdo real do manifest parcial. **Caminho feliz CONFIRMADO em GUI (13-jun-2026):** export do `doll_tagged.psd` concluiu com 22 entradas escritas. Falta só o smoke do caminho parcial (quebrar uma layer de propósito, confirmar que o resto exporta + nomeia a falha).
+
+### `object null is not iterable` derruba TODA escrita de tag + o export (painel de Tags inutilizável)
+
+Confirmado em uso real (13-jun-2026, `doll_tagged.psd`, 22 layers planas). Modo de falha **distinto e mais fundamental** que o bug acima (que é falha de write por-layer): aqui um `TypeError: object null is not iterable (cannot read property Symbol(Symbol.iterator))` é lançado antes de qualquer write, derrubando o painel de Tags inteiro e o export. Owned pela spec [041-photoshop-overhaul](041-photoshop-overhaul/TODO.md) (PR 1; bloqueia tudo, sequenciar antes do F-01/F-02).
+
+**Repro (determinístico):**
+
+- Painel **Proscenio Tags** > clicar no glyph `X` (ignore) de qualquer linha (ex. `eye.L`) -> banner `object null is not iterable (cannot read property Symbol(Symbol.iterator))` no topo da lista de Tags.
+- Mudar o dropdown **kind** (auto/mesh/sprite), mudar o dropdown **mode/blend**, ou expandir `+` > preencher campos > **Apply**: nenhum altera o nome/tags da layer (no-op silencioso - mesma falha, mas o `X` é o único que mostra o banner porque foi onde o erro mais recente caiu).
+- Painel **Proscenio Exporter** > **Export manifest + PNGs** -> `Export failed. TypeError: object null is not iterable (cannot read property Symbol(Symbol.iterator))`; nenhum `*.photoshop_exported.json` escrito.
+
+**O que foi verificado lendo o código (não é nenhum destes, para layers planas):** o caminho estático inteiro está guardado contra null - `adaptDocument` sobrevive a `.layers` null via `?? []` (por isso as 22 linhas renderizam); o `planner` opera sobre a árvore já adaptada (sempre array); `xmp.writeLayerTagsToXmp` e `manifest-validator` são try/caught / `?? []` e nunca lançam. As 4 interações de tag (`X`, kind, mode, `+`Apply) convergem todas em `onRename` -> `renameLayer` -> `findLayerByPath`, e `findLayerByPath` roda ANTES do `try` (`layer-rename.ts:30`), então a exceção sobe e o catch do `useTagTree.rename` a mostra como `lastError` cru.
+
+**Causa-raiz confirmada (estática) + FIX APLICADO (spec 041, working tree, 13-jun-2026):** `findLayerByPath` lia o `.layers` da layer encontrada MESMO no último segmento do path (`candidates = toArray(found.layers)` rodava no fim de toda iteração), e `toArray` guardava só `undefined`. Uma art layer do UXP que reporta `.layers === null` faz `Array.from(null)` lançar exatamente essa mensagem - em toda chamada de `findLayerByPath` (rename de toda tag-write E os writes do export), enquanto `adaptDocument` sobrevivia via `?? []` (árvore renderiza, escrita/export quebram). Essa é a única origem da mensagem para layers planas e explica os 3 sintomas. Fix: `toArray` normaliza `null` + qualquer não-iterável, e o walk não lê filhos além do último segmento; `adaptDocument` roteia `doc.layers`/`.layers` de grupo por `toLayerArray` e `extractAnchor` trata guides null; `readActiveLayerPath` tolera `activeLayers` null. Testes de regressão asseguram que cada função sobrevive a coleção null.
+
+**Status: CONFIRMADO EM GUI REAL (13-jun-2026).** Sessão no `doll_tagged.psd`: `X`/ignore, kind (mesh/sprite), blend (multiply/screen/additive) e `+`Apply (folder) todos aplicaram **sem nenhum `object null is not iterable`**, e o Export concluiu (`[proscenio:export-flow] runExport done {entries: 22}`). Fix aplicado + 266 testes verdes (typecheck/lint/build limpos). **Follow-up da mesma sessão (também corrigido):** editar tag de uma layer DENTRO de um grupo renomeado falhava por nome-path stale (`[proscenio:layer-find] no match at depth 0 seeking Agrupar 1`) - agora resolvido por lookup via `layerID` (`findLayerById`, threaded node.id -> renameLayer), que sobrevive a rename de grupo/layer e desambigua nomes-irmãos (fecha F-24).
+
+**Arquivos do fix:** [`_layer-find.ts`](../apps/photoshop/src/api/_layer-find.ts), [`adapt-document.ts`](../apps/photoshop/src/api/adapt-document.ts), [`ps-selection.ts`](../apps/photoshop/src/api/ps-selection.ts). Relacionado, ainda aberto: F-24 (nomes-irmãos duplicados, first-match na mesma `findLayerByPath`) - melhoria de mira via lookup por `layerID`, adiada com o multiGet na spec 041.
+
+**Severity:** high - era painel de Tags inutilizável + export quebrado. Fix aplicado; rebaixa pra "aguardando smoke GUI" quando confirmado em sessão real.
