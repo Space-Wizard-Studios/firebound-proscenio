@@ -63,4 +63,28 @@ describe("subscribePixelsPerUnit (F-14: import seeds the live value)", () => {
         persistPixelsPerUnit(200);
         expect(fn).not.toHaveBeenCalled();
     });
+
+    it("broadcasts to every registered subscriber", () => {
+        const seen1: number[] = [];
+        const seen2: number[] = [];
+        const unsubscribe1 = subscribePixelsPerUnit((v) => seen1.push(v));
+        const unsubscribe2 = subscribePixelsPerUnit((v) => seen2.push(v));
+        persistPixelsPerUnit(150);
+        unsubscribe1();
+        unsubscribe2();
+        expect(seen1).toEqual([150]);
+        expect(seen2).toEqual([150]);
+    });
+
+    it("keeps notifying the rest when one subscriber throws", () => {
+        // A broken subscriber must not break the chain (state would drift
+        // across components that depend on the PPU update).
+        const after = vi.fn();
+        const unsubscribeBad = subscribePixelsPerUnit(() => { throw new Error("boom"); });
+        const unsubscribeGood = subscribePixelsPerUnit(after);
+        expect(() => persistPixelsPerUnit(150)).not.toThrow();
+        unsubscribeBad();
+        unsubscribeGood();
+        expect(after).toHaveBeenCalledWith(150);
+    });
 });

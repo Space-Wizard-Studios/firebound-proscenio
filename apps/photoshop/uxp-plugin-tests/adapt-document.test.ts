@@ -63,12 +63,13 @@ describe("adaptLayer", () => {
         expect(layer.id).toBeUndefined();
     });
 
-    it("treats a group whose `.layers` is null as an empty group, not a crash", () => {
-        const group = { name: "arm", visible: true, layers: null } as unknown as PsLayer;
-        const layer = adaptLayer(group);
-        // A null `.layers` is not Array.isArray, so it falls to the art
-        // branch; the point is it does not throw.
-        expect(() => adaptLayer(group)).not.toThrow();
+    it("adapts a layer with null `.layers` as an art layer without crashing", () => {
+        const raw = { name: "arm", visible: true, layers: null } as unknown as PsLayer;
+        const layer = adaptLayer(raw);
+        // A null `.layers` is not Array.isArray, so `isGroup` is false and it
+        // falls to the art branch; the point is it does not throw.
+        expect(() => adaptLayer(raw)).not.toThrow();
+        expect(layer.kind).toBe("art");
         expect(layer.name).toBe("arm");
     });
 });

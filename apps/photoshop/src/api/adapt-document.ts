@@ -52,7 +52,8 @@ function toLayerArray(value: ArrayLike<PsLayer> | null | undefined): PsLayer[] {
     if (value === undefined || value === null) return [];
     try {
         return Array.from(value);
-    } catch {
+    } catch (err) {
+        log.warn("adapt-document", "non-iterable .layers; treating as empty", err);
         return [];
     }
 }

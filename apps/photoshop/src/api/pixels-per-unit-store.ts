@@ -6,6 +6,7 @@
 // write through here. Mirrors api/folder-storage's localStorage owner.
 
 import { DEFAULT_PIXELS_PER_UNIT } from "../lib/manifest";
+import { log } from "../utils/log";
 
 const KEY = "proscenio.pixelsPerUnit";
 
@@ -47,7 +48,15 @@ export function persistPixelsPerUnit(value: number): number {
     } catch {
         // localStorage unavailable; in-memory only.
     }
-    for (const listener of listeners) listener(normalised);
+    // Isolate each listener: one throwing subscriber must not break the
+    // notification chain for the rest (state would drift across components).
+    for (const listener of listeners) {
+        try {
+            listener(normalised);
+        } catch (err) {
+            log.warn("pixels-per-unit", "subscriber threw; continuing", err);
+        }
+    }
     return normalised;
 }
 

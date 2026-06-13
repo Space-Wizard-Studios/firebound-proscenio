@@ -62,15 +62,15 @@ const TagRowImpl: React.FC<TagRowProps> = ({
         const next = node.tags.ignore !== true;
         const newName = toggleTag(node.displayName, node.tags, "ignore", next);
         log.debug("TagsSection", "ignore", node.layerPath, next, newName);
-        onRename(node.layerPath, newName);
-    }, [node.layerPath, node.displayName, node.tags, onRename]);
+        onRename(node.layerPath, newName, node.id);
+    }, [node.layerPath, node.displayName, node.tags, node.id, onRename]);
 
     const onToggleMerge = React.useCallback(() => {
         const next = node.tags.merge !== true;
         const newName = toggleTag(node.displayName, node.tags, "merge", next);
         log.debug("TagsSection", "merge", node.layerPath, next, newName);
-        onRename(node.layerPath, newName);
-    }, [node.layerPath, node.displayName, node.tags, onRename]);
+        onRename(node.layerPath, newName, node.id);
+    }, [node.layerPath, node.displayName, node.tags, node.id, onRename]);
 
     const onKindChange = React.useCallback(
         (e: React.SyntheticEvent) => {
