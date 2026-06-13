@@ -97,7 +97,7 @@ Future actions land as future specs require them.
 
 ## photoshop tag system tag coverage (parity oracle)
 
-Every photoshop tag system v1 tag is exercised somewhere in `02_photoshop_setup/debug/doll_tagged_debug.psd`. See `02_photoshop_setup/README.md::Tags exercised` for the canonical table. If you add or rename a tag in the photoshop tag system, the parity test (`tests/test_doll_tagged_debug_manifest.py`) re-exports this PSD and diffs against the recorded baseline.
+Every photoshop tag system v1 tag is exercised somewhere in `02_photoshop_setup/debug/doll_tagged_debug.psd`. See `02_photoshop_setup/README.md::Tags exercised` for the canonical table. Two tests guard the taxonomy: the Python parity test (`tests/test_doll_tagged_debug_manifest.py`) loads and validates the committed manifest re-exported from this PSD, and `apps/photoshop/uxp-plugin-tests/tag-smoke.test.ts` snapshot-diffs the planner output for a synthetic tree. If you add or rename a tag, re-export this PSD and update both.
 
 ## What this fixture catches when broken
 
